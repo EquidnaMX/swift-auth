@@ -91,11 +91,11 @@ class AuthController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        if (!$request->startSession) {
-            Auth::login($user);
-
-            return redirect()->to(Config::get('swift-auth.success_url'))->with('success', 'Registration successful.');
+        if (Auth::check()) {
+            return redirect()->route('swift-auth.user.index')->with('success', 'Registration successful.');
         }
+
+        Auth::login($user);
 
         return redirect()->route('swift-auth.user.index')->with('success', 'Registration successful.');
     }

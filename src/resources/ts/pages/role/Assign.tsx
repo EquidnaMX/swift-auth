@@ -1,16 +1,41 @@
-import { useForm, Head } from "@inertiajs/react";
+import { Link, useForm, Head } from "@inertiajs/react";
+import Authenticated from "../../layouts/Authenticated";
 import { FormEvent, ReactNode } from "react";
-import Authenticated from "../../../layouts/Authenticated";
 
-const CreateForm = () => {
+interface User {
+    id: Number;
+    name: string;
+    email: string;
+}
+
+interface Role {
+    id: Number;
+    name: string;
+    description: string;
+}
+
+interface AssignFormProps {
+    users: User[];
+    roles: Role[];
+}
+
+const AssignForm = ({ users, roles }: AssignFormProps) => {
     const { data, setData, post, processing, errors } = useForm({
-        name: "",
-        description: "",
+        user: "",
+        role: "",
     });
+
+    const handleUserChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setData("user", e.target.value);
+    };
+
+    const handleRoleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setData("role", e.target.value);
+    };
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        post(route("swift-auth.store"));
+        post(route("swift-auth.user.role.assign"));
     };
 
     const handleCancel = () => {
@@ -19,51 +44,36 @@ const CreateForm = () => {
 
     return (
         <>
-            <Head title="Nuevo rol" />
+            <Head title="Asignar rol" />
+
             <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
                 <h2 className="text-2xl font-bold text-center mb-4">
-                    Agregar rol
+                    Asignar rol
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium">
-                            Nombre
+                            Usuario
                         </label>
-                        <input
-                            type="text"
-                            name="name"
-                            value={data.name}
-                            onChange={(e) => setData("name", e.target.value)}
-                            className="w-full border rounded px-3 py-2 mt-1"
-                            required
-                        />
-                        {errors.name && (
-                            <p className="text-gray-500 text-sm">
-                                {errors.name}
-                            </p>
-                        )}
+                        <select id="users" onChange={handleUserChange}>
+                            {users.map((user) => (
+                                <option key={user.id} value={user.id}>
+                                    {user.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium">
-                            Descripción
-                        </label>
-                        <input
-                            type="text"
-                            name="description"
-                            value={data.description}
-                            onChange={(e) =>
-                                setData("description", e.target.value)
-                            }
-                            className="w-full border rounded px-3 py-2 mt-1"
-                            required
-                        />
-                        {errors.description && (
-                            <p className="text-gray-500 text-sm">
-                                {errors.description}
-                            </p>
-                        )}
+                        <label className="block text-sm font-medium">Rol</label>
+                        <select id="roles" onChange={handleRoleChange}>
+                            {roles.map((role) => (
+                                <option key={role.id} value={role.id}>
+                                    {role.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="flex justify-between items-center">
@@ -91,4 +101,4 @@ const CreateForm = () => {
 
 CreateForm.layout = (page: ReactNode) => <Authenticated>{page}</Authenticated>;
 
-export default CreateForm;
+export default AssignForm;

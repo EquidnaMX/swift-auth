@@ -1,5 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import Authenticated from '../../../layouts/Authenticated';
+import Authenticated from '../../layouts/Authenticated';
 
 const Index = ({ roles }) => {
     const onDelete = (role) => {

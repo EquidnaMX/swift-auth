@@ -1,7 +1,7 @@
 import { PageProps } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import { ReactNode } from 'react';
-import Authenticated from '../../../layouts/Authenticated';
+import Authenticated from '../../layouts/Authenticated';
 
 type Role = {
     id: number;

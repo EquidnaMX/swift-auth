@@ -1,15 +1,18 @@
-import { Link, useForm } from "@inertiajs/react";
-import Authenticated from "../../../layouts/Authenticated";
+import { Head, useForm } from "@inertiajs/react";
+import Authenticated from "../../layouts/Authenticated";
 
-const CreateForm = () => {
-    const { data, setData, post, processing, errors } = useForm({
-        name: "",
-        description: ""
+const EditForm = ({ role }) => {
+    const { data, setData, put, processing, errors } = useForm({
+        name: role.name,
+        description: role.description,
+
     });
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route("swift-auth.store"));
+        put(route("swift-auth.user.role.update", role.id), {
+            onError: (errors) => alert(JSON.stringify(errors)),
+        });
     };
 
     const handleCancel = () => {
@@ -18,10 +21,9 @@ const CreateForm = () => {
 
     return (
         <>
-            <Head title="New user" />
-
+            <Head title="Editar rol" />
             <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-2xl font-bold text-center mb-4">Agregar rol</h2>
+                <h2 className="text-2xl font-bold text-center mb-4">Editar rol</h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
@@ -56,15 +58,16 @@ const CreateForm = () => {
                         )}
                     </div>
 
+
                     <div className="flex justify-between items-center">
 
 
-                    <button
-                        type="button"
-                        className="bg-transparent hover:bg-gray-500 text-gray-700 font-semibold hover:text-white py-2 px-4 border border-gray-500 hover:border-transparent rounded"
-                        onClick={handleCancel}
+                        <button
+                            type="button"
+                            className="bg-transparent hover:bg-gray-500 text-gray-700 font-semibold hover:text-white py-2 px-4 border border-gray-500 hover:border-transparent rounded"
+                            onClick={handleCancel}
                         >
-                        Cancelar
+                            Cancelar
                         </button>
 
                         <button
@@ -78,9 +81,10 @@ const CreateForm = () => {
                 </form>
             </div>
         </>
+
     );
 };
 
-CreateForm.layout = (page) => <Authenticated>{page}</Authenticated>;
+EditForm.layout = (page) => <Authenticated>{page}</Authenticated>;
 
-export default CreateForm;
+export default EditForm;

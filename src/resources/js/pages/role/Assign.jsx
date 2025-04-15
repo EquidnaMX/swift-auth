@@ -1,5 +1,5 @@
 import { useForm } from "@inertiajs/react";
-import Authenticated from "../../layouts/Authenticated";
+import Authenticated from "../layouts/Authenticated";
 
 const AssignForm = () => {
     const { data, setData, post, processing, errors } = useForm({

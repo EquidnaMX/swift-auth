@@ -28,15 +28,17 @@ class RoleController extends Controller
             : Inertia::render($inertiaComponent, $data);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $roles = Role::all();
+        $roles = Role::search($request->get("search"))
+            ->paginate(10);
+
         return $this->render('swift-auth::user.role.index', 'user/role/Index', ['roles' => $roles]);
     }
 
     public function create()
     {
-        return view('swift-auth::user.role.create');
+        return $this->render('swift-auth::user.role.create', 'role/Create');
     }
 
     public function store(Request $request)

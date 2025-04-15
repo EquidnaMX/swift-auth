@@ -33,7 +33,7 @@ class RoleController extends Controller
         $roles = Role::search($request->get("search"))
             ->paginate(10);
 
-        return $this->render('swift-auth::user.role.index', 'user/role/Index', ['roles' => $roles]);
+        return $this->render('swift-auth::user.role.index', 'role/Index', ['roles' => $roles]);
     }
 
     public function create()

@@ -22,8 +22,11 @@ class RoleController extends Controller
 
         $data = array_merge($data, $flashMessages);
 
-        return  Inertia::render($inertiaComponent, $data);
+        return Config::get('swift-auth.frontend') === 'blade'
+            ? view($bladeView, $data)
+            : Inertia::render($inertiaComponent, $data);
     }
+
     public function index()
     {
         $roles = Role::all();
@@ -48,7 +51,7 @@ class RoleController extends Controller
 
         Role::create($request->only('name', 'description'));
 
-        return redirect()->route('swift-auth.user.role.index')->with('success', 'Role created successfully.');
+        return redirect()->route('swift-auth.role.index')->with('success', 'Role created successfully.');
     }
 
     public function edit($id)
@@ -73,7 +76,7 @@ class RoleController extends Controller
 
         $role->update($request->only('name', 'description'));
 
-        return redirect()->route('swift-auth.user.role.index')->with('success', 'Role updated successfully.');
+        return redirect()->route('swift-auth.role.index')->with('success', 'Role updated successfully.');
     }
 
     public function destroy($id)
@@ -81,7 +84,7 @@ class RoleController extends Controller
         $role = Role::findOrFail($id);
         $role->delete();
 
-        return redirect()->route('swift-auth.user.role.index')->with('success', 'Role deleted successfully.');
+        return redirect()->route('swift-auth.role.index')->with('success', 'Role deleted successfully.');
     }
 
     public function assignUserForm()

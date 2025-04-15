@@ -23,4 +23,5 @@ Route::middleware('web')->prefix('swift-auth')->as('swift-auth.')->group(functio
     );
 
     require __DIR__ . '/user.php';
+    require __DIR__ . '/roles.php';
 });

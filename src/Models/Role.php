@@ -18,9 +18,7 @@ class Role extends Model
     ];
 
     /**
-     * Get the users that belong to this role.
-     *
-     * @return BelongsToMany
+     * The users that belong to the role.
      */
     public function users(): BelongsToMany
     {

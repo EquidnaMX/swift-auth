@@ -11,7 +11,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="{{ route('swift-auth.user.index') }}">Usuarios</a>
-            <a class="navbar-brand" href="{{ route('swift-auth.user.role.index') }}">Roles</a>
+            <a class="navbar-brand" href="{{ route('swift-auth.role.index') }}">Roles</a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>

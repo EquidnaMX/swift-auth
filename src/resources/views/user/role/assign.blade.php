@@ -4,7 +4,7 @@
     <div class="container">
         <h2>Asignar role a usuario</h2>
 
-        <form method="POST" action="{{ route('swift-auth.user.role.assign') }}">
+        <form method="POST" action="{{ route('swift-auth.role.assign') }}">
             @csrf
 
             <div class="mb-3">
@@ -26,7 +26,7 @@
             </div>
 
             <button type="submit" class="btn btn-primary">Asignar</button>
-            <a href="{{ route('swift-auth.user.role.index') }}" class="btn btn-secondary">Cancelar</a>
+            <a href="{{ route('swift-auth.role.index') }}" class="btn btn-secondary">Cancelar</a>
         </form>
     </div>
 @endsection

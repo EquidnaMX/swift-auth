@@ -19,7 +19,7 @@ const Index = ({ roles }: PageProps<Props>) => {
             `¿Estás seguro de que quieres eliminar el rol ${role.name}?`,
         );
         if (confirmDelete) {
-            router.delete(route('swift-auth.user.role.destroy', role.id));
+            router.delete(route('swift-auth.role.destroy', role.id));
         }
     };
 
@@ -31,7 +31,7 @@ const Index = ({ roles }: PageProps<Props>) => {
                     <h2 className="mb-4 text-left text-2xl font-bold">Roles</h2>
 
                     <Link
-                        href={route('swift-auth.user.role.create')}
+                        href={route('swift-auth.role.create')}
                         className="rounded bg-gray-500 px-4 py-2 font-bold text-white hover:bg-gray-700"
                     >
                         Nuevo rol

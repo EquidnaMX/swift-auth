@@ -20,7 +20,5 @@ Route::middleware('SwiftAuthMiddleware')->prefix('users')->as('user.')->group(
                 });
             }
         );
-
-        require __DIR__ . '/roles.php';
     }
 );

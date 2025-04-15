@@ -6,6 +6,7 @@ namespace Teleurban\SwiftAuth\Models;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
@@ -67,5 +68,17 @@ class User extends Authenticatable
     public function hasRole(string $role): bool
     {
         return $this->roles->contains('name', $role);
+    }
+
+    /**
+     * Scope a query to search users by name.
+     *
+     * @param Builder $query
+     * @param string|null $search
+     * @return Builder
+     */
+    public function scopeSearch(Builder $query, null|string $search): Builder
+    {
+        return $query->where('name', 'LIKE', '%' . $search . '%');
     }
 }

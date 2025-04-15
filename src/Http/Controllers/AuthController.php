@@ -61,9 +61,11 @@ class AuthController extends Controller
         return $this->render('swift-auth::user.edit', 'user/Edit', ['user' => $user]);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::all();
+        $users = User::search($request->get("search"))
+            ->paginate(10);
+
         return $this->render('swift-auth::user.index', 'user/Index', ['users' => $users]);
     }
 

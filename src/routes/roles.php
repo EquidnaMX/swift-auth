@@ -7,7 +7,7 @@ Route::prefix('roles')->as('role.')->group(function () {
     Route::get('', [RoleController::class, 'index'])->name('index');
     Route::get('create', [RoleController::class, 'create'])->name('create');
     Route::get('assign', [RoleController::class, 'assignUserForm'])->name('assignForm');
-    Route::get('{id}', [RoleController::class, 'show'])->name('show');
+    Route::get('{id}', [RoleController::class, 'show'])->name('edit');
 
     Route::middleware('SwiftAuthMiddleware' . ':root')->group(function () {
         // TODO: ([AuthenticateUser::class . ':root'])

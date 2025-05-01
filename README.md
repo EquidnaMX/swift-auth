@@ -1,7 +1,7 @@
 
 # Swift Auth
 
-Swift Auth is an efficient system designed for user management, providing an intuitive and scalable solution to manage access and permissions.
+Swift Auth is an simple, yet efficient system designed for user management, providing an intuitive and scalable solution to manage access and permissions.
 
 
 ## Environment Variables

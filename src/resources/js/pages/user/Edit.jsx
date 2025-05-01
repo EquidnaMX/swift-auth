@@ -5,12 +5,11 @@ const EditForm = ({ user }) => {
     const { data, setData, put, processing, errors } = useForm({
         name: user.name,
         email: user.email,
-
     });
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        put(route("swift-auth.user.update", user.id), {
+        put(route("swift-auth.users.update", user.id), {
             onError: (errors) => alert(JSON.stringify(errors)),
         });
     };
@@ -23,11 +22,15 @@ const EditForm = ({ user }) => {
         <>
             <Head title="Editar usuario" />
             <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-2xl font-bold text-center mb-4">Editar usuario</h2>
+                <h2 className="text-2xl font-bold text-center mb-4">
+                    Editar usuario
+                </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium">Nombre</label>
+                        <label className="block text-sm font-medium">
+                            Nombre
+                        </label>
                         <input
                             type="text"
                             name="name"
@@ -37,7 +40,9 @@ const EditForm = ({ user }) => {
                             required
                         />
                         {errors.name && (
-                            <p className="text-gray-500 text-sm">{errors.name}</p>
+                            <p className="text-gray-500 text-sm">
+                                {errors.name}
+                            </p>
                         )}
                     </div>
 
@@ -54,14 +59,13 @@ const EditForm = ({ user }) => {
                             required
                         />
                         {errors.email && (
-                            <p className="text-gray-500 text-sm">{errors.email}</p>
+                            <p className="text-gray-500 text-sm">
+                                {errors.email}
+                            </p>
                         )}
                     </div>
 
-
                     <div className="flex justify-between items-center">
-
-
                         <button
                             type="button"
                             className="bg-transparent hover:bg-gray-500 text-gray-700 font-semibold hover:text-white py-2 px-4 border border-gray-500 hover:border-transparent rounded"
@@ -81,7 +85,6 @@ const EditForm = ({ user }) => {
                 </form>
             </div>
         </>
-
     );
 };
 

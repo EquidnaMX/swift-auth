@@ -35,7 +35,7 @@ const AssignForm = ({ users, roles }: AssignFormProps) => {
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        post(route("swift-auth.user.role.assign"));
+        post(route("swift-auth.users.role.assign"));
     };
 
     const handleCancel = () => {

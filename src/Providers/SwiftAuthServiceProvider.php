@@ -5,7 +5,8 @@ namespace Teleurban\SwiftAuth\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
 use Teleurban\SwiftAuth\Console\Commands\InstallSwiftAuth;
-use Teleurban\SwiftAuth\Http\Middleware\AuthenticatedUser;
+use Teleurban\SwiftAuth\Http\Middleware\RequireAuthentication;
+use Teleurban\SwiftAuth\Http\Middleware\CanPerformAction;
 
 final class SwiftAuthServiceProvider extends ServiceProvider
 {
@@ -16,16 +17,31 @@ final class SwiftAuthServiceProvider extends ServiceProvider
 
     public function boot(Router $router): void
     {
-        $router->aliasMiddleware('SwiftAuthMiddleware', AuthenticatedUser::class);
+        $router->aliasMiddleware('SwiftAuth.RequireAuthentication', RequireAuthentication::class);
+        $router->aliasMiddleware('SwifthAuth.CanPerformAction', CanPerformAction::class);
 
-        $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'swift-auth');
+        $this->loadMigrationsFrom(
+            __DIR__ . '/../migrations'
+        );
+
+        $this->loadRoutesFrom(
+            [
+                __DIR__ . '/../routes/swifth-auth.php'
+            ]
+        );
+
+        $this->loadViewsFrom(
+            __DIR__ . '/../resources/views',
+            'swift-auth'
+        );
 
         $this->publishes(
             [
                 __DIR__ . '/../Models' => app_path('Models'),
             ],
-            ['swift-auth:models']
+            [
+                'swift-auth:models'
+            ]
         );
 
         $this->publishes(
@@ -37,7 +53,7 @@ final class SwiftAuthServiceProvider extends ServiceProvider
             ]
         );
 
-        $this->loadMigrationsFrom(__DIR__ . '/../migrations');
+
         $this->publishes(
             [
                 __DIR__ . '/../database/migrations' => database_path('migrations'),
@@ -58,14 +74,18 @@ final class SwiftAuthServiceProvider extends ServiceProvider
             [
                 __DIR__ . '/../resources/js' => resource_path('js'),
             ],
-            ['swift-auth:js-react']
+            [
+                'swift-auth:js-react'
+            ]
         );
 
         $this->publishes(
             [
                 __DIR__ . '/../resources/icons' => public_path('icons'),
             ],
-            ['swift-auth:icons']
+            [
+                'swift-auth:icons'
+            ]
         );
 
         if ($this->app->runningInConsole()) {

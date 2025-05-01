@@ -22,8 +22,8 @@
                     <td>{{ $user->email }}</td>
                     @if (auth()->user()->hasRole('root'))
                         <td>
-                            <a href="{{ route('swift-auth.user.show', $user->id) }}" class="btn btn-warning btn-sm">Editar</a>
-                            <form action="{{ route('swift-auth.user.destroy', $user->id) }}" method="POST" class="d-inline">
+                            <a href="{{ route('swift-auth.users.show', $user->id) }}" class="btn btn-warning btn-sm">Editar</a>
+                            <form action="{{ route('swift-auth.users.destroy', $user->id) }}" method="POST" class="d-inline">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-danger btn-sm"

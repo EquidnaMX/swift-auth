@@ -8,31 +8,27 @@ use Illuminate\Database\Eloquent\Model;
 
 class Role extends Model
 {
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+
+    protected $table = 'Roles';
+    protected $primary_key = 'id_role';
+
     protected $fillable = [
         'name',
         'description',
+        'actions'
     ];
 
-    /**
-     * The users that belong to the role.
-     */
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(
+            User::class,
+            'UsersRoles',
+            'id_role',
+            'id_user'
+        );
     }
 
-    /**
-     * Scope a query to search roles by name.
-     *
-     * @param Builder $query
-     * @param string|null $search
-     * @return Builder
-     */
+
     public function scopeSearch(Builder $query, null|string $search): Builder
     {
         return $query->where('name', 'LIKE', '%' . $search . '%');

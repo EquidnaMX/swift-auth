@@ -2,45 +2,28 @@
 
 namespace Teleurban\SwiftAuth\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory;
-    use Notifiable;
+    protected $table = "Users";
+    protected $primary_key = 'id_user';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
+
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+
     protected function casts(): array
     {
         return [
@@ -49,34 +32,29 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Get the roles associated with the user.
-     *
-     * @return BelongsToMany
-     */
+
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(Role::class);
+        return $this->belongsToMany(
+            Role::class,
+            'UsersRoles',
+            'id_user',
+            'id_role'
+        );
     }
 
-    /**
-     * Check if the user has a specific role.
-     *
-     * @param string $role Role name to check.
-     * @return bool Returns `true` if the user has the role, otherwise `false`.
-     */
-    public function hasRole(string $role): bool
+    public function availableActions()
     {
-        return $this->roles->contains('name', $role);
+        $actions = [];
+
+        foreach ($this->roles as $role) {
+            $actions = array_merge($actions, explode(",", $role->actions));
+        }
+
+        //TODO FIND AND REMOVE DUPLICATES
+        return $actions;
     }
 
-    /**
-     * Scope a query to search users by name.
-     *
-     * @param Builder $query
-     * @param string|null $search
-     * @return Builder
-     */
     public function scopeSearch(Builder $query, null|string $search): Builder
     {
         return $query->where('name', 'LIKE', '%' . $search . '%');

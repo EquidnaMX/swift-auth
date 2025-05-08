@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Config;
 use Teleurban\SwiftAuth\Traits\SelectiveRender;
 
 class AuthController extends Controller
@@ -47,8 +46,6 @@ class AuthController extends Controller
     {
         return $this->render('swift-auth::password.reset', 'ResetPassword');
     }
-
-
 
     public function logout(Request $request)
     {

@@ -3,13 +3,11 @@
 namespace Teleurban\SwiftAuth\Http\Middleware;
 
 use Symfony\Component\HttpFoundation\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Closure;
 
 class CanPerformAction
 {
-
     public function handle(Request $request, Closure $next, string $action): Response
     {
 

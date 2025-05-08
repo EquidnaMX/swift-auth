@@ -6,7 +6,6 @@ use Inertia\Inertia;
 
 trait SelectiveRender
 {
-
     protected function render($bladeView, $inertiaComponent, $data = [])
     {
         // Pasar mensajes de flash a la vista

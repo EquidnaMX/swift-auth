@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Role extends Model
 {
-
     protected $table = 'Roles';
     protected $primary_key = 'id_role';
 
@@ -27,7 +26,6 @@ class Role extends Model
             'id_user'
         );
     }
-
 
     public function scopeSearch(Builder $query, null|string $search): Builder
     {

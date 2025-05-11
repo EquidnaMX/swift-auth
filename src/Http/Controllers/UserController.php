@@ -5,6 +5,7 @@ namespace Teleurban\SwiftAuth\Http\Controllers;
 use Teleurban\SwiftAuth\Traits\SelectiveRender;
 use Teleurban\SwiftAuth\Models\User;
 use Teleurban\SwiftAuth\Models\Role;
+use Illuminate\Routing\Controller;
 
 class UserController extends Controller
 {

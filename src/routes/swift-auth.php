@@ -31,8 +31,8 @@ Route::middleware('web')
                 ]
             )->group(
                 function () {
-                    base_path(__DIR__ . '/swift-auth-users.php');
-                    base_path(__DIR__ . '/swift-auth-roles.php');
+                    require __DIR__ . '/swift-auth-users.php';
+                    require __DIR__ . '/swift-auth-roles.php';
                 }
             );
         }

@@ -2,6 +2,7 @@
 
 namespace Teleurban\SwiftAuth\Traits;
 
+use Illuminate\Support\Facades\Config;
 use Inertia\Inertia;
 
 trait SelectiveRender

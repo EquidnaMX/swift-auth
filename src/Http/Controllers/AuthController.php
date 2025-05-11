@@ -30,7 +30,7 @@ class AuthController extends Controller
 
             return redirect()
                 ->to(
-                    config('swift-auth.success_url')
+                    Config::get('swift-auth.success_url')
                 )->with('success', 'Login successful.');
         }
 

@@ -24,7 +24,7 @@ final class SwiftAuthServiceProvider extends ServiceProvider
             __DIR__ . '/../migrations'
         );
 
-        $this->loadRoutesFrom(__DIR__ . '/../routes/swifth-auth.php');
+        $this->loadRoutesFrom(__DIR__ . '/../routes/swift-auth.php');
 
         $this->loadViewsFrom(
             __DIR__ . '/../resources/views',

@@ -40,7 +40,7 @@
         <button type="submit" class="btn btn-primary w-100">Registrarse</button>
 
         <div class="text-center mt-3">
-            <a href="{{ route('swift-auth.login') }}" class="text-decoration-none">¿Ya tienes cuenta? Iniciar sesión</a>
+            <a href="{{ route('swift-auth.login.form') }}" class="text-decoration-none">¿Ya tienes cuenta? Iniciar sesión</a>
         </div>
     </form>
 @endsection

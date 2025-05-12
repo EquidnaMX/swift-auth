@@ -55,7 +55,7 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('swift-auth.login')->with('success', 'Logged out successfully.');
+        return redirect()->route('swift-auth.login.form')->with('success', 'Logged out successfully.');
     }
 
     public function sendResetLink(Request $request)
@@ -87,7 +87,7 @@ class AuthController extends Controller
         );
 
         return $status === Password::PASSWORD_RESET
-            ? redirect()->route('swift-auth.login')->with('status', __($status))
+            ? redirect()->route('swift-auth.login.form')->with('status', __($status))
             : back()->withErrors(['email' => __($status)]);
     }
 }

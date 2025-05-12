@@ -2,8 +2,10 @@
 
 namespace Teleurban\SwiftAuth\Http\Middleware;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
+use Teleurban\SwiftAuth\Models\User;
 use Illuminate\Http\Request;
 use Closure;
 
@@ -13,7 +15,7 @@ class RequireAuthentication
     {
         if (!Auth::check()) {
             return redirect()
-                ->route('swift-auth.login')
+                ->route('swift-auth.login.form')
                 ->with('error', 'You must be logged in.');
         }
 
@@ -27,7 +29,7 @@ class RequireAuthentication
             );
         } catch (ModelNotFoundException $e) {
             return redirect()
-                ->route('swift-auth.login')
+                ->route('swift-auth.login.form')
                 ->with('error', 'Authenticated user not found on record');
         }
 

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Teleurban\SwiftAuth\Traits\SelectiveRender;
+use Illuminate\Support\Facades\Config;
 
 class AuthController extends Controller
 {

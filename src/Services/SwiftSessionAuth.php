@@ -6,42 +6,97 @@ use Teleurban\SwiftAuth\Models\User;
 use Illuminate\Session\Store as Session;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
+/**
+ * Class SwiftSessionAuth
+ *
+ * Provides session-based authentication handling for users.
+ * This class handles login, logout, session checks, and user retrieval
+ * using Laravel's session storage.
+ */
 class SwiftSessionAuth
 {
+    /**
+     * The session store instance.
+     *
+     * @var Session
+     */
     protected Session $session;
+
+    /**
+     * The session key used to store the authenticated user ID.
+     *
+     * @var string
+     */
     protected string $sessionKey = 'swift_auth_user_id';
 
+    /**
+     * Create a new SwiftSessionAuth instance.
+     *
+     * @param Session $session
+     */
     public function __construct(Session $session)
     {
         $this->session = $session;
     }
 
+    /**
+     * Log in a user by storing their ID in the session.
+     *
+     * @param User $user
+     * @return void
+     */
     public function login(User $user): void
     {
         $this->session->put($this->sessionKey, $user->getKey());
     }
 
+    /**
+     * Log out the user by removing their ID from the session.
+     *
+     * @return void
+     */
     public function logout(): void
     {
         $this->session->forget($this->sessionKey);
     }
 
+    /**
+     * Determine if a user is currently authenticated via session.
+     *
+     * @return bool
+     */
     public function check(): bool
     {
         return $this->session->has($this->sessionKey);
     }
 
-    public function id(): ?int
+    /**
+     * Get the authenticated user's ID from the session.
+     *
+     * @return int|null
+     */
+    public function id(): null|int
     {
         return $this->session->get($this->sessionKey);
     }
 
-    public function user(): ?User
+    /**
+     * Get the authenticated User model instance, or null if not found.
+     *
+     * @return User|null
+     */
+    public function user(): null|User
     {
         $id = $this->id();
-        return $this->id() ? User::find($id) : null;
+        return $id ? User::find($id) : null;
     }
 
+    /**
+     * Get the authenticated User model instance or throw exception if not found.
+     *
+     * @throws ModelNotFoundException
+     * @return User
+     */
     public function userOrFail(): User
     {
         $id = $this->id();

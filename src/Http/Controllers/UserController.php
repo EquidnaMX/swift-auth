@@ -10,12 +10,28 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use Teleurban\SwiftAuth\Facades\SwiftAuth;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+use Inertia\Response;
 
+/**
+ * Class UserController
+ * 
+ * Manages user-related functionalities such as registration, profile display, and user management (create, update, delete).
+ *
+ * @package Teleurban\SwiftAuth\Http\Controllers
+ */
 class UserController extends Controller
 {
     use SelectiveRender;
 
-    public function index(Request $request)
+    /**
+     * Display a list of users with search functionality.
+     *
+     * @param Request $request
+     * @return View|Response
+     */
+    public function index(Request $request): View|Response
     {
         $users = User::search($request->get("search"))
             ->paginate(10);
@@ -23,12 +39,24 @@ class UserController extends Controller
         return $this->render('swift-auth::user.index', 'user/Index', ['users' => $users]);
     }
 
-    public function register(Request $request)
+    /**
+     * Show the user registration form.
+     *
+     * @param Request $request
+     * @return View|Response
+     */
+    public function register(Request $request): View|Response
     {
         return $this->render('swift-auth::register', 'Register');
     }
 
-    public function create(Request $request)
+    /**
+     * Show the form to create a new user.
+     *
+     * @param Request $request
+     * @return View|Response
+     */
+    public function create(Request $request): View|Response
     {
         $roles = Role::orderBy('name')->get();
 
@@ -41,7 +69,13 @@ class UserController extends Controller
         );
     }
 
-    public function store(Request $request)
+    /**
+     * Store a new user in the database.
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function store(Request $request): RedirectResponse
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
@@ -68,19 +102,40 @@ class UserController extends Controller
         return redirect()->route('swift-auth.users.index')->with('success', 'Registration successful.');
     }
 
-    public function show(Request $request, string $id_user)
+    /**
+     * Display the details of a specific user.
+     *
+     * @param Request $request
+     * @param string $id_user
+     * @return View|Response
+     */
+    public function show(Request $request, string $id_user): View|Response
     {
         $user = User::findOrFail($id_user);
         return $this->render('swift-auth::user.show', 'user/Show', ['user' => $user]);
     }
 
-    public function edit(Request $request, string $id_user)
+    /**
+     * Show the form to edit the user's details.
+     *
+     * @param Request $request
+     * @param string $id_user
+     * @return View|Response
+     */
+    public function edit(Request $request, string $id_user): View|Response
     {
         $user = User::findOrFail($id_user);
         return $this->render('swift-auth::user.edit', 'user/Edit', ['user' => $user]);
     }
 
-    public function update(Request $request, $id_user)
+    /**
+     * Update the user's information.
+     *
+     * @param Request $request
+     * @param string $id_user
+     * @return RedirectResponse
+     */
+    public function update(Request $request, string $id_user): RedirectResponse
     {
         $user = User::findOrFail($id_user);
 
@@ -108,7 +163,14 @@ class UserController extends Controller
             ->with('success', 'User updated successfully.');
     }
 
-    public function destroy(Request $request, $id_user)
+    /**
+     * Delete a user from the database.
+     *
+     * @param Request $request
+     * @param string $id_user
+     * @return RedirectResponse
+     */
+    public function destroy(Request $request, string $id_user): RedirectResponse
     {
         if (SwiftAuth::id() === (int) $id_user) {
             return back()->with('error', 'You cannot delete your own account.');

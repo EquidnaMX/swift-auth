@@ -4,16 +4,42 @@ namespace Teleurban\SwiftAuth\Console\Commands;
 
 use Illuminate\Console\Command;
 
+/**
+ * Class InstallSwiftAuth
+ *
+ * This command installs SwiftAuth by publishing configuration files,
+ * views, migrations, icons, and models. It also allows the developer
+ * to choose the desired frontend stack.
+ */
 class InstallSwiftAuth extends Command
 {
-    protected $signature    = 'swift-auth:install';
-    protected $description  = 'Instala SwiftAuth: configura, migra y publica archivos';
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'swift-auth:install';
 
-    public function handle()
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Instala SwiftAuth: configura, migra y publica archivos';
+
+    /**
+     * Execute the console command.
+     *
+     * @return void
+     */
+    public function handle(): void
     {
         $this->info('Iniciando instalación de SwiftAuth...');
 
-        $this->call('vendor:publish', ['--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider', '--tag' => 'swift-auth:config']);
+        $this->call('vendor:publish', [
+            '--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider',
+            '--tag' => 'swift-auth:config'
+        ]);
 
         $choice = $this->choice(
             '¿Qué frontend deseas utilizar?',
@@ -35,37 +61,72 @@ class InstallSwiftAuth extends Command
 
         $this->info('Importando migraciones...');
 
-        $this->call('vendor:publish', ['--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider', '--tag' => 'swift-auth:migrations']);
+        $this->call('vendor:publish', [
+            '--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider',
+            '--tag' => 'swift-auth:migrations'
+        ]);
+
         $this->call('migrate');
 
         $this->info('Importando iconos...');
-        $this->call('vendor:publish', ['--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider', '--tag' => 'swift-auth:icons']);
-
+        $this->call('vendor:publish', [
+            '--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider',
+            '--tag' => 'swift-auth:icons'
+        ]);
 
         $this->info('Importando modelos...');
-        $this->call('vendor:publish', ['--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider', '--tag' => 'swift-auth:models']);
+        $this->call('vendor:publish', [
+            '--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider',
+            '--tag' => 'swift-auth:models'
+        ]);
 
         $this->info('Instalación completada.');
     }
 
+    /**
+     * Publish Blade views.
+     *
+     * @return void
+     */
     protected function installBlade(): void
     {
         $this->info('Instalando vistas Blade...');
-        $this->call('vendor:publish', ['--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider', '--tag' => 'swift-auth:views']);
+        $this->call('vendor:publish', [
+            '--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider',
+            '--tag' => 'swift-auth:views'
+        ]);
     }
 
+    /**
+     * Publish React views with JavaScript.
+     * Displays a reminder to run npm commands.
+     *
+     * @return void
+     */
     protected function installJavaScript(): void
     {
         $this->info('Instalando vistas en React con JavaScript...');
-        $this->call('vendor:publish', ['--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider', '--tag' => 'swift-auth:js-react']);
+        $this->call('vendor:publish', [
+            '--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider',
+            '--tag' => 'swift-auth:js-react'
+        ]);
 
         $this->warn('Recuerda ejecutar: npm install && npm run dev');
     }
 
+    /**
+     * Publish React views with TypeScript.
+     * Displays a reminder to run npm commands.
+     *
+     * @return void
+     */
     protected function installTypeScript(): void
     {
         $this->info('Instalando vistas en React con TypeScript...');
-        $this->call('vendor:publish', ['--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider', '--tag' => 'swift-auth:ts-react']);
+        $this->call('vendor:publish', [
+            '--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider',
+            '--tag' => 'swift-auth:ts-react'
+        ]);
 
         $this->warn('Recuerda ejecutar: npm install && npm run dev');
     }

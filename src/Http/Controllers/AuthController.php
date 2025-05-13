@@ -10,17 +10,39 @@ use Illuminate\Support\Facades\Config;
 use Teleurban\SwiftAuth\Facades\SwiftAuth;
 use Teleurban\SwiftAuth\Models\User;
 use Teleurban\SwiftAuth\Traits\SelectiveRender;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+use Inertia\Response;
 
+/**
+ * Class AuthController
+ * 
+ * Handles the authentication processes, including login, logout, password reset, and view rendering.
+ *
+ * @package Teleurban\SwiftAuth\Http\Controllers
+ */
 class AuthController extends Controller
 {
     use SelectiveRender;
 
-    public function showLoginForm(Request $request)
+    /**
+     * Show the login form view.
+     *
+     * @param Request $request
+     * @return View|Response
+     */
+    public function showLoginForm(Request $request): View|Response
     {
         return $this->render('swift-auth::login', 'Login');
     }
 
-    public function login(Request $request)
+    /**
+     * Handle login request.
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function login(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
             'email' => 'required|email',
@@ -41,17 +63,35 @@ class AuthController extends Controller
         return back()->with('error', 'Invalid credentials.');
     }
 
-    public function showResetForm(Request $request)
+    /**
+     * Show the password reset request form.
+     *
+     * @param Request $request
+     * @return View|Response
+     */
+    public function showResetForm(Request $request): View|Response
     {
         return $this->render('swift-auth::password.email', 'ForgotPassword');
     }
 
-    public function showNewPasswordForm(Request $request)
+    /**
+     * Show the new password form.
+     *
+     * @param Request $request
+     * @return View|Response
+     */
+    public function showNewPasswordForm(Request $request): View|Response
     {
         return $this->render('swift-auth::password.reset', 'ResetPassword');
     }
 
-    public function logout(Request $request)
+    /**
+     * Handle the logout process.
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function logout(Request $request): RedirectResponse
     {
         SwiftAuth::logout();
 
@@ -61,7 +101,13 @@ class AuthController extends Controller
         return redirect()->route('swift-auth.login.form')->with('success', 'Logged out successfully.');
     }
 
-    public function sendResetLink(Request $request)
+    /**
+     * Send a password reset link to the user.
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function sendResetLink(Request $request): RedirectResponse
     {
         $request->validate(['email' => 'required|email|exists:Users,email']);
 
@@ -74,7 +120,13 @@ class AuthController extends Controller
             : back()->withErrors(['email' => __($status)]);
     }
 
-    public function updatePassword(Request $request)
+    /**
+     * Update the user's password.
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function updatePassword(Request $request): RedirectResponse
     {
         $request->validate([
             'email' => 'required|email|exists:Users,email',

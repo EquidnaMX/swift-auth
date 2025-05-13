@@ -39,7 +39,7 @@ class SwiftSessionAuth
     public function user(): ?User
     {
         $id = $this->id();
-        return $id ? User::find($id) : null;
+        return $this->id() ? User::find($id) : null;
     }
 
     public function userOrFail(): User

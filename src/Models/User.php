@@ -10,6 +10,7 @@ class User extends Authenticatable
 {
     protected $table = "Users";
     protected $primaryKey = 'id_user';
+    protected $with = ["roles"];
 
     protected $fillable = [
         'name',
@@ -17,21 +18,15 @@ class User extends Authenticatable
         'password',
     ];
 
-
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
-
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
 
     public function roles(): BelongsToMany
     {
@@ -51,8 +46,7 @@ class User extends Authenticatable
             $actions = array_merge($actions, explode(",", $role->actions));
         }
 
-        //TODO FIND AND REMOVE DUPLICATES
-        return $actions;
+        return array_unique($actions);
     }
 
     public function scopeSearch(Builder $query, null|string $search): Builder

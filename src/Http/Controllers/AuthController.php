@@ -3,12 +3,13 @@
 namespace Teleurban\SwiftAuth\Http\Controllers;
 
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
-use Teleurban\SwiftAuth\Traits\SelectiveRender;
 use Illuminate\Support\Facades\Config;
+use Teleurban\SwiftAuth\Facades\SwiftAuth;
+use Teleurban\SwiftAuth\Models\User;
+use Teleurban\SwiftAuth\Traits\SelectiveRender;
 
 class AuthController extends Controller
 {
@@ -26,13 +27,15 @@ class AuthController extends Controller
             'password' => 'required|min:6',
         ]);
 
-        if (Auth::attempt($credentials)) {
+        $user = User::where('email', $credentials['email'])->first();
+
+        if ($user && Hash::check($credentials['password'], $user->password)) {
+            SwiftAuth::login($user);
             $request->session()->regenerate();
 
             return redirect()
-                ->to(
-                    Config::get('swift-auth.success_url')
-                )->with('success', 'Login successful.');
+                ->to(Config::get('swift-auth.success_url'))
+                ->with('success', 'Login successful.');
         }
 
         return back()->with('error', 'Invalid credentials.');
@@ -50,7 +53,7 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        SwiftAuth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
@@ -60,9 +63,9 @@ class AuthController extends Controller
 
     public function sendResetLink(Request $request)
     {
-        $request->validate(['email' => 'required|email|exists:users,email']);
+        $request->validate(['email' => 'required|email|exists:Users,email']);
 
-        $status = Password::sendResetLink(
+        $status = Password::broker()->sendResetLink(
             $request->only('email')
         );
 
@@ -74,12 +77,12 @@ class AuthController extends Controller
     public function updatePassword(Request $request)
     {
         $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email|exists:Users,email',
             'password' => 'required|min:6|confirmed',
             'token' => 'required',
         ]);
 
-        $status = Password::reset(
+        $status = Password::broker()->reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
                 $user->forceFill(['password' => Hash::make($password)])->save();

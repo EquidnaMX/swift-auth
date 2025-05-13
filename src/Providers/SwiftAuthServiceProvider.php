@@ -42,7 +42,7 @@ final class SwiftAuthServiceProvider extends ServiceProvider
     {
         // Register middleware
         $router->aliasMiddleware('SwiftAuth.RequireAuthentication', RequireAuthentication::class);
-        $router->aliasMiddleware('SwifthAuth.CanPerformAction', CanPerformAction::class);
+        $router->aliasMiddleware('SwiftAuth.CanPerformAction', CanPerformAction::class);
 
         // Load package resources
         $this->loadRoutesFrom(__DIR__ . '/../routes/swift-auth.php');

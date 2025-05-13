@@ -7,12 +7,17 @@ use Illuminate\Routing\Router;
 use Teleurban\SwiftAuth\Console\Commands\InstallSwiftAuth;
 use Teleurban\SwiftAuth\Http\Middleware\RequireAuthentication;
 use Teleurban\SwiftAuth\Http\Middleware\CanPerformAction;
+use Teleurban\SwiftAuth\Services\SwiftSessionAuth;
 
 final class SwiftAuthServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/swift-auth.php', 'swift-auth');
+
+        $this->app->singleton('swift-auth', function ($app) {
+            return new SwiftSessionAuth($app['session.store']);
+        });
     }
 
     public function boot(Router $router): void

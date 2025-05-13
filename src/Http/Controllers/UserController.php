@@ -6,6 +6,10 @@ use Teleurban\SwiftAuth\Traits\SelectiveRender;
 use Teleurban\SwiftAuth\Models\User;
 use Teleurban\SwiftAuth\Models\Role;
 use Illuminate\Routing\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
+use Teleurban\SwiftAuth\Facades\SwiftAuth;
 
 class UserController extends Controller
 {
@@ -41,7 +45,7 @@ class UserController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'required|string|email|max:255|unique:Users',
             'password' => 'required|string|min:6|confirmed',
         ]);
 
@@ -55,11 +59,11 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        if (Auth::check()) {
+        if (SwiftAuth::check()) {
             return redirect()->route('swift-auth.users.index')->with('success', 'Registration successful.');
         }
 
-        Auth::login($user);
+        SwiftAuth::login($user);
 
         return redirect()->route('swift-auth.users.index')->with('success', 'Registration successful.');
     }
@@ -84,7 +88,7 @@ class UserController extends Controller
             $request->all(),
             [
                 'name' => 'sometimes|string|max:255',
-                'email' => 'sometimes|email|unique:users,email,' . $id_user,
+                'email' => 'sometimes|email|unique:Users,email,' . $id_user,
             ]
         );
 
@@ -92,12 +96,10 @@ class UserController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        $user->update(
-            [
-                'name' => $request->name ?? $user->name,
-                'email' => $request->email ?? $user->email,
-            ]
-        );
+        $user->update([
+            'name' => $request->name ?? $user->name,
+            'email' => $request->email ?? $user->email,
+        ]);
 
         $user->roles()->sync($request->roles);
 
@@ -108,7 +110,7 @@ class UserController extends Controller
 
     public function destroy(Request $request, $id_user)
     {
-        if (Auth::id() === (int) $id_user) {
+        if (SwiftAuth::id() === (int) $id_user) {
             return back()->with('error', 'You cannot delete your own account.');
         }
 

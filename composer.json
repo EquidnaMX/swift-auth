@@ -1,5 +1,5 @@
 {
-    "name": "teleurban/switft-auth",
+    "name": "teleurban/swift-auth",
     "description": "Bottled authentication for Laravel projects",
     "version": "0.2.0",
     "type": "library",

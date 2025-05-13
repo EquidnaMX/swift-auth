@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 class User extends Authenticatable
 {
     protected $table = "Users";
-    protected $primary_key = 'id_user';
+    protected $primaryKey = 'id_user';
 
     protected $fillable = [
         'name',

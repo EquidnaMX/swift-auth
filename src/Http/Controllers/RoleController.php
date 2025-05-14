@@ -7,6 +7,7 @@ use Teleurban\SwiftAuth\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Teleurban\SwiftAuth\Traits\SelectiveRender;
+use Illuminate\Support\Facades\Config;
 use Illuminate\View\View;
 use Inertia\Response;
 use Illuminate\Http\RedirectResponse;
@@ -36,7 +37,9 @@ class RoleController extends Controller
      */
     public function create(Request $request): View|Response
     {
-        return $this->render('swift-auth::user.role.create', 'role/Create');
+        return $this->render('swift-auth::user.role.create', 'role/Create', [
+            'actions' => Config::get('swift-auth.actions'),
+        ]);
     }
 
     /**
@@ -61,11 +64,11 @@ class RoleController extends Controller
                 ->withInput();
         }
 
-        Role::create(
-            $request->name,
-            $request->description,
-            implode(',', $request->actions)
-        );
+        Role::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'actions' => implode(',', $request->actions)
+        ]);
 
         return redirect()
             ->route('swift-auth.roles.index')

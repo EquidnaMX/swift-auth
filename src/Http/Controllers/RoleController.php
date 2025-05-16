@@ -85,8 +85,11 @@ class RoleController extends Controller
     public function edit(Request $request, string $id_role): View|Response
     {
         $role = Role::findOrFail($id_role);
+        return $this->render('swift-auth::role.edit', 'role/Edit', [
+            'rol' => $role,
+            'actions' => Config::get('swift-auth.actions'),
+        ]);
 
-        return view('swift-auth::user.role.edit')->with('role', $role);
     }
 
     /**
@@ -116,9 +119,9 @@ class RoleController extends Controller
 
         $role->update(
             [
-                $request->name,
-                $request->description,
-                implode(',', $request->actions)
+                'name' => $request->name,
+                'description' =>$request->description,
+                'actions' => implode(',', $request->actions)
             ]
         );
 

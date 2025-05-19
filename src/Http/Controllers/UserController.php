@@ -81,6 +81,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:Users',
             'password' => 'required|string|min:6|confirmed',
+            'role' => 'required|exists:Roles,id_role',
         ]);
 
         if ($validator->fails()) {
@@ -93,6 +94,8 @@ class UserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        $user->roles()->attach($request->role);
+
         if (SwiftAuth::check()) {
             return redirect()->route('swift-auth.users.index')->with('success', 'Registration successful.');
         }
@@ -101,7 +104,6 @@ class UserController extends Controller
 
         return redirect()->route('swift-auth.users.index')->with('success', 'Registration successful.');
     }
-
     /**
      * Display the details of a specific user.
      *

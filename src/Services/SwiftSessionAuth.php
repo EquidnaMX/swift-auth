@@ -107,4 +107,21 @@ class SwiftSessionAuth
 
         return $user;
     }
+
+    /**
+     * Check if the authenticated user is allowed to perform the given action(s).
+     *
+     * @param string|array $actions The action or list of actions to validate.
+     * @return bool True if the user has permission for at least one of the actions; otherwise, false.
+     */
+    public function CanPerformAction(string|array $actions): bool
+    {
+        $user = $this->user();
+
+        $available = $user->availableActions();
+
+        return is_array($actions)
+            ? count(array_intersect($available, $actions)) > 0
+            : in_array($actions, $available);
+    }
 }

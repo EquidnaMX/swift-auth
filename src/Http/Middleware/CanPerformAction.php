@@ -22,7 +22,7 @@ class CanPerformAction
      */
     public function handle(Request $request, Closure $next, string $action): Response
     {
-        if (!SwiftAuth::CanPerformAction($action)) {
+        if (!SwiftAuth::canPerformAction($action)) {
             return back()->with('error', 'You cannot perform this action');
         }
 

@@ -114,7 +114,7 @@ class SwiftSessionAuth
      * @param string|array $actions The action or list of actions to validate.
      * @return bool True if the user has permission for at least one of the actions; otherwise, false.
      */
-    public function CanPerformAction(string|array $actions): bool
+    public function canPerformAction(string|array $actions): bool
     {
         $user = $this->user();
 

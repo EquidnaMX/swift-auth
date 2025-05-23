@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\Hash;
 use Teleurban\SwiftAuth\Facades\SwiftAuth;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
-use Inertia\Response;
 use Illuminate\Support\Facades\Config;
+use Inertia\Response;
 
 /**
  * Class UserController
@@ -36,11 +36,7 @@ class UserController extends Controller
     {
         $users = User::search($request->get("search"))
             ->paginate(10);
-
-        return $this->render('swift-auth::user.index', 'user/Index', [
-            'users' => $users,
-            'actions' => Config::get('swift-auth.actions'),
-        ]);
+        return $this->render('swift-auth::user.index', 'user/Index', ['users' => $users, 'actions' => Config::get('swift-auth.actions')]);
     }
 
     /**

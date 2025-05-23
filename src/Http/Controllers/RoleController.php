@@ -26,10 +26,7 @@ class RoleController extends Controller
     {
         $roles = Role::search($request->get("search"))->paginate(10);
 
-        return $this->render('swift-auth::user.role.index', 'role/Index', [
-            'roles' => $roles,
-            'actions' => Config::get('swift-auth.actions'),
-        ]);
+        return $this->render('swift-auth::user.role.index', 'role/Index', ['roles' => $roles,'actions' => Config::get('swift-auth.actions')]);
     }
 
     /**

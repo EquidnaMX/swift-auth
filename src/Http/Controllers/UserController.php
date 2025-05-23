@@ -63,7 +63,6 @@ class UserController extends Controller
     public function create(Request $request): View|Response
     {
         $roles = Role::orderBy('name')->get();
-
         return $this->render(
             'swift-auth::user.create',
             'user/Create',
@@ -97,7 +96,7 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
-
+        
         $user->roles()->attach($request->role);
 
         if (SwiftAuth::check()) {
@@ -108,6 +107,7 @@ class UserController extends Controller
 
         return redirect()->route('swift-auth.users.index')->with('success', 'Registration successful.');
     }
+
     /**
      * Display the details of a specific user.
      *
@@ -130,8 +130,9 @@ class UserController extends Controller
      */
     public function edit(Request $request, string $id_user): View|Response
     {
+        $roles = Role::orderBy('name')->get();
         $user = User::findOrFail($id_user);
-        return $this->render('swift-auth::user.edit', 'user/Edit', ['user' => $user]);
+        return $this->render('swift-auth::user.edit', 'user/Edit', ['user' => $user, 'roles' => $roles]);
     }
 
     /**
@@ -149,7 +150,6 @@ class UserController extends Controller
             $request->all(),
             [
                 'name' => 'sometimes|string|max:255',
-                'email' => 'sometimes|email|unique:Users,email,' . $id_user,
             ]
         );
 
@@ -159,13 +159,12 @@ class UserController extends Controller
 
         $user->update([
             'name' => $request->name ?? $user->name,
-            'email' => $request->email ?? $user->email,
         ]);
 
-        $user->roles()->sync($request->roles);
+        $user->roles()->sync($request->id_role);
 
         return redirect()
-            ->route('swift-auth.users.show', $id_user)
+            ->route('swift-auth.users.index', $id_user)
             ->with('success', 'User updated successfully.');
     }
 

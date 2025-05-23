@@ -88,6 +88,7 @@ class RoleController extends Controller
     public function edit(Request $request, string $id_role): View|Response
     {
         $role = Role::findOrFail($id_role);
+
         return $this->render('swift-auth::role.edit', 'role/Edit', [
             'rol' => $role,
             'actions' => Config::get('swift-auth.actions'),
@@ -104,11 +105,10 @@ class RoleController extends Controller
     public function update(Request $request, string $id_role): RedirectResponse
     {
         $role = Role::findOrFail($id_role);
-
+        
         $validator = Validator::make(
             $request->all(),
             [
-                'name' => 'required|string|unique:Roles,name,' . $id_role,
                 'description' => 'required|string'
             ]
         );
@@ -118,12 +118,11 @@ class RoleController extends Controller
                 ->withErrors($validator)
                 ->withInput();
         }
-
+       
         $role->update(
             [
-                'name' => $request->name,
-                'description' => $request->description,
-                'actions' => implode(',', $request->actions)
+                'description' =>$request->description,
+                'actions' => implode(',', $request->actions??[])
             ]
         );
 

@@ -124,4 +124,21 @@ class SwiftSessionAuth
             ? count(array_intersect($available, $actions)) > 0
             : in_array($actions, $available);
     }
+
+    /**
+     * Check if the authenticated user has any of the given roles.
+     *
+     * @param string|array $roles
+     * @return bool
+     */
+    public function hasRole(string|array $roles): bool
+    {
+        $user = $this->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        return $user->hasRoles($roles);
+    }
 }

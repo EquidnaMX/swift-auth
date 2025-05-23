@@ -36,6 +36,7 @@ class UserController extends Controller
     {
         $users = User::search($request->get("search"))
             ->paginate(10);
+
         return $this->render('swift-auth::user.index', 'user/Index', ['users' => $users, 'actions' => Config::get('swift-auth.actions')]);
     }
 
@@ -59,6 +60,7 @@ class UserController extends Controller
     public function create(Request $request): View|Response
     {
         $roles = Role::orderBy('name')->get();
+
         return $this->render(
             'swift-auth::user.create',
             'user/Create',
@@ -92,7 +94,7 @@ class UserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
-        
+
         $user->roles()->attach($request->role);
 
         if (SwiftAuth::check()) {
@@ -128,6 +130,7 @@ class UserController extends Controller
     {
         $roles = Role::orderBy('name')->get();
         $user = User::findOrFail($id_user);
+
         return $this->render('swift-auth::user.edit', 'user/Edit', ['user' => $user, 'roles' => $roles]);
     }
 

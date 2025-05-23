@@ -68,6 +68,11 @@ class InstallSwiftAuth extends Command
 
         $this->call('migrate');
 
+        $this->info('Ejecutando seeder inicial...');
+        $this->call('db:seed', [
+            '--class' => 'Teleurban\\SwiftAuth\\Database\\Seeders\\AdminSeeder',
+        ]);
+
         $this->info('Importando iconos...');
         $this->call('vendor:publish', [
             '--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider',

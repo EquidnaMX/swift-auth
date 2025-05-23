@@ -40,5 +40,21 @@ return [
 
     'actions' => [
         'sw-admin' => 'Swift Auth admin', // !! DO NOT REMOVE THIS ACTION: used in core SwiftAuth functions
-    ]
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin User (Default Credentials)
+    |--------------------------------------------------------------------------
+    |
+    | Define the default administrator credentials for initial seeding.
+    | These values are typically used by the AdminSeeder to create
+    | the first admin user during installation.
+    */
+
+    'admin_user' => [
+        'email' => env('SWIFT_ADMIN_EMAIL'),
+        'password' => env('SWIFT_ADMIN_PASSWORD'),
+        'name' => env('SWIFT_ADMIN_NAME'),
+    ],
 ];

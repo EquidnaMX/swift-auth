@@ -32,6 +32,6 @@ class AdminSeeder extends Seeder
             ]
         );
 
-        $user->roles()->attach($role->id_role);
+        $user->roles()->syncWithoutDetaching([$role->id_role]);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Teleurban\SwiftAuth\Database\Seeders;
+namespace Teleurban\SwiftAuth\database\seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;

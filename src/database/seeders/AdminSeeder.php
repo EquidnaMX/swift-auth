@@ -32,8 +32,6 @@ class AdminSeeder extends Seeder
             ]
         );
 
-        if (!$user->roles->contains($role->id)) {
-            $user->roles()->attach($role->id);
-        }
+        $user->roles()->attach($role->id_role);
     }
 }

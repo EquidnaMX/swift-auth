@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use Teleurban\SwiftAuth\Http\Controllers\AuthController;
+use Teleurban\SwiftAuth\Http\Middleware\CanPerformAction;
+use Teleurban\SwiftAuth\Http\Middleware\RequireAuthentication;
 
 Route::middleware('web')
     ->prefix('swift-auth')
@@ -26,8 +28,8 @@ Route::middleware('web')
 
             Route::middleware(
                 [
-                    'SwiftAuth.RequireAuthentication',
-                    'SwiftAuth.CanPerformAction:sw-admin'
+                    RequireAuthentication::class,
+                    CanPerformAction::class . ':sw-admin'
                 ]
             )->group(
                 function () {

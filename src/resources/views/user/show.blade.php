@@ -5,7 +5,7 @@
 @section('content')
     <h2 class="text-center">Actualizar usuario</h2>
 
-    <form method="POST" action="{{ route('swift-auth.user.update', $user->id) }}">
+    <form method="POST" action="{{ route('swift-auth.users.update', $user->id) }}">
         @csrf
         @method('PUT')
 

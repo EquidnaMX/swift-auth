@@ -2,137 +2,116 @@
 
 namespace Teleurban\SwiftAuth\Http\Controllers;
 
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Teleurban\SwiftAuth\Models\User;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Config;
+use Teleurban\SwiftAuth\Facades\SwiftAuth;
+use Teleurban\SwiftAuth\Models\User;
+use Teleurban\SwiftAuth\Traits\SelectiveRender;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
+use Inertia\Response;
 
+/**
+ * Class AuthController
+ * 
+ * Handles the authentication processes, including login, logout, password reset, and view rendering.
+ *
+ * @package Teleurban\SwiftAuth\Http\Controllers
+ */
 class AuthController extends Controller
 {
-    protected function render($bladeView, $inertiaComponent, $data = [])
-    {
-        // Pasar mensajes de flash a la vista
-        $flashMessages = [
-            'success' => session('success'),
-            'error' => session('error'),
-            'status' => session('status'),
-        ];
+    use SelectiveRender;
 
-        $data = array_merge($data, $flashMessages);
-
-        return Config::get('swift-auth.frontend') === 'blade'
-            ? view($bladeView, $data)
-            : Inertia::render($inertiaComponent, $data);
-    }
-
-    public function showLoginForm()
+    /**
+     * Show the login form view.
+     *
+     * @param Request $request
+     * @return View|Response
+     */
+    public function showLoginForm(Request $request): View|Response
     {
         return $this->render('swift-auth::login', 'Login');
     }
 
-    public function showRegisterForm()
-    {
-        return $this->render('swift-auth::register', 'Register');
-    }
-
-    public function showResetForm()
-    {
-        return $this->render('swift-auth::password.email', 'ForgotPassword');
-    }
-
-    public function showNewPasswordForm()
-    {
-        return $this->render('swift-auth::password.reset', 'ResetPassword');
-    }
-
-    public function showNewUserForm()
-    {
-        return $this->render('swift-auth::user.create', 'user/Create');
-    }
-
-    public function showEditUserForm($id)
-    {
-        $user = User::findOrFail($id);
-        return $this->render('swift-auth::user.edit', 'user/Edit', ['user' => $user]);
-    }
-
-    public function index(Request $request)
-    {
-        $users = User::search($request->get("search"))
-            ->paginate(10);
-
-        return $this->render('swift-auth::user.index', 'user/Index', ['users' => $users]);
-    }
-
-    public function show($id)
-    {
-        $user = User::findOrFail($id);
-        return $this->render('swift-auth::user.show', 'user/Show', ['user' => $user]);
-    }
-
-    public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:6|confirmed',
-        ]);
-
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-        ]);
-
-        if (Auth::check()) {
-            return redirect()->route('swift-auth.user.index')->with('success', 'Registration successful.');
-        }
-
-        Auth::login($user);
-
-        return redirect()->route('swift-auth.user.index')->with('success', 'Registration successful.');
-    }
-
-    public function login(Request $request)
+    /**
+     * Handle login request.
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function login(Request $request): RedirectResponse
     {
         $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required|min:6',
         ]);
 
-        if (Auth::attempt($credentials)) {
+        $user = User::where('email', $credentials['email'])->first();
+
+        if ($user && Hash::check($credentials['password'], $user->password)) {
+            SwiftAuth::login($user);
             $request->session()->regenerate();
 
-            return redirect()->to(Config::get('swift-auth.success_url'))->with('success', 'Login successful.');
+            return redirect()
+                ->to(Config::get('swift-auth.success_url'))
+                ->with('success', 'Login successful.');
         }
 
         return back()->with('error', 'Invalid credentials.');
     }
 
-    public function logout(Request $request)
+    /**
+     * Show the password reset request form.
+     *
+     * @param Request $request
+     * @return View|Response
+     */
+    public function showResetForm(Request $request): View|Response
     {
-        Auth::logout();
+        return $this->render('swift-auth::password.email', 'ForgotPassword');
+    }
+
+    /**
+     * Show the new password form.
+     *
+     * @param Request $request
+     * @return View|Response
+     */
+    public function showNewPasswordForm(Request $request): View|Response
+    {
+        return $this->render('swift-auth::password.reset', 'ResetPassword');
+    }
+
+    /**
+     * Handle the logout process.
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function logout(Request $request): RedirectResponse
+    {
+        SwiftAuth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('swift-auth.login')->with('success', 'Logged out successfully.');
+        return redirect()->route('swift-auth.login.form')->with('success', 'Logged out successfully.');
     }
 
-    public function sendResetLink(Request $request)
+    /**
+     * Send a password reset link to the user.
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function sendResetLink(Request $request): RedirectResponse
     {
-        $request->validate(['email' => 'required|email|exists:users,email']);
+        $request->validate(['email' => 'required|email|exists:Users,email']);
 
-        $status = Password::sendResetLink(
+        $status = Password::broker()->sendResetLink(
             $request->only('email')
         );
 
@@ -141,15 +120,21 @@ class AuthController extends Controller
             : back()->withErrors(['email' => __($status)]);
     }
 
-    public function updatePassword(Request $request)
+    /**
+     * Update the user's password.
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function updatePassword(Request $request): RedirectResponse
     {
         $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email|exists:Users,email',
             'password' => 'required|min:6|confirmed',
             'token' => 'required',
         ]);
 
-        $status = Password::reset(
+        $status = Password::broker()->reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function ($user, $password) {
                 $user->forceFill(['password' => Hash::make($password)])->save();
@@ -157,40 +142,7 @@ class AuthController extends Controller
         );
 
         return $status === Password::PASSWORD_RESET
-            ? redirect()->route('swift-auth.login')->with('status', __($status))
+            ? redirect()->route('swift-auth.login.form')->with('status', __($status))
             : back()->withErrors(['email' => __($status)]);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $user = User::findOrFail($id);
-
-        $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|unique:users,email,' . $id,
-        ]);
-
-        if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
-        }
-
-        $user->update([
-            'name' => $request->name ?? $user->name,
-            'email' => $request->email ?? $user->email,
-        ]);
-
-        return redirect()->route('swift-auth.user.index')->with('success', 'User updated successfully.');
-    }
-
-    public function destroy($id)
-    {
-        if (Auth::id() === (int) $id) {
-            return back()->with('error', 'You cannot delete your own account.');
-        }
-
-        $user = User::findOrFail($id);
-        $user->delete();
-
-        return redirect()->route('swift-auth.user.index')->with('success', 'User successfully deleted.');
     }
 }

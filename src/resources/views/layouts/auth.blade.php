@@ -10,9 +10,9 @@
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="{{ route('swift-auth.user.index') }}">Usuarios</a>
-            <a class="navbar-brand" href="{{ route('swift-auth.role.index') }}">Roles</a>
-            
+            <a class="navbar-brand" href="{{ route('swift-auth.users.index') }}">Usuarios</a>
+            <a class="navbar-brand" href="{{ route('swift-auth.roles.index') }}">Roles</a>
+
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -36,7 +36,7 @@
         @if (session('error'))
             <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
-        
+
         @yield('content')
     </div>
 </body>

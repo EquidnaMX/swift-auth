@@ -4,23 +4,23 @@ import { PageProps } from "@/types";
 import { Link, Head } from "@inertiajs/react";
 import { router } from "@inertiajs/react";
 
-
 type User = {
     id: number;
     name: string;
     email: string;
-}
+};
 
 type Props = {
     users: User[];
-}
+};
 
 const Index = ({ users }: PageProps<Props>) => {
-
     const onDelete = (user: User) => {
-        const confirmDelete = window.confirm(`¿Estás seguro de que quieres eliminar el usuario ${user.name}?`);
+        const confirmDelete = window.confirm(
+            `¿Estás seguro de que quieres eliminar el usuario ${user.name}?`
+        );
         if (confirmDelete) {
-            router.delete(route("swift-auth.user.destroy", user.id));
+            router.delete(route("swift-auth.users.destroy", user.id));
         }
     };
 
@@ -29,9 +29,14 @@ const Index = ({ users }: PageProps<Props>) => {
             <Head title="Usuarios" />
             <div className="max-w-4xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold text-left mb-4">Usuarios</h2>
+                    <h2 className="text-2xl font-bold text-left mb-4">
+                        Usuarios
+                    </h2>
 
-                    <Link href={route("swift-auth.user.create")} className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                    <Link
+                        href={route("swift-auth.users.create")}
+                        className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+                    >
                         Nuevo usuario
                     </Link>
                 </div>
@@ -54,17 +59,34 @@ const Index = ({ users }: PageProps<Props>) => {
                                     <td className="border p-2">{user.email}</td>
                                     <td className="border p-2">
                                         <div className="flex justify-center space-x-2">
-                                            <a href={route("swift-auth.user.edit", user.id)}>
-                                                <img src="/icons/edit.svg" className="h-8" alt="" />
+                                            <a
+                                                href={route(
+                                                    "swift-auth.users.edit",
+                                                    user.id
+                                                )}
+                                            >
+                                                <img
+                                                    src="/icons/edit.svg"
+                                                    className="h-8"
+                                                    alt=""
+                                                />
                                             </a>
-                                            <button onClick={() => onDelete(user)} className="cursor-pointer">
-                                                <img src="/icons/destroy.svg" className="h-8 " />
-
+                                            <button
+                                                onClick={() => onDelete(user)}
+                                                className="cursor-pointer"
+                                            >
+                                                <img
+                                                    src="/icons/destroy.svg"
+                                                    className="h-8 "
+                                                />
                                             </button>
 
-                                            <a href={route("swift-auth.user.destroy", user.id)} >
-                                            </a>
-
+                                            <a
+                                                href={route(
+                                                    "swift-auth.users.destroy",
+                                                    user.id
+                                                )}
+                                            ></a>
                                         </div>
                                     </td>
                                 </tr>
@@ -83,7 +105,6 @@ const Index = ({ users }: PageProps<Props>) => {
                 </table>
             </div>
         </>
-
     );
 };
 

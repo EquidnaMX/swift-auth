@@ -4,7 +4,7 @@ import Authenticated from "../layouts/Authenticated";
 const AssignForm = () => {
     const { data, setData, post, processing, errors } = useForm({
         user: "",
-        role: ""
+        role: "",
     });
 
     const handleUserChange = (event) => {
@@ -17,7 +17,7 @@ const AssignForm = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route("swift-auth.user.role.assign"));
+        post(route("swift-auth.users.role.assign"));
     };
 
     const handleCancel = () => {
@@ -29,42 +29,42 @@ const AssignForm = () => {
             <Head title="Asignar rol" />
 
             <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-2xl font-bold text-center mb-4">Asignar rol</h2>
+                <h2 className="text-2xl font-bold text-center mb-4">
+                    Asignar rol
+                </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium">Usuario</label>
+                        <label className="block text-sm font-medium">
+                            Usuario
+                        </label>
                         <select id="users" onChange={handleUserChange}>
                             {users.map((user) => (
-                            <option key={user.id} value={user.id}>
-                                {user.name}
-                            </option>
+                                <option key={user.id} value={user.id}>
+                                    {user.name}
+                                </option>
                             ))}
                         </select>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium">
-                            Rol
-                        </label>
+                        <label className="block text-sm font-medium">Rol</label>
                         <select id="roles" onChange={handleRoleChange}>
                             {roles.map((role) => (
-                            <option key={role.id} value={role.id}>
-                                {role.name}
-                            </option>
+                                <option key={role.id} value={role.id}>
+                                    {role.name}
+                                </option>
                             ))}
                         </select>
                     </div>
 
                     <div className="flex justify-between items-center">
-
-
-                    <button
-                        type="button"
-                        className="bg-transparent hover:bg-gray-500 text-gray-700 font-semibold hover:text-white py-2 px-4 border border-gray-500 hover:border-transparent rounded"
-                        onClick={handleCancel}
+                        <button
+                            type="button"
+                            className="bg-transparent hover:bg-gray-500 text-gray-700 font-semibold hover:text-white py-2 px-4 border border-gray-500 hover:border-transparent rounded"
+                            onClick={handleCancel}
                         >
-                        Cancelar
+                            Cancelar
                         </button>
 
                         <button

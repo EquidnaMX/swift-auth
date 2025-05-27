@@ -1,13 +1,13 @@
-import { Head, Link, router } from '@inertiajs/react';
-import Authenticated from '../../layouts/Authenticated';
+import { Head, Link, router } from "@inertiajs/react";
+import Authenticated from "../../layouts/Authenticated";
 
 const Index = ({ roles }) => {
     const onDelete = (role) => {
         const confirmDelete = window.confirm(
-            `¿Estás seguro de que quieres eliminar el rol ${role.name}?`,
+            `¿Estás seguro de que quieres eliminar el rol ${role.name}?`
         );
         if (confirmDelete) {
-            router.delete(route('swift-auth.role.destroy', role.id));
+            router.delete(route("swift-auth.roles.destroy", role.id));
         }
     };
 
@@ -19,7 +19,7 @@ const Index = ({ roles }) => {
                     <h2 className="mb-4 text-left text-2xl font-bold">Roles</h2>
 
                     <Link
-                        href={route('swift-auth.role.create')}
+                        href={route("swift-auth.roles.create")}
                         className="rounded bg-gray-500 px-4 py-2 font-bold text-white hover:bg-gray-700"
                     >
                         Nuevo rol
@@ -48,8 +48,8 @@ const Index = ({ roles }) => {
                                         <div className="flex justify-center space-x-2">
                                             <a
                                                 href={route(
-                                                    'swift-auth.role.edit',
-                                                    role.id,
+                                                    "swift-auth.roles.edit",
+                                                    role.id
                                                 )}
                                             >
                                                 <img
@@ -70,8 +70,8 @@ const Index = ({ roles }) => {
 
                                             <a
                                                 href={route(
-                                                    'swift-auth.user.role.destroy',
-                                                    role.id,
+                                                    "swift-auth.users.role.destroy",
+                                                    role.id
                                                 )}
                                             ></a>
                                         </div>

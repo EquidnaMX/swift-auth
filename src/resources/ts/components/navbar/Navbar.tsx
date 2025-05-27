@@ -1,5 +1,5 @@
-import { Link } from '@inertiajs/react';
-import { useState } from 'react';
+import { Link } from "@inertiajs/react";
+import { useState } from "react";
 
 export function Navbar({ user }: { user?: { name: string } }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -13,13 +13,13 @@ export function Navbar({ user }: { user?: { name: string } }) {
                             Inicio
                         </Link>
                         <Link
-                            href={route('swift-auth.user.index')}
+                            href={route("swift-auth.users.index")}
                             className="hover:text-gray-300"
                         >
                             Usuarios
                         </Link>
                         <Link
-                            href={route('swift-auth.role.index')}
+                            href={route("swift-auth.roles.index")}
                             className="hover:text-gray-300"
                         >
                             Roles
@@ -39,7 +39,7 @@ export function Navbar({ user }: { user?: { name: string } }) {
                                 <span className="px-4 py-2">{user.name}</span>
                                 <form
                                     method="GET"
-                                    action={route('swift-auth.logout')}
+                                    action={route("swift-auth.logout")}
                                 >
                                     <button
                                         type="submit"

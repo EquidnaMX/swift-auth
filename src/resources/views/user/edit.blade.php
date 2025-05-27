@@ -4,7 +4,7 @@
 <div class="container">
     <h2>Editar rol</h2>
 
-    <form action="{{ route('swift-auth.user.update', $role->id) }}" method="POST">
+    <form action="{{ route('swift-auth.users.update', $role->id) }}" method="POST">
         @csrf
         @method('PUT')
 
@@ -19,7 +19,7 @@
         </div>
 
         <button type="submit" class="btn btn-success">Actualizar</button>
-        <a href="{{ route('swift-auth.user.index') }}" class="btn btn-secondary">Cancelar</a>
+        <a href="{{ route('swift-auth.users.index') }}" class="btn btn-secondary">Cancelar</a>
     </form>
 </div>
 @endsection

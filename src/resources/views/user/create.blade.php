@@ -3,7 +3,7 @@
 @section('content')
     <h2>Crear usuario</h2>
 
-    <form action="{{ route('swift-auth.user.store') }}" method="POST">
+    <form action="{{ route('swift-auth.users.store') }}" method="POST">
         @csrf
         <div class="mb-3">
             <label for="name" class="form-label">Nombre:</label>
@@ -26,6 +26,6 @@
         </div>
 
         <button type="submit" class="btn btn-success">Crear</button>
-        <a href="{{ route('swift-auth.user.index') }}" class="btn btn-secondary">Cancelar</a>
+        <a href="{{ route('swift-auth.users.index') }}" class="btn btn-secondary">Cancelar</a>
     </form>
 @endsection

@@ -2,23 +2,37 @@
 
 namespace Teleurban\SwiftAuth\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Notifications\Notifiable;
 
+/**
+ * Class User
+ *
+ * @property int $id_user
+ * @property string $name
+ * @property string $email
+ * @property string $password
+ */
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory;
-    use Notifiable;
+    /**
+     * @var string
+     */
+    protected $table = "Users";
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
+     * @var string
+     */
+    protected $primaryKey = 'id_user';
+
+    /**
+     * @var array<int, string>
+     */
+    protected $with = ['roles'];
+
+    /**
+     * @var array<int, string>
      */
     protected $fillable = [
         'name',
@@ -27,9 +41,7 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -37,41 +49,63 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * @var array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
 
     /**
-     * Get the roles associated with the user.
+     * The roles associated with the user.
      *
-     * @return BelongsToMany
+     * @return BelongsToMany<Role>
      */
     public function roles(): BelongsToMany
     {
-        return $this->belongsToMany(Role::class);
+        return $this->belongsToMany(
+            Role::class,
+            'UsersRoles',
+            'id_user',
+            'id_role'
+        );
     }
 
     /**
-     * Check if the user has a specific role.
+     * Check if the user has any of the given roles (by name).
      *
-     * @param string $role Role name to check.
-     * @return bool Returns `true` if the user has the role, otherwise `false`.
+     * @param string|array<string> $roles List of role names to check.
+     * @return bool True if the user has at least one of the roles.
      */
-    public function hasRole(string $role): bool
+    public function hasRoles(string|array $roles): bool
     {
-        return $this->roles->contains('name', $role);
+        $rolesToCheck = collect((array) $roles)->map(fn($r) => strtolower($r));
+
+        return $this->roles
+            ->pluck('name')
+            ->map(fn($name) => strtolower($name))
+            ->intersect($rolesToCheck)
+            ->isNotEmpty();
     }
 
     /**
-     * Scope a query to search users by name.
+     * Get the list of available actions from all assigned roles.
+     *
+     * @return array<int, string> Unique list of actions the user can perform.
+     */
+    public function availableActions(): array
+    {
+        $actions = [];
+
+        foreach ($this->roles as $role) {
+            $actions = array_merge($actions, explode(",", $role->actions));
+        }
+
+        return array_unique($actions);
+    }
+
+    /**
+     * Scope a query to filter users by name or email.
      *
      * @param Builder $query
      * @param string|null $search
@@ -79,6 +113,7 @@ class User extends Authenticatable
      */
     public function scopeSearch(Builder $query, null|string $search): Builder
     {
-        return $query->where('name', 'LIKE', '%' . $search . '%');
+        return $query->where('name', 'LIKE', '%' . $search . '%')
+            ->orWhere('email', 'LIKE', '%' . $search . '%');
     }
 }

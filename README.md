@@ -78,7 +78,9 @@ Swift Auth provides middleware to protect routes that require authentication or 
 **Add Authentication Middleware**:
 
 ```php
-Route::middleware(['SwiftAuth.RequireAuthentication'])->group(function () {
+use Teleurban\SwiftAuth\Http\Middleware\RequireAuthentication;
+
+Route::middleware(RequireAuthentication::class)->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
 });
 ```
@@ -87,7 +89,9 @@ Route::middleware(['SwiftAuth.RequireAuthentication'])->group(function () {
 If you want to protect a specific action that only certain users can perform, you can use the `CanPerformAction` middleware. This checks if the user has the necessary permission to perform the requested action.
 
 ```php
-Route::middleware(['SwifthAuth.CanPerformAction:some-action'])->group(function () {
+use Teleurban\SwiftAuth\Http\Middleware\CanPerformAction;
+
+Route::middleware(CanPerformAction::class . ':sw-admin')->group(function () {
     Route::post('/create', [UserController::class, 'create']);
 });
 ```

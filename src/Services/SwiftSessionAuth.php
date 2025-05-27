@@ -120,6 +120,10 @@ class SwiftSessionAuth
 
         $available = $user->availableActions();
 
+        if (in_array('sw-admin', $available)) {
+            return true;
+        }
+
         return is_array($actions)
             ? count(array_intersect($available, $actions)) > 0
             : in_array($actions, $available);
@@ -137,6 +141,10 @@ class SwiftSessionAuth
 
         if (!$user) {
             return false;
+        }
+
+        if ($user->hasRoles('root')) {
+            return true;
         }
 
         return $user->hasRoles($roles);

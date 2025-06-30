@@ -30,6 +30,18 @@ To run this project, you need to add the following environment variables to your
     SWIFT_AUTH_SUCCESS_URL=/dashboard
     ```
 
+-   `SWIFT_ADMIN_NAME`: The full name of the initial admin user.
+-   `SWIFT_ADMIN_EMAIL`: The email address used to log in.
+-   `SWIFT_ADMIN_PASSWORD`: The password assigned to the admin (make sure to change this in production).
+
+    **Example:**
+
+    ```bash
+    SWIFT_ADMIN_NAME="Administrador"
+    SWIFT_ADMIN_EMAIL=admin@admin.com
+    SWIFT_ADMIN_PASSWORD=examplepass
+    ```
+
 # Installation
 
 1. **Create the project**:

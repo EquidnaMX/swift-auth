@@ -19,8 +19,7 @@
         }
     ],
     "require": {
-        "php": "^8.2",
-        "illuminate/support": "^11.21"
+        "php": "^8.2"
     },
     "require-dev": {
         "laravel/helpers": "^1.7",

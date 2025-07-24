@@ -2,6 +2,8 @@
 
 namespace Teleurban\SwiftAuth\Http\Controllers;
 
+use Teleurban\SwiftAuth\Models\PasswordResetToken;
+use Teleurban\SwiftAuth\Mail\PasswordResetMail;
 use Teleurban\SwiftAuth\Traits\SelectiveRender;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Http\RedirectResponse;
@@ -10,6 +12,8 @@ use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Inertia\Response;
+use Mail;
+use Str;
 
 /**
  * Class PasswordController
@@ -46,9 +50,18 @@ class PasswordController extends Controller
     {
         $request->validate(['email' => 'required|email|exists:Users,email']);
 
-        $status = Password::broker()->sendResetLink(
-            $request->only('email')
+        $email = $request->email;
+        $token = Str::random(64);
+
+        PasswordResetToken::updateOrCreate(
+            ['email' => $email],
+            [
+                'token' => hash('sha256', $token),
+                'created_at' => now(),
+            ]
         );
+
+        Mail::to($email)->send(new PasswordResetMail(email: $email, token: $token));
 
         return $this->render('swift-auth::password.reset', 'password/RequestSent');
     }
@@ -70,7 +83,7 @@ class PasswordController extends Controller
      * @param Request $request
      * @return RedirectResponse
      */
-    public function resetPassword(Request $request): RedirectResponse
+    public function resetPassword(Request $request): View|Response
     {
         $request->validate([
             'email' => 'required|email|exists:Users,email',

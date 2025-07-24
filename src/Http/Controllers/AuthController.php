@@ -2,15 +2,14 @@
 
 namespace Teleurban\SwiftAuth\Http\Controllers;
 
-use Illuminate\Support\Facades\Password;
+use Teleurban\SwiftAuth\Traits\SelectiveRender;
+use Teleurban\SwiftAuth\Facades\SwiftAuth;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Hash;
+use Teleurban\SwiftAuth\Models\User;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Config;
-use Teleurban\SwiftAuth\Facades\SwiftAuth;
-use Teleurban\SwiftAuth\Models\User;
-use Teleurban\SwiftAuth\Traits\SelectiveRender;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Inertia\Response;
 
@@ -64,28 +63,6 @@ class AuthController extends Controller
     }
 
     /**
-     * Show the password reset request form.
-     *
-     * @param Request $request
-     * @return View|Response
-     */
-    public function showResetForm(Request $request): View|Response
-    {
-        return $this->render('swift-auth::password.email', 'ForgotPassword');
-    }
-
-    /**
-     * Show the new password form.
-     *
-     * @param Request $request
-     * @return View|Response
-     */
-    public function showNewPasswordForm(Request $request): View|Response
-    {
-        return $this->render('swift-auth::password.reset', 'ResetPassword');
-    }
-
-    /**
      * Handle the logout process.
      *
      * @param Request $request
@@ -99,50 +76,5 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('swift-auth.login.form')->with('success', 'Logged out successfully.');
-    }
-
-    /**
-     * Send a password reset link to the user.
-     *
-     * @param Request $request
-     * @return RedirectResponse
-     */
-    public function sendResetLink(Request $request): RedirectResponse
-    {
-        $request->validate(['email' => 'required|email|exists:Users,email']);
-
-        $status = Password::broker()->sendResetLink(
-            $request->only('email')
-        );
-
-        return $status === Password::RESET_LINK_SENT
-            ? back()->with('status', __($status))
-            : back()->withErrors(['email' => __($status)]);
-    }
-
-    /**
-     * Update the user's password.
-     *
-     * @param Request $request
-     * @return RedirectResponse
-     */
-    public function updatePassword(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'email' => 'required|email|exists:Users,email',
-            'password' => 'required|min:6|confirmed',
-            'token' => 'required',
-        ]);
-
-        $status = Password::broker()->reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user, $password) {
-                $user->forceFill(['password' => Hash::make($password)])->save();
-            }
-        );
-
-        return $status === Password::PASSWORD_RESET
-            ? redirect()->route('swift-auth.login.form')->with('status', __($status))
-            : back()->withErrors(['email' => __($status)]);
     }
 }

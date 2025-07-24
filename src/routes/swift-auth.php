@@ -1,13 +1,13 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Teleurban\SwiftAuth\Http\Controllers\AuthController;
-use Teleurban\SwiftAuth\Http\Middleware\CanPerformAction;
 use Teleurban\SwiftAuth\Http\Middleware\RequireAuthentication;
+use Teleurban\SwiftAuth\Http\Controllers\PasswordController;
+use Teleurban\SwiftAuth\Http\Middleware\CanPerformAction;
+use Teleurban\SwiftAuth\Http\Controllers\AuthController;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware('web')
-    ->prefix('swift-auth')
-    ->as('swift-auth.')
+    ->prefix('swift-auth')->as('swift-auth.')
     ->group(
         function () {
             Route::get('login', [AuthController::class, 'showLoginForm'])->name('login.form');
@@ -15,14 +15,15 @@ Route::middleware('web')
 
             Route::match(['get', 'post'], 'logout', [AuthController::class, 'logout'])->name('logout');
 
-            Route::prefix('password')
-                ->as('password.')->group(
+            Route::prefix('password')->as('password.')
+                ->group(
                     function () {
-                        Route::get('reset', [AuthController::class, 'showResetForm'])->name('request');
-                        Route::post('email', [AuthController::class, 'sendResetLink'])->name('email');
+                        Route::get('', [PasswordController::class, 'showRequestForm'])->name('request.form');
+                        Route::post('', [PasswordController::class, 'sendResetLink'])->name('request.send');
+                        Route::get('sent', [PasswordController::class, 'showRequestSent'])->name('request.sent');
 
-                        Route::get('reset/{token}', [AuthController::class, 'showNewPasswordForm'])->name('reset');
-                        Route::post('reset', [AuthController::class, 'updatePassword'])->name('update');
+                        Route::post('reset', [PasswordController::class, 'resetPassword'])->name('reset.update');
+                        Route::get('{token}', [PasswordController::class, 'showResetForm'])->name('reset.form');
                     }
                 );
 

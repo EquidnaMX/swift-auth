@@ -31,7 +31,7 @@ class PasswordController extends Controller
      * @param Request $request
      * @return View|Response
      */
-    public function showResetForm(Request $request): View|Response
+    public function showRequestForm(Request $request): View|Response
     {
         return $this->render('swift-auth::password.email', 'password/Request');
     }

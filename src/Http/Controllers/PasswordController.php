@@ -37,23 +37,12 @@ class PasswordController extends Controller
     }
 
     /**
-     * Show the new password form.
+     * Send a password reset link to the user.
      *
      * @param Request $request
      * @return View|Response
      */
-    public function showNewPasswordForm(Request $request): View|Response
-    {
-        return $this->render('swift-auth::password.reset', 'password/Reset');
-    }
-
-    /**
-     * Send a password reset link to the user.
-     *
-     * @param Request $request
-     * @return RedirectResponse
-     */
-    public function sendResetLink(Request $request): RedirectResponse
+    public function sendResetLink(Request $request): View|Response
     {
         $request->validate(['email' => 'required|email|exists:Users,email']);
 
@@ -61,9 +50,18 @@ class PasswordController extends Controller
             $request->only('email')
         );
 
-        return $status === Password::RESET_LINK_SENT
-            ? back()->with('status', __($status))
-            : back()->withErrors(['email' => __($status)]);
+        return $this->render('swift-auth::password.reset', 'password/RequestSent');
+    }
+
+    /**
+     * Show the new password form.
+     *
+     * @param Request $request
+     * @return View|Response
+     */
+    public function showResetForm(Request $request): View|Response
+    {
+        return $this->render('swift-auth::password.reset', 'password/Reset');
     }
 
     /**
@@ -72,7 +70,7 @@ class PasswordController extends Controller
      * @param Request $request
      * @return RedirectResponse
      */
-    public function updatePassword(Request $request): RedirectResponse
+    public function resetPassword(Request $request): RedirectResponse
     {
         $request->validate([
             'email' => 'required|email|exists:Users,email',
@@ -87,8 +85,6 @@ class PasswordController extends Controller
             }
         );
 
-        return $status === Password::PASSWORD_RESET
-            ? redirect()->route('swift-auth.login.form')->with('status', __($status))
-            : back()->withErrors(['email' => __($status)]);
+        return $this->render('swift-auth::login', 'Login');
     }
 }

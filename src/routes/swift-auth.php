@@ -20,10 +20,10 @@ Route::middleware('web')
                     function () {
                         Route::get('', [PasswordController::class, 'showRequestForm'])->name('request.form');
                         Route::post('', [PasswordController::class, 'sendResetLink'])->name('request.send');
-                        Route::get('sent', [PasswordController::class, 'showRequestSent'])->name('request.sent');
 
-                        Route::post('reset', [PasswordController::class, 'resetPassword'])->name('reset.update');
+                        Route::get('sent', [PasswordController::class, 'showRequestSent'])->name('request.sent');
                         Route::get('{token}', [PasswordController::class, 'showResetForm'])->name('reset.form');
+                        Route::post('reset', [PasswordController::class, 'resetPassword'])->name('reset.update');
                     }
                 );
 

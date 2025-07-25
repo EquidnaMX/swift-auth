@@ -41,23 +41,12 @@ class UserController extends Controller
     }
 
     /**
-     * Show the user registration form.
+     * Show the form to register a new user.
      *
      * @param Request $request
      * @return View|Response
      */
     public function register(Request $request): View|Response
-    {
-        return $this->render('swift-auth::register', 'Register');
-    }
-
-    /**
-     * Show the form to create a new user.
-     *
-     * @param Request $request
-     * @return View|Response
-     */
-    public function create(Request $request): View|Response
     {
         $roles = Role::orderBy('name')->get();
 
@@ -116,22 +105,9 @@ class UserController extends Controller
     public function show(Request $request, string $id_user): View|Response
     {
         $user = User::findOrFail($id_user);
-        return $this->render('swift-auth::user.show', 'user/Show', ['user' => $user]);
-    }
-
-    /**
-     * Show the form to edit the user's details.
-     *
-     * @param Request $request
-     * @param string $id_user
-     * @return View|Response
-     */
-    public function edit(Request $request, string $id_user): View|Response
-    {
         $roles = Role::orderBy('name')->get();
-        $user = User::findOrFail($id_user);
 
-        return $this->render('swift-auth::user.edit', 'user/Edit', ['user' => $user, 'roles' => $roles]);
+        return $this->render('swift-auth::user.show', 'user/Edit', ['user' => $user, 'roles' => $roles]);
     }
 
     /**

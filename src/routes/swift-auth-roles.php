@@ -8,9 +8,9 @@ Route::prefix('roles')
     ->group(
         function () {
             Route::get('', [RoleController::class, 'index'])->name('index');
+            Route::post('', [RoleController::class, 'store'])->name('store');
 
             Route::get('create', [RoleController::class, 'create'])->name('create');
-            Route::post('create', [RoleController::class, 'store'])->name('store');
 
             Route::prefix('{id_role}')->group(
                 function () {

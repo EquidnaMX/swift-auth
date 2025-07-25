@@ -5,13 +5,13 @@ namespace Teleurban\SwiftAuth\Http\Controllers;
 use Teleurban\SwiftAuth\Models\PasswordResetToken;
 use Teleurban\SwiftAuth\Mail\PasswordResetMail;
 use Teleurban\SwiftAuth\Traits\SelectiveRender;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Hash;
+use Teleurban\SwiftAuth\Models\User;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Inertia\Response;
+use Hash;
 use Mail;
 use Str;
 
@@ -51,12 +51,12 @@ class PasswordController extends Controller
         $request->validate(['email' => 'required|email|exists:Users,email']);
 
         $email = $request->email;
-        $token = Str::random(64);
+        $token = hash('sha256', Str::random(64));
 
         PasswordResetToken::updateOrCreate(
             ['email' => $email],
             [
-                'token' => hash('sha256', $token),
+                'token' => $token,
                 'created_at' => now(),
             ]
         );
@@ -72,9 +72,12 @@ class PasswordController extends Controller
      * @param Request $request
      * @return View|Response
      */
-    public function showResetForm(Request $request): View|Response
+    public function showResetForm(Request $request, string $token): View|Response
     {
-        return $this->render('swift-auth::password.reset', 'password/Reset');
+        return $this->render('swift-auth::password.reset', 'password/Reset', [
+            'token' => $token,
+            'email' => $request->email
+        ]);
     }
 
     /**
@@ -83,20 +86,37 @@ class PasswordController extends Controller
      * @param Request $request
      * @return RedirectResponse
      */
-    public function resetPassword(Request $request): View|Response
+    /**
+     * Update the user's password.
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function resetPassword(Request $request): View|Response|RedirectResponse
     {
         $request->validate([
-            'email' => 'required|email|exists:Users,email',
             'password' => 'required|min:6|confirmed',
-            'token' => 'required',
         ]);
 
-        $status = Password::broker()->reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user, $password) {
-                $user->forceFill(['password' => Hash::make($password)])->save();
-            }
-        );
+        $reset = PasswordResetToken::where('email', $request->get('email'))
+            ->where('token', $request->get('token'))
+            ->first();
+
+        if (!$reset) {
+            return back()->withErrors(['email' => 'El token es inválido o ha expirado.']);
+        }
+
+        $user = User::where('email', $request->get('email'))->first();
+
+        if (!$user) {
+            return back()->withErrors(['email' => 'No se encontró un usuario con ese correo.']);
+        }
+
+        $user->update([
+            'password' => Hash::make($request->password)
+        ]);
+
+        $reset->delete();
 
         return $this->render('swift-auth::login', 'Login');
     }

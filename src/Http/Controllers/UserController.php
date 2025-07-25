@@ -51,8 +51,8 @@ class UserController extends Controller
         $roles = Role::orderBy('name')->get();
 
         return $this->render(
-            'swift-auth::user.create',
-            'user/Create',
+            'swift-auth::user.register',
+            'user/Register',
             [
                 'roles' => $roles
             ]
@@ -107,7 +107,7 @@ class UserController extends Controller
         $user = User::findOrFail($id_user);
         $roles = Role::orderBy('name')->get();
 
-        return $this->render('swift-auth::user.show', 'user/Edit', ['user' => $user, 'roles' => $roles]);
+        return $this->render('swift-auth::user.show', 'user/Details', ['user' => $user, 'roles' => $roles]);
     }
 
     /**

@@ -21,7 +21,7 @@ class PasswordResetMail  extends Mailable
 
     public function build()
     {
-        $resetUrl = url("/swift-auth/password/?token={$this->token}&email=" . urlencode($this->email));
+        $resetUrl = url("/swift-auth/password/{$this->token}?email=" . urlencode($this->email));
 
         return $this->subject('Recuperación de contraseña')
             ->html("

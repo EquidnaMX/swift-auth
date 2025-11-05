@@ -57,4 +57,7 @@ return [
         'password' => env('SWIFT_ADMIN_PASSWORD'),
         'name' => env('SWIFT_ADMIN_NAME'),
     ],
+
+
+    'system_prefix' => env('SWIFT_AUTH_PREFIX', ''),
 ];

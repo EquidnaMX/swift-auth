@@ -7,7 +7,7 @@ use Teleurban\SwiftAuth\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('web')
-    ->prefix('swift-auth')->as('swift-auth.')
+    ->prefix(env("APP_URL") . '/swift-auth')->as('swift-auth.')
     ->group(
         function () {
             Route::get('login', [AuthController::class, 'showLoginForm'])->name('login.form');

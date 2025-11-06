@@ -55,7 +55,7 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             return redirect()
-                ->to(env("APP_URL") . Config::get('swift-auth.success_url'))
+                ->to(Config::get('swift-auth.success_url'))
                 ->with('success', 'Login successful.');
         }
 

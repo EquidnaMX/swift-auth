@@ -20,8 +20,11 @@ class CreateAdminUser extends Command
      *
      * @var string
      */
-    protected $signature = 'swift-auth:create-admin {--default} {name} {email} {password}';
-
+    protected $signature = 'swift-auth:create-admin
+                            {--default : Crea el usuario con los valores del archivo .env}
+                            {name? : Nombre del usuario administrador}
+                            {email? : Correo electrónico del usuario}
+                            {password? : Contraseña del usuario}';
     /**
      * The console command description.
      *

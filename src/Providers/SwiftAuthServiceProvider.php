@@ -5,6 +5,7 @@ namespace Teleurban\SwiftAuth\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
 use Teleurban\SwiftAuth\Console\Commands\InstallSwiftAuth;
+use Teleurban\SwiftAuth\Console\Commands\CreateAdminUser;
 use Teleurban\SwiftAuth\Http\Middleware\RequireAuthentication;
 use Teleurban\SwiftAuth\Http\Middleware\CanPerformAction;
 use Teleurban\SwiftAuth\Services\SwiftSessionAuth;
@@ -88,6 +89,7 @@ final class SwiftAuthServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 InstallSwiftAuth::class,
+                CreateAdminUser::class,
             ]);
         }
     }

@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Role routes for SwiftAuth package.
+ *
+ * PHP 8.1+
+ *
+ * @package Equidna\SwifthAuth\Routes
+ */
+
 use Illuminate\Support\Facades\Route;
 use Equidna\SwifthAuth\Http\Controllers\RoleController;
 

@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Routes for SwiftAuth package.
+ *
+ * PHP 8.1+
+ *
+ * @package Equidna\SwifthAuth\Routes
+ */
+
 use Equidna\SwifthAuth\Http\Middleware\RequireAuthentication;
 use Equidna\SwifthAuth\Http\Controllers\PasswordController;
 use Equidna\SwifthAuth\Http\Middleware\CanPerformAction;

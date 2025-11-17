@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Migration: create users table for SwiftAuth.
+ *
+ * PHP 8.1+
+ *
+ * @package Equidna\SwifthAuth\Database\Migrations
+ */
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;

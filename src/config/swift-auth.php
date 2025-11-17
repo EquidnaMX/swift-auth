@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Package configuration for SwiftAuth.
+ *
+ * PHP 8.1+
+ *
+ * @package Equidna\SwifthAuth\Config
+ */
+
 return [
 
     /*

@@ -1,7 +1,7 @@
 {
     "name": "equidna/swift-auth",
     "description": "Bottled authentication for Laravel projects",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -20,7 +20,7 @@
     ],
     "require": {
         "php": "^8.2",
-        "equidna/toolkit": "^0.6.5",
+        "equidna/laravel-toolkit": "^1.0",
         "inertiajs/inertia-laravel": "^1.0"
     },
     "require-dev": {

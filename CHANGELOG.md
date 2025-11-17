@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.1] - 2025-11-17
+
+### Changed
+
+-   Version bump for maintenance and dependency updates (see composer.json).
+
+---
+
 ## [1.0.0] - 2025-11-17
 
 ### Added
@@ -13,7 +21,7 @@ All notable changes to this project will be documented in this file.
 -   Queue-based password reset emails
 -   PSR-12 code style and unit test guidance
 
-### Changed
+### Changed (1.0.0)
 
 -   Namespace standardized to `Equidna\SwifthAuth`
 -   Removed legacy admin password config for security

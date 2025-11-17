@@ -1,14 +1,14 @@
 <?php
 
-namespace Teleurban\SwiftAuth\Providers;
+namespace Equidna\SwifthAuth\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
-use Teleurban\SwiftAuth\Console\Commands\InstallSwiftAuth;
-use Teleurban\SwiftAuth\Console\Commands\CreateAdminUser;
-use Teleurban\SwiftAuth\Http\Middleware\RequireAuthentication;
-use Teleurban\SwiftAuth\Http\Middleware\CanPerformAction;
-use Teleurban\SwiftAuth\Services\SwiftSessionAuth;
+use Equidna\SwifthAuth\Console\Commands\InstallSwiftAuth;
+use Equidna\SwifthAuth\Console\Commands\CreateAdminUser;
+use Equidna\SwifthAuth\Http\Middleware\RequireAuthentication;
+use Equidna\SwifthAuth\Http\Middleware\CanPerformAction;
+use Equidna\SwifthAuth\Services\SwiftSessionAuth;
 
 /**
  * SwiftAuthServiceProvider
@@ -47,7 +47,7 @@ final class SwiftAuthServiceProvider extends ServiceProvider
 
         // Load package resources
         $this->loadRoutesFrom(__DIR__ . '/../routes/swift-auth.php');
-        $this->loadMigrationsFrom(__DIR__ . '/../migrations');
+        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'swift-auth');
 
         // Publish config

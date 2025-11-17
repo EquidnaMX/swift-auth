@@ -10,20 +10,21 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('Roles', function (Blueprint $table) {
+        $prefix = config('swift-auth.table_prefix', '');
+
+        Schema::create($prefix . 'Roles', function (Blueprint $table) {
             $table->id('id_role');
             $table->string('name')->unique();
             $table->string('description')->nullable();
             $table->string('actions');
             $table->timestamps();
         });
-
-        Schema::create('UsersRoles', function (Blueprint $table) {
+        Schema::create($prefix . 'UsersRoles', function (Blueprint $table) use ($prefix) {
             $table->unsignedBigInteger('id_user');
             $table->unsignedBigInteger('id_role');
             $table->primary(['id_user', 'id_role']);
-            $table->foreign('id_user')->references('id_user')->on('Users')->onDelete('cascade');
-            $table->foreign('id_role')->references('id_role')->on('Roles')->onDelete('cascade');
+            $table->foreign('id_user')->references('id_user')->on($prefix . 'Users')->onDelete('cascade');
+            $table->foreign('id_role')->references('id_role')->on($prefix . 'Roles')->onDelete('cascade');
         });
     }
 
@@ -32,7 +33,8 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('UsersRoles');
-        Schema::dropIfExists('Roles');
+        $prefix = config('swift-auth.table_prefix', '');
+        Schema::dropIfExists($prefix . 'UsersRoles');
+        Schema::dropIfExists($prefix . 'Roles');
     }
 };

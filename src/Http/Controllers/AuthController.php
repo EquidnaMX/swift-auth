@@ -1,47 +1,63 @@
 <?php
 
-namespace Teleurban\SwiftAuth\Http\Controllers;
+/**
+ * Exposes SwiftAuth login/logout flows for Laravel apps.
+ *
+ * PHP 8.2+
+ *
+ * @package   Equidna\SwifthAuth\Http\Controllers
+ * @author    Gabriel Ruelas <gruelas@gruelas.com>
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @link      https://github.com/EquidnaMX/swift_auth
+ */
 
-use Teleurban\SwiftAuth\Traits\SelectiveRender;
-use Teleurban\SwiftAuth\Facades\SwiftAuth;
-use Illuminate\Support\Facades\Config;
+namespace Equidna\SwifthAuth\Http\Controllers;
+
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Hash;
-use Teleurban\SwiftAuth\Models\User;
-use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
+use Equidna\Toolkit\Exceptions\UnauthorizedException;
+use Equidna\Toolkit\Helpers\ResponseHelper;
 use Inertia\Response;
+use Equidna\SwifthAuth\Facades\SwiftAuth;
+use Equidna\SwifthAuth\Models\User;
+use Equidna\SwifthAuth\Traits\SelectiveRender;
 
 /**
- * Class AuthController
- * 
- * Handles the authentication processes, including login, logout, password reset, and view rendering.
+ * Orchestrates SwiftAuth authentication flows across login/logout endpoints.
  *
- * @package Teleurban\SwiftAuth\Http\Controllers
+ * Presents blade or Inertia views as needed and emits context-aware toolkit responses.
  */
 class AuthController extends Controller
 {
     use SelectiveRender;
 
     /**
-     * Show the login form view.
+     * Shows the login form view.
      *
-     * @param Request $request
-     * @return View|Response
+     * @param  Request       $request  HTTP request with context info.
+     * @return View|Response           Blade or Inertia response.
      */
     public function showLoginForm(Request $request): View|Response
     {
-        return $this->render('swift-auth::login', 'Login');
+        return $this->render(
+            'swift-auth::login',
+            'Login',
+        );
     }
 
     /**
-     * Handle login request.
+     * Authenticates the user using SwiftAuth.
      *
-     * @param Request $request
-     * @return RedirectResponse
+     * @param  Request                   $request  HTTP request with credentials.
+     * @return RedirectResponse|JsonResponse       Context-aware success response.
+     * @throws UnauthorizedException               When credentials are invalid.
      */
-    public function login(Request $request): RedirectResponse
+    public function login(Request $request): RedirectResponse|JsonResponse
     {
         $credentials = $request->validate([
             'email' => 'required|email',
@@ -50,31 +66,39 @@ class AuthController extends Controller
 
         $user = User::where('email', $credentials['email'])->first();
 
-        if ($user && Hash::check($credentials['password'], $user->password)) {
-            SwiftAuth::login($user);
-            $request->session()->regenerate();
-
-            return redirect()
-                ->to(Config::get('swift-auth.success_url'))
-                ->with('success', 'Login successful.');
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            throw new UnauthorizedException('Invalid credentials.');
         }
 
-        return back()->with('error', 'Invalid credentials.');
+        SwiftAuth::login($user);
+        $request->session()->regenerate();
+
+        return ResponseHelper::success(
+            message: 'Login successful.',
+            data: [
+                'user_id' => $user->getKey(),
+            ],
+            forward_url: Config::get('swift-auth.success_url'),
+        );
     }
 
     /**
-     * Handle the logout process.
+     * Logs out the current user and clears the session.
      *
-     * @param Request $request
-     * @return RedirectResponse
+     * @param  Request                   $request  HTTP request carrying the session.
+     * @return RedirectResponse|JsonResponse       Context-aware success response.
      */
-    public function logout(Request $request): RedirectResponse
+    public function logout(Request $request): RedirectResponse|JsonResponse
     {
         SwiftAuth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('swift-auth.login.form')->with('success', 'Logged out successfully.');
+        return ResponseHelper::success(
+            message: 'Logged out successfully.',
+            data: null,
+            forward_url: route('swift-auth.login.form'),
+        );
     }
 }

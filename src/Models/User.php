@@ -1,6 +1,6 @@
 <?php
 
-namespace Teleurban\SwiftAuth\Models;
+namespace Equidna\SwifthAuth\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -98,10 +98,21 @@ class User extends Authenticatable
         $actions = [];
 
         foreach ($this->roles as $role) {
-            $actions = array_merge($actions, explode(",", $role->actions));
+            if (empty($role->actions)) {
+                continue;
+            }
+
+            $roleActions = array_filter(
+                array_map(
+                    static fn(string $action) => trim($action),
+                    explode(',', $role->actions)
+                )
+            );
+
+            $actions = array_merge($actions, $roleActions);
         }
 
-        return array_unique($actions);
+        return array_values(array_unique($actions));
     }
 
     /**

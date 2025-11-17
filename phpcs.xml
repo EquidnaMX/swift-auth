@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<ruleset name="SwiftAuth Custom Rules">
+    <description>Project PHPCS rules: PSR12 with view files excluded.</description>
+
+    <!-- Use PSR12 standard -->
+    <rule ref="PSR12"/>
+
+    <!-- Exclude vendor and Blade view resources from code style checks -->
+    <exclude-pattern>vendor/*</exclude-pattern>
+    <exclude-pattern>src/resources/views/*</exclude-pattern>
+    <exclude-pattern>src/resources/**/views/*</exclude-pattern>
+</ruleset>

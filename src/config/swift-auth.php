@@ -29,6 +29,37 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Password Reset Token TTL
+    |--------------------------------------------------------------------------
+    |
+    | Time-to-live for password reset tokens (in seconds). Tokens older than
+    | this value will be considered expired and rejected by the reset flow.
+    | Default is 900 seconds (15 minutes).
+    |
+    */
+
+    'password_reset_ttl' => env('SWIFT_AUTH_PASSWORD_RESET_TTL', 900),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Password Reset Rate Limit
+    |--------------------------------------------------------------------------
+    |
+    | Limits password reset *request* attempts per target (hashed email).
+    | `attempts` = number of allowed tries in the window, `decay_seconds`
+    | = length of the window in seconds. Tune per-app; Redis is recommended
+    | as the cache driver to enforce limits across instances.
+    |
+    */
+
+    'password_reset_rate_limit' => [
+        'attempts' => 5,
+        'decay_seconds' => 60,
+        // 'block_for_seconds' => 600, // optional: stronger block after limit reached
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Available Actions
     |--------------------------------------------------------------------------
     |
@@ -41,20 +72,15 @@ return [
     'actions' => [
         'sw-admin' => 'Swift Auth admin', // !! DO NOT REMOVE THIS ACTION: used in core SwiftAuth functions
     ],
-
     /*
     |--------------------------------------------------------------------------
-    | Admin User (Default Credentials)
+    | Table & Route Prefix
     |--------------------------------------------------------------------------
     |
-    | Define the default administrator credentials for initial seeding.
-    | These values are typically used by the AdminSeeder to create
-    | the first admin user during installation.
+    | You can add a prefix to all package tables and routes to avoid name
+    | collisions with host applications. Leave empty for no prefix.
+    |
     */
-
-    'admin_user' => [
-        'email' => env('SWIFT_ADMIN_EMAIL'),
-        'password' => env('SWIFT_ADMIN_PASSWORD'),
-        'name' => env('SWIFT_ADMIN_NAME'),
-    ],
+    'table_prefix' => env('SWIFT_AUTH_TABLE_PREFIX', 'swift-auth_'),
+    'route_prefix' => env('SWIFT_AUTH_ROUTE_PREFIX', 'swift-auth'),
 ];

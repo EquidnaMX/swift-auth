@@ -1,201 +1,125 @@
 # Swift Auth
 
-**Swift Auth** is a simple yet efficient system designed for user management, providing an intuitive and scalable solution to manage access and permissions.
+Swift Auth is a compact, production-oriented authentication and authorization package suitable for Laravel-style applications. This README focuses on installation, configuration, and the recent security and workflow changes.
 
-# Features
+## Quick Summary
 
--   **User management**: Create, update, delete, and view users with roles and permissions.
--   **Authentication**: Simplifies user login and registration.
--   **Roles and Permissions**: Assign roles to users and check if they have specific permissions to perform actions.
--   **Middleware**: Protect routes that require authentication or special permissions.
--   **Easy to integrate**: Compatible with **Laravel** and **Blade**, with support for **TypeScript** and **JavaScript**.
+-   Namespace: `Equidna\SwifthAuth`
+-   Admin creation: `php artisan swift-auth:create-admin` (name/email required via args or env; password is always randomly generated and never printed)
+-   Password resets: configurable TTL and per-email rate-limiting
 
-# Environment Variables
+## Quick Install
 
-To run this project, you need to add the following environment variables to your `.env` file:
+1. Install via Composer (use your package name):
 
--   `SWIFT_AUTH_FRONTEND`: Defines the type of frontend you will use. It can have one of the following values: **typescript**, **blade**, or **javascript**.
-
-    **Example:**
-
-    ```bash
-    SWIFT_AUTH_FRONTEND=typescript
-    ```
-
--   `SWIFT_AUTH_SUCCESS_URL`: Defines the URL to redirect to after a successful login.
-
-    **Example:**
-
-    ```bash
-    SWIFT_AUTH_SUCCESS_URL=/dashboard
-    ```
-
--   `SWIFT_ADMIN_NAME`: The full name of the initial admin user.
--   `SWIFT_ADMIN_EMAIL`: The email address used to log in.
--   `SWIFT_ADMIN_PASSWORD`: The password assigned to the admin (make sure to change this in production).
-
-    **Example:**
-
-    ```bash
-    SWIFT_ADMIN_NAME="Administrador"
-    SWIFT_ADMIN_EMAIL=admin@admin.com
-    SWIFT_ADMIN_PASSWORD=examplepass
-    ```
-
-# Installation
-
-1. **Create the project**:
-   If you haven't created the project yet, do so and navigate to your project directory:
-
-    ```bash
-    mkdir my-project
-    cd my-project
-    ```
-
-2. **Install Swift Auth**:
-
-    **Install with Composer**:
-
-    ```bash
-    composer require teleurban/swift-auth
-    ```
-
-    If you encounter an error, use the beta version:
-
-    ```bash
-    composer require teleurban/swift-auth:dev-main
-    ```
-
-3. **Install Swift Auth**:
-   Run the following command to install Swift Auth:
-
-    ```bash
-    php artisan swift-auth:install
-    ```
-
-    After running the command, it will ask if you want to publish different configuration files and resources.
-
-4. **Run migrations**:
-   Run the migrations to create the necessary tables in the database:
-    ```bash
-    php artisan migrate
-    ```
-
----
-
-# Middleware
-
-Swift Auth provides middleware to protect routes that require authentication or special permissions. You must add it to the corresponding routes in your routes file.
-
-**Add Authentication Middleware**:
-
-```php
-use Teleurban\SwiftAuth\Http\Middleware\RequireAuthentication;
-
-Route::middleware(RequireAuthentication::class)->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index']);
-});
+```powershell
+composer require equidna/swift-auth
 ```
 
-**Add Action Middleware**:
-If you want to protect a specific action that only certain users can perform, you can use the `CanPerformAction` middleware. This checks if the user has the necessary permission to perform the requested action.
+1. Publish package assets and configuration:
 
-```php
-use Teleurban\SwiftAuth\Http\Middleware\CanPerformAction;
-
-Route::middleware(CanPerformAction::class . ':sw-admin')->group(function () {
-    Route::post('/create', [UserController::class, 'create']);
-});
+```powershell
+php artisan swift-auth:install
 ```
 
----
+1. Run migrations:
 
-# Swift Auth - Route Reference Guide
+```powershell
+php artisan migrate
+```
 
-This guide outlines all the available routes used in the **Swift Auth** package, grouped by feature. All routes are prefixed with `/swift-auth` and protected by the necessary middleware.
+1. Create the initial admin (interactive or non-interactive using env vars):
 
----
+```powershell
+# Interactive (prompts for name/email)
+php artisan swift-auth:create-admin "Admin Name" "admin@example.test"
 
-## 📌 Authentication Routes
+# Non-interactive when env vars are set
+$env:SWIFT_ADMIN_NAME='CI Admin'; $env:SWIFT_ADMIN_EMAIL='ci-admin@example.test'; php artisan swift-auth:create-admin
+```
 
-| Method   | URL                | Name                  | Description       |
-| -------- | ------------------ | --------------------- | ----------------- |
-| GET      | /swift-auth/login  | swift-auth.login.form | Show login form   |
-| POST     | /swift-auth/login  | swift-auth.login      | Authenticate user |
-| GET/POST | /swift-auth/logout | swift-auth.logout     | Logout user       |
+After code or namespace changes, regenerate autoload:
 
----
+```powershell
+composer dump-autoload -o
+```
 
-## 🔒 Password Reset Routes
+## Admin creation behavior (important)
 
-| Method | URL                                | Name                        | Description                      |
-| ------ | ---------------------------------- | --------------------------- | -------------------------------- |
-| GET    | /swift-auth/password/reset         | swift-auth.password.request | Show password reset request form |
-| POST   | /swift-auth/password/email         | swift-auth.password.email   | Send reset link to user's email  |
-| GET    | /swift-auth/password/reset/{token} | swift-auth.password.reset   | Show new password form           |
-| POST   | /swift-auth/password/reset         | swift-auth.password.update  | Update password                  |
+-   The `create-admin` command requires `name` and `email` either as command arguments or via the environment variables `SWIFT_ADMIN_NAME` and `SWIFT_ADMIN_EMAIL`.
+-   The command always generates a cryptographically-random password and stores the hashed value. The password is never printed or written to logs.
+-   The created admin's `email_verified_at` is left `null` to force a password reset flow for the new user.
 
----
+This removes any plaintext-secret workflow and reduces accidental credential exposure.
 
-## 👥 User Management Routes
+## Password reset hardening
 
-| Method | URL                              | Name                      | Description             |
-| ------ | -------------------------------- | ------------------------- | ----------------------- |
-| GET    | /swift-auth/users                | swift-auth.users.index    | List users              |
-| GET    | /swift-auth/users/create         | swift-auth.users.create   | Show user creation form |
-| GET    | /swift-auth/users/register       | swift-auth.users.register | Show user register form |
-| POST   | /swift-auth/users/create         | swift-auth.users.store    | Store new user          |
-| GET    | /swift-auth/users/{id_user}      | swift-auth.users.show     | Show user details       |
-| GET    | /swift-auth/users/{id_user}/edit | swift-auth.users.edit     | Show edit form          |
-| PUT    | /swift-auth/users/{id_user}/edit | swift-auth.users.update   | Update user             |
-| DELETE | /swift-auth/users/{id_user}      | swift-auth.users.destroy  | Delete user             |
+-   `password_reset_ttl` (seconds) — TTL for reset tokens. Default: `900` (15 minutes).
+-   `password_reset_rate_limit` — Rate-limiter settings applied per email (hashed key) to reduce enumeration and abuse. Example:
 
----
+```php
+'password_reset_rate_limit' => [
+    'attempts' => 5,
+    'decay_seconds' => 60,
+],
+```
 
-## 🛡️ Role Management Routes
+-   Reset emails are queued by default; run a queue worker in production to avoid blocking requests.
 
-| Method | URL                         | Name                     | Description             |
-| ------ | --------------------------- | ------------------------ | ----------------------- |
-| GET    | /swift-auth/roles           | swift-auth.roles.index   | List roles              |
-| GET    | /swift-auth/roles/create    | swift-auth.roles.create  | Show role creation form |
-| POST   | /swift-auth/roles/create    | swift-auth.roles.store   | Store new role          |
-| GET    | /swift-auth/roles/{id_role} | swift-auth.roles.edit    | Show edit form for role |
-| PUT    | /swift-auth/roles/{id_role} | swift-auth.roles.update  | Update role             |
-| DELETE | /swift-auth/roles/{id_role} | swift-auth.roles.destroy | Delete role             |
+## Configuration
 
----
+Publishable file: `config/swift-auth.php`.
+Key entries to review:
 
-## 🔐 Middleware Applied
+-   `password_reset_ttl` (int seconds)
+-   `password_reset_rate_limit` (array)
 
-All sensitive routes are protected by:
+Note: the `admin_user` config and any stored admin passwords have been removed for security — use the `create-admin` command instead.
 
--   `SwiftAuth.RequireAuthentication` - Ensures the user is authenticated.
--   `SwiftAuth.CanPerformAction:sw-admin` - Ensures the user has `sw-admin` action permission.
+## Mail / Queue recommendation
 
-These middleware groups are applied to all `/users` and `/roles` route files.
+Use a queue driver (e.g. `database`) and run a worker:
 
----
+```powershell
+QUEUE_CONNECTION=database
+php artisan queue:work
+```
 
-### Usage
+## Namespace & upgrade notes
 
--   Access login page at `/swift-auth/login`
--   Protect your routes using `SwiftAuth.RequireAuthentication`
--   Assign `sw-admin` permission to users who need to manage users and roles
--   Customize views and controllers as needed by overriding published files
+The package uses the `Equidna\SwifthAuth` namespace. If you upgraded from an older package using `Teleurban\SwiftAuth`, update any published files and run:
 
----
+```powershell
+composer dump-autoload -o
+php artisan vendor:publish --provider="Equidna\SwifthAuth\Providers\SwiftAuthServiceProvider" --tag=swift-auth:config
+```
 
-For detailed implementation and controller logic, review the source code.
+## Commands
 
-### Contributing
+-   `php artisan swift-auth:install` — publishes config, views, and migrations
+-   `php artisan swift-auth:create-admin [name] [email]` — creates an admin user (password always random)
 
-If you would like to contribute to Swift Auth, please follow these steps:
+## Environment variables
 
-1. Fork the repository.
-2. Create a new branch for your changes.
-3. Make your changes and ensure that the tests pass.
-4. Submit a pull request.
+Set these in your application's `.env` file:
 
-### License
+-   `SWIFT_AUTH_FRONTEND` — `blade`, `typescript`, or `javascript` (installer default)
+-   `SWIFT_AUTH_SUCCESS_URL` — redirect URL after successful login
+-   `SWIFT_ADMIN_NAME` — initial admin full name (optional, used by `create-admin`)
+-   `SWIFT_ADMIN_EMAIL` — initial admin email (optional, used by `create-admin`)
 
-Swift Auth is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+## Testing & Linting
+
+-   PHPCS is configured (PSR-12). Blade templates are excluded from PSR-12 checks via `phpcs.xml`.
+-   Unit tests belong under `tests/Unit` and must be isolated (mock external I/O). See repository `phpcs.xml` and `TestingScope` guidance.
+
+## Contributing
+
+1. Fork and branch.
+2. Respect PSR-12 and the repository `phpcs.xml` rules.
+3. Add unit tests under `tests/Unit` for logic changes.
+4. Open a PR with upgrade notes if behavior or namespaces changed.
+
+## License
+
+MIT — see `LICENSE`.

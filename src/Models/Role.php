@@ -1,6 +1,6 @@
 <?php
 
-namespace Teleurban\SwiftAuth\Models;
+namespace Equidna\SwifthAuth\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Builder;

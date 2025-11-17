@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Teleurban\SwiftAuth\Http\Controllers\RoleController;
+use Equidna\SwifthAuth\Http\Controllers\RoleController;
 
 Route::prefix('roles')
     ->as('roles.')

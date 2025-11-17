@@ -1,8 +1,8 @@
 <?php
 
-namespace Teleurban\SwiftAuth\Services;
+namespace Equidna\SwifthAuth\Services;
 
-use Teleurban\SwiftAuth\Models\User;
+use Equidna\SwifthAuth\Models\User;
 use Illuminate\Session\Store as Session;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
@@ -117,6 +117,10 @@ class SwiftSessionAuth
     public function canPerformAction(string|array $actions): bool
     {
         $user = $this->user();
+
+        if (!$user) {
+            return false;
+        }
 
         $available = $user->availableActions();
 

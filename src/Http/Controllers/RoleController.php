@@ -1,148 +1,217 @@
 <?php
 
-namespace Teleurban\SwiftAuth\Http\Controllers;
+/**
+ * Manages SwiftAuth roles and permissions screens.
+ *
+ * PHP 8.2+
+ *
+ * @package   Equidna\SwifthAuth\Http\Controllers
+ * @author    Gabriel Ruelas <gruelas@gruelas.com>
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @link      https://github.com/EquidnaMX/swift_auth
+ */
 
-use Illuminate\Support\Facades\Validator;
-use Teleurban\SwiftAuth\Models\Role;
+namespace Equidna\SwifthAuth\Http\Controllers;
+
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Teleurban\SwiftAuth\Traits\SelectiveRender;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
+use Equidna\Toolkit\Exceptions\BadRequestException;
+use Equidna\Toolkit\Helpers\ResponseHelper;
 use Inertia\Response;
-use Illuminate\Http\RedirectResponse;
+use Equidna\SwifthAuth\Models\Role;
+use Equidna\SwifthAuth\Traits\SelectiveRender;
 
+/**
+ * Administers SwiftAuth roles through list, create, update, and delete endpoints.
+ *
+ * Relies on SelectiveRender to harmonize Blade and Inertia outputs.
+ */
 class RoleController extends Controller
 {
     use SelectiveRender;
 
     /**
-     * Display a listing of the roles.
+     * Displays the paginated role list.
      *
-     * @param  Request  $request
-     * @return View|Response
+     * @param  Request       $request  HTTP request with optional search term.
+     * @return View|Response           Blade or Inertia response containing roles.
      */
     public function index(Request $request): View|Response
     {
-        $roles = Role::search($request->get("search"))->paginate(10);
+        $roles = Role::search($request->get('search'))
+            ->paginate(10);
 
-        return $this->render('swift-auth::user.role.index', 'role/Index', ['roles' => $roles,'actions' => Config::get('swift-auth.actions')]);
+        return $this->render(
+            'swift-auth::user.role.index',
+            'role/Index',
+            [
+                'roles' => $roles,
+                'actions' => Config::get('swift-auth.actions'),
+            ],
+        );
     }
 
     /**
-     * Show the form to create a new role.
+     * Shows the role creation form.
      *
-     * @param  Request  $request
-     * @return View|Response
+     * @param  Request       $request  HTTP request context.
+     * @return View|Response           Blade or Inertia response with action list.
      */
     public function create(Request $request): View|Response
     {
-        return $this->render('swift-auth::user.role.create', 'role/Create', [
-            'actions' => Config::get('swift-auth.actions'),
-        ]);
+        return $this->render(
+            'swift-auth::user.role.create',
+            'role/Create',
+            [
+                'actions' => Config::get('swift-auth.actions'),
+            ],
+        );
     }
 
     /**
-     * Store a newly created role in storage.
+     * Stores a new role with description and allowed actions.
      *
-     * @param  Request  $request
-     * @return RedirectResponse
+     * @param  Request                   $request  HTTP request containing role data.
+     * @return RedirectResponse|JsonResponse       Context-aware created response.
+     * @throws BadRequestException                 When validation fails.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $validator = Validator::make(
             $request->all(),
             [
                 'name' => 'required|string|unique:Roles,name',
-                'description' => 'required|string'
+                'description' => 'required|string',
+                'actions' => 'required|array|min:1',
+                'actions.*' => 'string',
             ]
         );
 
         if ($validator->fails()) {
-            return back()
-                ->withErrors($validator)
-                ->withInput();
+            throw new BadRequestException(
+                'Role data invalid.',
+                errors: $validator->errors()->toArray()
+            );
         }
 
+        $payload = $validator->validated();
+
+        $roleActions = array_values(
+            array_filter(
+                $payload['actions'],
+                static fn($action) => filled($action),
+            ),
+        );
+
         Role::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'actions' => implode(',', $request->actions)
+            'name' => $payload['name'],
+            'description' => $payload['description'],
+            'actions' => implode(',', $roleActions),
         ]);
 
-        return redirect()
-            ->route('swift-auth.roles.index')
-            ->with('success', 'Role created successfully.');
+        return ResponseHelper::created(
+            message: 'Role created successfully.',
+            data: null,
+            forward_url: route('swift-auth.roles.index'),
+        );
     }
 
     /**
-     * Show the form to edit the specified role.
+     * Shows the edit form for a role.
      *
-     * @param  Request  $request
-     * @param  string   $id_role
-     * @return View|Response
+     * @param  Request       $request  HTTP request context.
+     * @param  string        $id_role  Identifier for the role.
+     * @return View|Response           Blade or Inertia response with role data.
      */
     public function edit(Request $request, string $id_role): View|Response
     {
         $role = Role::findOrFail($id_role);
 
-        return $this->render('swift-auth::role.edit', 'role/Edit', [
-            'rol' => $role,
-            'actions' => Config::get('swift-auth.actions'),
-        ]);
+        return $this->render(
+            'swift-auth::role.edit',
+            'role/Edit',
+            [
+                'rol' => $role,
+                'actions' => Config::get('swift-auth.actions'),
+            ],
+        );
     }
 
     /**
-     * Update the specified role in storage.
+     * Updates a role description and actions.
      *
-     * @param  Request  $request
-     * @param  string   $id_role
-     * @return RedirectResponse
+     * @param  Request                   $request  HTTP request carrying modifications.
+     * @param  string                    $id_role  Identifier of the role.
+     * @return RedirectResponse|JsonResponse       Context-aware success response.
+     * @throws BadRequestException                 When validation fails.
      */
-    public function update(Request $request, string $id_role): RedirectResponse
+    public function update(Request $request, string $id_role): RedirectResponse|JsonResponse
     {
         $role = Role::findOrFail($id_role);
-        
+
         $validator = Validator::make(
             $request->all(),
             [
-                'description' => 'required|string'
+                'description' => 'required|string',
+                'actions' => 'sometimes|array',
+                'actions.*' => 'string',
             ]
         );
 
         if ($validator->fails()) {
-            return back()
-                ->withErrors($validator)
-                ->withInput();
+            throw new BadRequestException(
+                'Role update invalid.',
+                errors: $validator->errors()->toArray()
+            );
         }
-       
-        $role->update(
-            [
-                'description' =>$request->description,
-                'actions' => implode(',', $request->actions??[])
-            ]
+
+        $payload = $validator->validated();
+
+        $roleActions = array_values(
+            array_filter(
+                $payload['actions'] ?? [],
+                static fn($action) => filled($action),
+            ),
         );
 
-        return redirect()
-            ->route('swift-auth.roles.index')
-            ->with('success', 'Role updated successfully.');
+        $role->update([
+            'description' => $payload['description'],
+            'actions' => implode(',', $roleActions),
+        ]);
+
+        return ResponseHelper::success(
+            message: 'Role updated successfully.',
+            data: [
+                'role_id' => $role->getKey(),
+            ],
+            forward_url: route('swift-auth.roles.index'),
+        );
     }
 
     /**
-     * Remove the specified role from storage.
+     * Deletes a role.
      *
-     * @param  Request  $request
-     * @param  string   $id_role
-     * @return RedirectResponse
+     * @param  Request                   $request  HTTP request context.
+     * @param  string                    $id_role  Identifier of the role to delete.
+     * @return RedirectResponse|JsonResponse       Context-aware success response.
      */
-    public function destroy(Request $request, string $id_role): RedirectResponse
+    public function destroy(Request $request, string $id_role): RedirectResponse|JsonResponse
     {
         $role = Role::findOrFail($id_role);
 
         $role->delete();
 
-        return redirect()
-            ->route('swift-auth.roles.index')
-            ->with('success', 'Role deleted successfully.');
+        return ResponseHelper::success(
+            message: 'Role deleted successfully.',
+            data: [
+                'role_id' => (int) $id_role,
+            ],
+            forward_url: route('swift-auth.roles.index'),
+        );
     }
 }

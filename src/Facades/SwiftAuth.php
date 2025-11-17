@@ -1,6 +1,6 @@
 <?php
 
-namespace Teleurban\SwiftAuth\Facades;
+namespace Equidna\SwifthAuth\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Facade;
  * SwiftAuth::user();
  * ```
  *
- * @see \Teleurban\SwiftAuth\Services\SwiftSessionAuth
+ * @see \Equidna\SwifthAuth\Services\SwiftSessionAuth
  */
 class SwiftAuth extends Facade
 {

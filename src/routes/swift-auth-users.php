@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Teleurban\SwiftAuth\Http\Controllers\UserController;
+use Equidna\SwifthAuth\Http\Controllers\UserController;
 
 Route::prefix('users')
     ->as('users.')

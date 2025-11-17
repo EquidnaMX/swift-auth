@@ -1,13 +1,25 @@
 <?php
 
-namespace Teleurban\SwiftAuth\Http\Middleware;
+/**
+ * Ensures SwiftAuth authenticated sessions are present on protected routes.
+ *
+ * PHP 8.2+
+ *
+ * @package   Equidna\SwifthAuth\Http\Middleware
+ */
 
-use Closure;
-use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
+namespace Equidna\SwifthAuth\Http\Middleware;
+
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Teleurban\SwiftAuth\Facades\SwiftAuth;
+use Illuminate\Http\Request;
+use Equidna\Toolkit\Helpers\ResponseHelper;
+use Symfony\Component\HttpFoundation\Response;
+use Equidna\SwifthAuth\Facades\SwiftAuth;
+use Closure;
 
+/**
+ * Redirects unauthenticated users or missing session records to the login form.
+ */
 class RequireAuthentication
 {
     /**
@@ -17,16 +29,17 @@ class RequireAuthentication
      * If the user is not authenticated, redirects to the login form with an error message.
      * If the authenticated user cannot be found, redirects to the login form with a different error message.
      *
-     * @param  Request  $request The incoming HTTP request.
-     * @param  Closure  $next The next middleware to handle the request.
-     * @return Response The response after handling the request.
+     * @param  Request $request  Incoming HTTP request.
+     * @param  Closure $next     Next middleware to handle the request.
+     * @return Response          Response after handling the request.
      */
     public function handle(Request $request, Closure $next): Response
     {
         if (!SwiftAuth::check()) {
-            return redirect()
-                ->route('swift-auth.login.form')
-                ->with('error', 'You must be logged in.');
+            return ResponseHelper::unauthorized(
+                message: 'You must be logged in.',
+                forward_url: route('swift-auth.login.form'),
+            );
         }
 
         try {
@@ -34,9 +47,10 @@ class RequireAuthentication
 
             $request->attributes->add(['sw-user' => $user]);
         } catch (ModelNotFoundException $e) {
-            return redirect()
-                ->route('swift-auth.login.form')
-                ->with('error', 'Authenticated user not found on record');
+            return ResponseHelper::unauthorized(
+                message: 'Authenticated user not found on record.',
+                forward_url: route('swift-auth.login.form'),
+            );
         }
 
         return $next($request);

@@ -1,13 +1,16 @@
 <?php
 
-use Teleurban\SwiftAuth\Http\Middleware\RequireAuthentication;
-use Teleurban\SwiftAuth\Http\Controllers\PasswordController;
-use Teleurban\SwiftAuth\Http\Middleware\CanPerformAction;
-use Teleurban\SwiftAuth\Http\Controllers\AuthController;
+use Equidna\SwifthAuth\Http\Middleware\RequireAuthentication;
+use Equidna\SwifthAuth\Http\Controllers\PasswordController;
+use Equidna\SwifthAuth\Http\Middleware\CanPerformAction;
+use Equidna\SwifthAuth\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
+$routePrefix = config('swift-auth.route_prefix', 'swift-auth');
+
 Route::middleware('web')
-    ->prefix('swift-auth')->as('swift-auth.')
+    ->prefix($routePrefix)
+    ->as($routePrefix . '.')
     ->group(
         function () {
             Route::get('login', [AuthController::class, 'showLoginForm'])->name('login.form');

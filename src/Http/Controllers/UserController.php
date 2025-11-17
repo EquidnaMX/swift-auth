@@ -1,50 +1,70 @@
 <?php
 
-namespace Teleurban\SwiftAuth\Http\Controllers;
+/**
+ * Provides CRUD endpoints for SwiftAuth user management.
+ *
+ * PHP 8.2+
+ *
+ * @package   Equidna\SwifthAuth\Http\Controllers
+ * @author    Gabriel Ruelas <gruelas@gruelas.com>
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @link      https://github.com/EquidnaMX/swift_auth
+ */
 
-use Teleurban\SwiftAuth\Traits\SelectiveRender;
-use Teleurban\SwiftAuth\Models\User;
-use Teleurban\SwiftAuth\Models\Role;
-use Illuminate\Routing\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Hash;
-use Teleurban\SwiftAuth\Facades\SwiftAuth;
+namespace Equidna\SwifthAuth\Http\Controllers;
+
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\View\View;
+use Equidna\Toolkit\Exceptions\BadRequestException;
+use Equidna\Toolkit\Exceptions\ForbiddenException;
+use Equidna\Toolkit\Helpers\ResponseHelper;
 use Inertia\Response;
+use Equidna\SwifthAuth\Facades\SwiftAuth;
+use Equidna\SwifthAuth\Models\Role;
+use Equidna\SwifthAuth\Models\User;
+use Equidna\SwifthAuth\Traits\SelectiveRender;
 
 /**
- * Class UserController
- * 
- * Manages user-related functionalities such as registration, profile display, and user management (create, update, delete).
+ * Manages SwiftAuth user lifecycle actions (listing, creation, updates, and deletion).
  *
- * @package Teleurban\SwiftAuth\Http\Controllers
+ * Renders blade or Inertia resources and emits toolkit responses that honor the current context.
  */
 class UserController extends Controller
 {
     use SelectiveRender;
 
     /**
-     * Display a list of users with search functionality.
+     * Displays the paginated user list optionally filtered by search term.
      *
-     * @param Request $request
-     * @return View|Response
+     * @param  Request       $request  HTTP request containing the optional search filter.
+     * @return View|Response           Blade or Inertia response with pagination data.
      */
     public function index(Request $request): View|Response
     {
-        $users = User::search($request->get("search"))
+        $users = User::search($request->get('search'))
             ->paginate(10);
 
-        return $this->render('swift-auth::user.index', 'user/Index', ['users' => $users, 'actions' => Config::get('swift-auth.actions')]);
+        return $this->render(
+            'swift-auth::user.index',
+            'user/Index',
+            [
+                'users' => $users,
+                'actions' => Config::get('swift-auth.actions'),
+            ],
+        );
     }
 
     /**
-     * Show the form to register a new user.
+     * Shows the registration form for creating a new user.
      *
-     * @param Request $request
-     * @return View|Response
+     * @param  Request       $request  HTTP request context.
+     * @return View|Response           Blade or Inertia response with role list.
      */
     public function register(Request $request): View|Response
     {
@@ -54,18 +74,19 @@ class UserController extends Controller
             'swift-auth::user.register',
             'user/Register',
             [
-                'roles' => $roles
-            ]
+                'roles' => $roles,
+            ],
         );
     }
 
     /**
-     * Store a new user in the database.
+     * Stores a new user and assigns the selected role.
      *
-     * @param Request $request
-     * @return RedirectResponse
+     * @param  Request                   $request  HTTP request with registration payload.
+     * @return RedirectResponse|JsonResponse       Context-aware created response.
+     * @throws BadRequestException                 When validation fails.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
@@ -75,49 +96,74 @@ class UserController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
+            throw new BadRequestException(
+                'Registration data invalid.',
+                errors: $validator->errors()->toArray()
+            );
         }
 
+        $payload = $validator->validated();
+
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'name' => $payload['name'],
+            'email' => $payload['email'],
+            'password' => Hash::make($payload['password']),
         ]);
 
-        $user->roles()->attach($request->role);
+        $user->roles()->attach($payload['role']);
 
         if (SwiftAuth::check()) {
-            return redirect()->route('swift-auth.users.index')->with('success', 'Registration successful.');
+            return ResponseHelper::created(
+                message: 'Registration successful.',
+                data: [
+                    'user_id' => $user->getKey(),
+                ],
+                forward_url: route('swift-auth.users.index'),
+            );
         }
 
         SwiftAuth::login($user);
 
-        return redirect()->route('swift-auth.users.index')->with('success', 'Registration successful.');
+        return ResponseHelper::created(
+            message: 'Registration successful.',
+            data: [
+                'user_id' => $user->getKey(),
+            ],
+            forward_url: route('swift-auth.users.index'),
+        );
     }
 
     /**
-     * Display the details of a specific user.
+     * Displays the detail page for a specific user.
      *
-     * @param Request $request
-     * @param string $id_user
-     * @return View|Response
+     * @param  Request       $request  HTTP request context.
+     * @param  string        $id_user  Identifier of the user to show.
+     * @return View|Response           Blade or Inertia response with user data.
      */
     public function show(Request $request, string $id_user): View|Response
     {
         $user = User::findOrFail($id_user);
         $roles = Role::orderBy('name')->get();
 
-        return $this->render('swift-auth::user.show', 'user/Details', ['user' => $user, 'roles' => $roles]);
+        return $this->render(
+            'swift-auth::user.show',
+            'user/Details',
+            [
+                'user' => $user,
+                'roles' => $roles,
+            ],
+        );
     }
 
     /**
-     * Update the user's information.
+     * Updates the selected user name and roles.
      *
-     * @param Request $request
-     * @param string $id_user
-     * @return RedirectResponse
+     * @param  Request                   $request  HTTP request containing changes.
+     * @param  string                    $id_user  Identifier of the user to update.
+     * @return RedirectResponse|JsonResponse       Context-aware success response.
+     * @throws BadRequestException                 When provided data is invalid.
      */
-    public function update(Request $request, string $id_user): RedirectResponse
+    public function update(Request $request, string $id_user): RedirectResponse|JsonResponse
     {
         $user = User::findOrFail($id_user);
 
@@ -125,42 +171,69 @@ class UserController extends Controller
             $request->all(),
             [
                 'name' => 'sometimes|string|max:255',
+                'roles' => 'sometimes|array',
+                'roles.*' => 'integer|exists:Roles,id_role',
+                'role' => 'sometimes|integer|exists:Roles,id_role',
             ]
         );
 
         if ($validator->fails()) {
-            return back()->withErrors($validator)->withInput();
+            throw new BadRequestException(
+                'User update failed.',
+                errors: $validator->errors()->toArray()
+            );
         }
 
+        $payload = $validator->validated();
+
         $user->update([
-            'name' => $request->name ?? $user->name,
+            'name' => $payload['name'] ?? $user->name,
         ]);
 
-        $user->roles()->sync($request->id_role);
+        $roleIds = [];
 
-        return redirect()
-            ->route('swift-auth.users.index', $id_user)
-            ->with('success', 'User updated successfully.');
+        if (isset($payload['roles'])) {
+            $roleIds = $payload['roles'];
+        } elseif (isset($payload['role'])) {
+            $roleIds = [$payload['role']];
+        }
+
+        if (!empty($roleIds)) {
+            $user->roles()->sync($roleIds);
+        }
+
+        return ResponseHelper::success(
+            message: 'User updated successfully.',
+            data: [
+                'user_id' => $user->getKey(),
+            ],
+            forward_url: route('swift-auth.users.index'),
+        );
     }
 
     /**
-     * Delete a user from the database.
+     * Deletes a user from the system.
      *
-     * @param Request $request
-     * @param string $id_user
-     * @return RedirectResponse
+     * @param  Request                   $request  HTTP request context.
+     * @param  string                    $id_user  Identifier for the user to delete.
+     * @return RedirectResponse|JsonResponse       Context-aware success response.
+     * @throws ForbiddenException                  When attempting to delete your own account.
      */
-    public function destroy(Request $request, string $id_user): RedirectResponse
+    public function destroy(Request $request, string $id_user): RedirectResponse|JsonResponse
     {
-        if (SwiftAuth::id() === (int) $id_user) {
-            return back()->with('error', 'You cannot delete your own account.');
+        if ((int) SwiftAuth::id() === (int) $id_user) {
+            throw new ForbiddenException('You cannot delete your own account.');
         }
 
         $user = User::findOrFail($id_user);
         $user->delete();
 
-        return redirect()
-            ->route('swift-auth.users.index')
-            ->with('success', 'User successfully deleted.');
+        return ResponseHelper::success(
+            message: 'User successfully deleted.',
+            data: [
+                'user_id' => (int) $id_user,
+            ],
+            forward_url: route('swift-auth.users.index'),
+        );
     }
 }

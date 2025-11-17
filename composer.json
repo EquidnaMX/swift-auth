@@ -1,7 +1,7 @@
 {
-    "name": "teleurban/swift-auth",
+    "name": "equidna/swift-auth",
     "description": "Bottled authentication for Laravel projects",
-    "version": "0.2.0",
+    "version": "1.0.0",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -19,16 +19,18 @@
         }
     ],
     "require": {
-        "php": "^8.2"
+        "php": "^8.2",
+        "equidna/toolkit": "^0.6.5",
+        "inertiajs/inertia-laravel": "^1.0"
     },
     "require-dev": {
-        "laravel/helpers": "^1.7",
         "laravel/framework": "^11.21",
-        "laravel/facade-documenter": "dev-main"
+        "squizlabs/php_codesniffer": "^4.0",
+        "stevebauman/autodoc-facades": "^1.3"
     },
     "autoload": {
         "psr-4": {
-            "Teleurban\\SwiftAuth\\": "/src"
+            "Equidna\\SwifthAuth\\": "src/"
         }
     },
     "scripts": {
@@ -37,16 +39,11 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Teleurban\\SwiftAuth\\Providers\\SwiftAuthServiceProvider"
+                "Equidna\\SwifthAuth\\Providers\\SwiftAuthServiceProvider"
             ]
         }
     },
-    "repositories": {
-        "facade-documenter": {
-            "type": "vcs",
-            "url": "git@github.com:laravel/facade-documenter.git"
-        }
-    },
+    "repositories": {},
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",

@@ -1,6 +1,6 @@
 <?php
 
-namespace Teleurban\SwiftAuth\Console\Commands;
+namespace Equidna\SwifthAuth\Console\Commands;
 
 use Illuminate\Console\Command;
 
@@ -37,7 +37,7 @@ class InstallSwiftAuth extends Command
         $this->info('Iniciando instalación de SwiftAuth...');
 
         $this->call('vendor:publish', [
-            '--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider',
+            '--provider' => 'Equidna\SwifthAuth\Providers\SwiftAuthServiceProvider',
             '--tag' => 'swift-auth:config'
         ]);
 
@@ -62,26 +62,25 @@ class InstallSwiftAuth extends Command
         $this->info('Importando migraciones...');
 
         $this->call('vendor:publish', [
-            '--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider',
+            '--provider' => 'Equidna\SwifthAuth\Providers\SwiftAuthServiceProvider',
             '--tag' => 'swift-auth:migrations'
         ]);
 
         $this->call('migrate');
 
-        $this->info('Ejecutando seeder inicial...');
-        $this->call('db:seed', [
-            '--class' => 'Teleurban\SwiftAuth\database\seeders\AdminSeeder',
-        ]);
+        $this->info('No automatic admin seeded. To create an administrator run:');
+        $this->info('  php artisan swift-auth:create-admin --default');
+        $this->info('Set `SWIFT_ADMIN_NAME` and `SWIFT_ADMIN_EMAIL` in the environment for non-interactive creation.');
 
         $this->info('Importando iconos...');
         $this->call('vendor:publish', [
-            '--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider',
+            '--provider' => 'Equidna\SwifthAuth\Providers\SwiftAuthServiceProvider',
             '--tag' => 'swift-auth:icons'
         ]);
 
         $this->info('Importando modelos...');
         $this->call('vendor:publish', [
-            '--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider',
+            '--provider' => 'Equidna\SwifthAuth\Providers\SwiftAuthServiceProvider',
             '--tag' => 'swift-auth:models'
         ]);
 
@@ -97,7 +96,7 @@ class InstallSwiftAuth extends Command
     {
         $this->info('Instalando vistas Blade...');
         $this->call('vendor:publish', [
-            '--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider',
+            '--provider' => 'Equidna\SwifthAuth\Providers\SwiftAuthServiceProvider',
             '--tag' => 'swift-auth:views'
         ]);
     }
@@ -112,7 +111,7 @@ class InstallSwiftAuth extends Command
     {
         $this->info('Instalando vistas en React con JavaScript...');
         $this->call('vendor:publish', [
-            '--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider',
+            '--provider' => 'Equidna\SwifthAuth\Providers\SwiftAuthServiceProvider',
             '--tag' => 'swift-auth:js-react'
         ]);
 
@@ -129,7 +128,7 @@ class InstallSwiftAuth extends Command
     {
         $this->info('Instalando vistas en React con TypeScript...');
         $this->call('vendor:publish', [
-            '--provider' => 'Teleurban\SwiftAuth\Providers\SwiftAuthServiceProvider',
+            '--provider' => 'Equidna\SwifthAuth\Providers\SwiftAuthServiceProvider',
             '--tag' => 'swift-auth:ts-react'
         ]);
 

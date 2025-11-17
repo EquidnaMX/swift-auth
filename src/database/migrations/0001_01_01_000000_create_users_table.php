@@ -10,7 +10,9 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('Users', function (Blueprint $table) {
+        $prefix = config('swift-auth.table_prefix', '');
+
+        Schema::create($prefix . 'Users', function (Blueprint $table) {
             $table->id('id_user');
             $table->string('name');
             $table->string('email')->unique();
@@ -19,8 +21,7 @@ return new class extends Migration {
             $table->rememberToken();
             $table->timestamps();
         });
-
-        Schema::create('PasswordResetTokens', function (Blueprint $table) {
+        Schema::create($prefix . 'PasswordResetTokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
             $table->timestamp('created_at')->nullable();
@@ -32,7 +33,8 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('Users');
-        Schema::dropIfExists('PasswordResetTokens');
+        $prefix = config('swift-auth.table_prefix', '');
+        Schema::dropIfExists($prefix . 'Users');
+        Schema::dropIfExists($prefix . 'PasswordResetTokens');
     }
 };

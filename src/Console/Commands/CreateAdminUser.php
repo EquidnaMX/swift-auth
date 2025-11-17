@@ -1,12 +1,12 @@
 <?php
 
-namespace Teleurban\SwiftAuth\Console\Commands;
+namespace Equidna\SwifthAuth\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
-use Teleurban\SwiftAuth\Models\Role;
-use Teleurban\SwiftAuth\Models\User;
+use Equidna\SwifthAuth\Models\Role;
+use Equidna\SwifthAuth\Models\User;
 
 /**
  * Class InstallSwiftAuth
@@ -20,17 +20,15 @@ class CreateAdminUser extends Command
      *
      * @var string
      */
-    protected $signature = 'swift-auth:create-admin
-                            {--default : Crea el usuario con los valores del archivo .env}
-                            {name? : Nombre del usuario administrador}
-                            {email? : Correo electrónico del usuario}
-                            {password? : Contraseña del usuario}';
+    protected $signature = 'swift-auth:create-admin'
+        . ' {name? : Admin name}'
+        . ' {email? : Admin email}';
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Crea un usuario administrador con los datos definidos en el archivo .env o por los datos proporcionados por el usuario';
+    protected $description = 'Crea un usuario administrador usando valores de .env o datos ingresados por el usuario';
 
     /**
      * Execute the console command.
@@ -39,37 +37,46 @@ class CreateAdminUser extends Command
      */
     public function handle(): void
     {
-        if ($this->option('default')) {
-            $userName = Config::get('swift-auth.admin_user.name');
-            $email = Config::get('swift-auth.admin_user.email');
-            $password = Config::get('swift-auth.admin_user.password');
 
-            $this->createAdminUser($userName, $email, $password);
+        // Require name and email to be provided via CLI arguments or environment.
+        $userName = $this->argument('name') ?? env('SWIFT_ADMIN_NAME');
+        $email = $this->argument('email') ?? env('SWIFT_ADMIN_EMAIL');
+
+        if (empty($userName) || empty($email)) {
+            $this->info('Aborting: provide admin name and email via command arguments.');
+            $this->info('Or set SWIFT_ADMIN_NAME and SWIFT_ADMIN_EMAIL in the environment.');
             return;
         }
-
-        $userName = $this->argument('name') ?? $this->ask('Nombre del usuario administrador');
-        $email = $this->argument('email') ?? $this->ask('Correo electrónico del usuario');
-        $password = $this->argument('password') ?? $this->secret('Contraseña del usuario');
 
         if (!$this->confirm("¿Deseas crear el usuario administrador '{$userName}' con el correo '{$email}'?", true)) {
             $this->info('Operación cancelada.');
             return;
         }
 
-        $this->createAdminUser($userName, $email, $password);
+        try {
+            $randomPassword = bin2hex(random_bytes(16));
+        } catch (\Exception $e) {
+            $randomPassword = bin2hex(openssl_random_pseudo_bytes(16));
+        }
+
+        $this->createAdminUser($userName, $email, $randomPassword, false);
+        $this->info('Admin user created. Request a password reset for the new account to set a secure password.');
 
         return;
     }
 
-    private function createAdminUser(string $userName, string $email, string $textPassword): void
-    {
+    private function createAdminUser(
+        string $userName,
+        string $email,
+        string $textPassword,
+        bool $verifyEmail = true
+    ): void {
         $user = User::firstOrCreate(
             ['email' => $email],
             [
                 'name' => $userName,
                 'password' => Hash::make($textPassword),
-                'email_verified_at' => now(),
+                'email_verified_at' => $verifyEmail ? now() : null,
             ]
         );
 

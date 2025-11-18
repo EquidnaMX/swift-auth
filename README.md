@@ -4,7 +4,7 @@ Swift Auth is a compact, production-oriented authentication and authorization pa
 
 ## Quick Summary
 
--   Namespace: `Equidna\SwifthAuth`
+-   Namespace: `Equidna\SwiftAuth`
 -   Admin creation: `php artisan swift-auth:create-admin` (name/email required via args or env; password is always randomly generated and never printed)
 -   Password resets: configurable TTL and per-email rate-limiting
 
@@ -87,11 +87,11 @@ php artisan queue:work
 
 ## Namespace & upgrade notes
 
-The package uses the `Equidna\SwifthAuth` namespace. If you upgraded from an older package using `Teleurban\SwiftAuth`, update any published files and run:
+The package uses the `Equidna\SwiftAuth` namespace. If you upgraded from an older package using `Teleurban\SwiftAuth`, update any published files and run:
 
 ```powershell
 composer dump-autoload -o
-php artisan vendor:publish --provider="Equidna\SwifthAuth\Providers\SwiftAuthServiceProvider" --tag=swift-auth:config
+php artisan vendor:publish --provider="Equidna\SwiftAuth\Providers\SwiftAuthServiceProvider" --tag=swift-auth:config
 ```
 
 ## Commands
@@ -107,6 +107,14 @@ Set these in your application's `.env` file:
 -   `SWIFT_AUTH_SUCCESS_URL` — redirect URL after successful login
 -   `SWIFT_ADMIN_NAME` — initial admin full name (optional, used by `create-admin`)
 -   `SWIFT_ADMIN_EMAIL` — initial admin email (optional, used by `create-admin`)
+
+## Security recommendations
+
+Swift Auth ships with sensible defaults, but production deployments should harden cookies and sessions. Review `SECURITY.md` for:
+
+-   Recommended `SESSION_*` and `SWIFT_AUTH_SUCCESS_URL` values (secure, HTTP-only, same-site strict, HTTPS redirects).
+-   A checklist of runtime package dependencies (`laravel/framework`, `equidna/laravel-toolkit`, `inertiajs/inertia-laravel`).
+-   Additional HTTP header suggestions (HSTS, CSP, X-Frame-Options) for reverse proxies.
 
 ## Testing & Linting
 

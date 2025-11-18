@@ -5,15 +5,15 @@
  *
  * PHP 8.2+
  *
- * @package   Equidna\SwifthAuth\Http\Middleware
+ * @package   Equidna\SwiftAuth\Http\Middleware
  */
 
-namespace Equidna\SwifthAuth\Http\Middleware;
+namespace Equidna\SwiftAuth\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Equidna\Toolkit\Helpers\ResponseHelper;
 use Symfony\Component\HttpFoundation\Response;
-use Equidna\SwifthAuth\Facades\SwiftAuth;
+use Equidna\SwiftAuth\Facades\SwiftAuth;
 use Closure;
 
 /**

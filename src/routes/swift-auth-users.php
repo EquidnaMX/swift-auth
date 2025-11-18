@@ -5,11 +5,11 @@
  *
  * PHP 8.1+
  *
- * @package Equidna\SwifthAuth\Routes
+ * @package Equidna\SwiftAuth\Routes
  */
 
 use Illuminate\Support\Facades\Route;
-use Equidna\SwifthAuth\Http\Controllers\UserController;
+use Equidna\SwiftAuth\Http\Controllers\UserController;
 
 Route::prefix('users')
     ->as('users.')

@@ -1,8 +1,19 @@
 <?php
 
-namespace Equidna\SwifthAuth\Services;
+/**
+ * Implements SwiftAuth's session-backed authentication service helpers.
+ *
+ * PHP 8.2+
+ *
+ * @package   Equidna\SwiftAuth\Services
+ * @author    Gabriel Ruelas <gruelas@gruelas.com>
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @link      https://github.com/EquidnaMX/swift_auth
+ */
 
-use Equidna\SwifthAuth\Models\User;
+namespace Equidna\SwiftAuth\Services;
+
+use Equidna\SwiftAuth\Models\User;
 use Illuminate\Session\Store as Session;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 

@@ -1,14 +1,14 @@
 <?php
 
-namespace Equidna\SwifthAuth\Providers;
+namespace Equidna\SwiftAuth\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
-use Equidna\SwifthAuth\Console\Commands\InstallSwiftAuth;
-use Equidna\SwifthAuth\Console\Commands\CreateAdminUser;
-use Equidna\SwifthAuth\Http\Middleware\RequireAuthentication;
-use Equidna\SwifthAuth\Http\Middleware\CanPerformAction;
-use Equidna\SwifthAuth\Services\SwiftSessionAuth;
+use Equidna\SwiftAuth\Console\Commands\InstallSwiftAuth;
+use Equidna\SwiftAuth\Console\Commands\CreateAdminUser;
+use Equidna\SwiftAuth\Http\Middleware\RequireAuthentication;
+use Equidna\SwiftAuth\Http\Middleware\CanPerformAction;
+use Equidna\SwiftAuth\Services\SwiftSessionAuth;
 
 /**
  * SwiftAuthServiceProvider

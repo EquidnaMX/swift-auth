@@ -1,6 +1,6 @@
 <?php
 
-namespace Equidna\SwifthAuth\Mail;
+namespace Equidna\SwiftAuth\Mail;
 
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Bus\Queueable;

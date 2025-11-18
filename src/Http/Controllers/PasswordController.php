@@ -5,13 +5,13 @@
  *
  * PHP 8.2+
  *
- * @package   Equidna\SwifthAuth\Http\Controllers
+ * @package   Equidna\SwiftAuth\Http\Controllers
  * @author    Gabriel Ruelas <gruelas@gruelas.com>
  * @license   https://opensource.org/licenses/MIT MIT License
  * @link      https://github.com/EquidnaMX/swift_auth
  */
 
-namespace Equidna\SwifthAuth\Http\Controllers;
+namespace Equidna\SwiftAuth\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -27,10 +27,10 @@ use Equidna\Toolkit\Exceptions\BadRequestException;
 use Equidna\Toolkit\Exceptions\NotFoundException;
 use Equidna\Toolkit\Helpers\ResponseHelper;
 use Inertia\Response;
-use Equidna\SwifthAuth\Mail\PasswordResetMail;
-use Equidna\SwifthAuth\Models\PasswordResetToken;
-use Equidna\SwifthAuth\Models\User;
-use Equidna\SwifthAuth\Traits\SelectiveRender;
+use Equidna\SwiftAuth\Mail\PasswordResetMail;
+use Equidna\SwiftAuth\Models\PasswordResetToken;
+use Equidna\SwiftAuth\Models\User;
+use Equidna\SwiftAuth\Traits\SelectiveRender;
 
 /**
  * Coordinates SwiftAuth password reset UX, from request to completion.
@@ -139,7 +139,7 @@ class PasswordController extends Controller
             'password/Reset',
             [
                 'token' => $token,
-                'email' => $request->email,
+                'email' => $request->input('email'),
             ],
         );
     }

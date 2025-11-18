@@ -5,13 +5,13 @@
  *
  * PHP 8.2+
  *
- * @package   Equidna\SwifthAuth\Http\Controllers
+ * @package   Equidna\SwiftAuth\Http\Controllers
  * @author    Gabriel Ruelas <gruelas@gruelas.com>
  * @license   https://opensource.org/licenses/MIT MIT License
  * @link      https://github.com/EquidnaMX/swift_auth
  */
 
-namespace Equidna\SwifthAuth\Http\Controllers;
+namespace Equidna\SwiftAuth\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -23,8 +23,8 @@ use Illuminate\View\View;
 use Equidna\Toolkit\Exceptions\BadRequestException;
 use Equidna\Toolkit\Helpers\ResponseHelper;
 use Inertia\Response;
-use Equidna\SwifthAuth\Models\Role;
-use Equidna\SwifthAuth\Traits\SelectiveRender;
+use Equidna\SwiftAuth\Models\Role;
+use Equidna\SwiftAuth\Traits\SelectiveRender;
 
 /**
  * Administers SwiftAuth roles through list, create, update, and delete endpoints.
@@ -47,7 +47,7 @@ class RoleController extends Controller
             ->paginate(10);
 
         return $this->render(
-            'swift-auth::user.role.index',
+            'swift-auth::role.index',
             'role/Index',
             [
                 'roles' => $roles,
@@ -65,7 +65,7 @@ class RoleController extends Controller
     public function create(Request $request): View|Response
     {
         return $this->render(
-            'swift-auth::user.role.create',
+            'swift-auth::role.create',
             'role/Create',
             [
                 'actions' => Config::get('swift-auth.actions'),
@@ -136,7 +136,7 @@ class RoleController extends Controller
             'swift-auth::role.edit',
             'role/Edit',
             [
-                'rol' => $role,
+                'role' => $role,
                 'actions' => Config::get('swift-auth.actions'),
             ],
         );

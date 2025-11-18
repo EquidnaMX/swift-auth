@@ -23,7 +23,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed (1.0.0)
 
--   Namespace standardized to `Equidna\SwifthAuth`
+-   Namespace standardized to `Equidna\SwiftAuth`
 -   Removed legacy admin password config for security
 
 ### Security

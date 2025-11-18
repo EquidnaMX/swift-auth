@@ -5,13 +5,13 @@
  *
  * PHP 8.1+
  *
- * @package Equidna\SwifthAuth\Routes
+ * @package Equidna\SwiftAuth\Routes
  */
 
-use Equidna\SwifthAuth\Http\Middleware\RequireAuthentication;
-use Equidna\SwifthAuth\Http\Controllers\PasswordController;
-use Equidna\SwifthAuth\Http\Middleware\CanPerformAction;
-use Equidna\SwifthAuth\Http\Controllers\AuthController;
+use Equidna\SwiftAuth\Http\Middleware\RequireAuthentication;
+use Equidna\SwiftAuth\Http\Controllers\PasswordController;
+use Equidna\SwiftAuth\Http\Middleware\CanPerformAction;
+use Equidna\SwiftAuth\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
 $routePrefix = config('swift-auth.route_prefix', 'swift-auth');

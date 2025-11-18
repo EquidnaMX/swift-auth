@@ -1,12 +1,11 @@
 <?php
 
-namespace Equidna\SwifthAuth\Console\Commands;
+namespace Equidna\SwiftAuth\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
-use Equidna\SwifthAuth\Models\Role;
-use Equidna\SwifthAuth\Models\User;
+use Equidna\SwiftAuth\Models\Role;
+use Equidna\SwiftAuth\Models\User;
 
 /**
  * Class InstallSwiftAuth

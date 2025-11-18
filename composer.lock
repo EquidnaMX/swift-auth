@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "51896f4c1c21fcd8707bbf5812a21b24",
+    "content-hash": "92cc9012d36c8e911340061aa31c39ea",
     "packages": [
         {
             "name": "brick/math",
@@ -510,16 +510,16 @@
         },
         {
             "name": "equidna/laravel-toolkit",
-            "version": "1.0.0",
+            "version": "1.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/EquidnaMX/laravel-toolkit.git",
-                "reference": "29fdc387789457e87f18872df3f7958e08cc48e5"
+                "reference": "f4a5a6989f50a60e38b775df13f8577502ed4367"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/EquidnaMX/laravel-toolkit/zipball/29fdc387789457e87f18872df3f7958e08cc48e5",
-                "reference": "29fdc387789457e87f18872df3f7958e08cc48e5",
+                "url": "https://api.github.com/repos/EquidnaMX/laravel-toolkit/zipball/f4a5a6989f50a60e38b775df13f8577502ed4367",
+                "reference": "f4a5a6989f50a60e38b775df13f8577502ed4367",
                 "shasum": ""
             },
             "require": {
@@ -529,7 +529,7 @@
                 "php": "^8.0"
             },
             "require-dev": {
-                "squizlabs/php_codesniffer": "^4.0"
+                "squizlabs/php_codesniffer": "*"
             },
             "type": "library",
             "extra": {
@@ -556,9 +556,9 @@
             ],
             "support": {
                 "issues": "https://github.com/EquidnaMX/laravel-toolkit/issues",
-                "source": "https://github.com/EquidnaMX/laravel-toolkit/tree/1.0.0"
+                "source": "https://github.com/EquidnaMX/laravel-toolkit/tree/1.0.2"
             },
-            "time": "2025-11-17T15:59:18+00:00"
+            "time": "2025-11-18T21:51:26+00:00"
         },
         {
             "name": "fruitcake/php-cors",
@@ -1944,33 +1944,38 @@
         },
         {
             "name": "league/uri",
-            "version": "7.5.1",
+            "version": "7.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/uri.git",
-                "reference": "81fb5145d2644324614cc532b28efd0215bda430"
+                "reference": "f625804987a0a9112d954f9209d91fec52182344"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/uri/zipball/81fb5145d2644324614cc532b28efd0215bda430",
-                "reference": "81fb5145d2644324614cc532b28efd0215bda430",
+                "url": "https://api.github.com/repos/thephpleague/uri/zipball/f625804987a0a9112d954f9209d91fec52182344",
+                "reference": "f625804987a0a9112d954f9209d91fec52182344",
                 "shasum": ""
             },
             "require": {
-                "league/uri-interfaces": "^7.5",
-                "php": "^8.1"
+                "league/uri-interfaces": "^7.6",
+                "php": "^8.1",
+                "psr/http-factory": "^1"
             },
             "conflict": {
                 "league/uri-schemes": "^1.0"
             },
             "suggest": {
                 "ext-bcmath": "to improve IPV4 host parsing",
+                "ext-dom": "to convert the URI into an HTML anchor tag",
                 "ext-fileinfo": "to create Data URI from file contennts",
                 "ext-gmp": "to improve IPV4 host parsing",
                 "ext-intl": "to handle IDN host with the best performance",
+                "ext-uri": "to use the PHP native URI class",
                 "jeremykendall/php-domain-parser": "to resolve Public Suffix and Top Level Domain",
                 "league/uri-components": "Needed to easily manipulate URI objects components",
+                "league/uri-polyfill": "Needed to backport the PHP URI extension for older versions of PHP",
                 "php-64bit": "to improve IPV4 host parsing",
+                "rowbot/url": "to handle WHATWG URL",
                 "symfony/polyfill-intl-idn": "to handle IDN host via the Symfony polyfill if ext-intl is not present"
             },
             "type": "library",
@@ -1998,6 +2003,7 @@
             "description": "URI manipulation library",
             "homepage": "https://uri.thephpleague.com",
             "keywords": [
+                "URN",
                 "data-uri",
                 "file-uri",
                 "ftp",
@@ -2010,9 +2016,11 @@
                 "psr-7",
                 "query-string",
                 "querystring",
+                "rfc2141",
                 "rfc3986",
                 "rfc3987",
                 "rfc6570",
+                "rfc8141",
                 "uri",
                 "uri-template",
                 "url",
@@ -2022,7 +2030,7 @@
                 "docs": "https://uri.thephpleague.com",
                 "forum": "https://thephpleague.slack.com",
                 "issues": "https://github.com/thephpleague/uri-src/issues",
-                "source": "https://github.com/thephpleague/uri/tree/7.5.1"
+                "source": "https://github.com/thephpleague/uri/tree/7.6.0"
             },
             "funding": [
                 {
@@ -2030,26 +2038,25 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-12-08T08:40:02+00:00"
+            "time": "2025-11-18T12:17:23+00:00"
         },
         {
             "name": "league/uri-interfaces",
-            "version": "7.5.0",
+            "version": "7.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/uri-interfaces.git",
-                "reference": "08cfc6c4f3d811584fb09c37e2849e6a7f9b0742"
+                "reference": "ccbfb51c0445298e7e0b7f4481b942f589665368"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/uri-interfaces/zipball/08cfc6c4f3d811584fb09c37e2849e6a7f9b0742",
-                "reference": "08cfc6c4f3d811584fb09c37e2849e6a7f9b0742",
+                "url": "https://api.github.com/repos/thephpleague/uri-interfaces/zipball/ccbfb51c0445298e7e0b7f4481b942f589665368",
+                "reference": "ccbfb51c0445298e7e0b7f4481b942f589665368",
                 "shasum": ""
             },
             "require": {
                 "ext-filter": "*",
                 "php": "^8.1",
-                "psr/http-factory": "^1",
                 "psr/http-message": "^1.1 || ^2.0"
             },
             "suggest": {
@@ -2057,6 +2064,7 @@
                 "ext-gmp": "to improve IPV4 host parsing",
                 "ext-intl": "to handle IDN host with the best performance",
                 "php-64bit": "to improve IPV4 host parsing",
+                "rowbot/url": "to handle WHATWG URL",
                 "symfony/polyfill-intl-idn": "to handle IDN host via the Symfony polyfill if ext-intl is not present"
             },
             "type": "library",
@@ -2081,7 +2089,7 @@
                     "homepage": "https://nyamsprod.com"
                 }
             ],
-            "description": "Common interfaces and classes for URI representation and interaction",
+            "description": "Common tools for parsing and resolving RFC3987/RFC3986 URI",
             "homepage": "https://uri.thephpleague.com",
             "keywords": [
                 "data-uri",
@@ -2106,7 +2114,7 @@
                 "docs": "https://uri.thephpleague.com",
                 "forum": "https://thephpleague.slack.com",
                 "issues": "https://github.com/thephpleague/uri-src/issues",
-                "source": "https://github.com/thephpleague/uri-interfaces/tree/7.5.0"
+                "source": "https://github.com/thephpleague/uri-interfaces/tree/7.6.0"
             },
             "funding": [
                 {
@@ -2114,7 +2122,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-12-08T08:18:47+00:00"
+            "time": "2025-11-18T12:17:23+00:00"
         },
         {
             "name": "monolog/monolog",
@@ -5795,6 +5803,137 @@
     ],
     "packages-dev": [
         {
+            "name": "iamcal/sql-parser",
+            "version": "v0.6",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/iamcal/SQLParser.git",
+                "reference": "947083e2dca211a6f12fb1beb67a01e387de9b62"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/iamcal/SQLParser/zipball/947083e2dca211a6f12fb1beb67a01e387de9b62",
+                "reference": "947083e2dca211a6f12fb1beb67a01e387de9b62",
+                "shasum": ""
+            },
+            "require-dev": {
+                "php-coveralls/php-coveralls": "^1.0",
+                "phpunit/phpunit": "^5|^6|^7|^8|^9"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "iamcal\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Cal Henderson",
+                    "email": "cal@iamcal.com"
+                }
+            ],
+            "description": "MySQL schema parser",
+            "support": {
+                "issues": "https://github.com/iamcal/SQLParser/issues",
+                "source": "https://github.com/iamcal/SQLParser/tree/v0.6"
+            },
+            "time": "2025-03-17T16:59:46+00:00"
+        },
+        {
+            "name": "larastan/larastan",
+            "version": "v3.8.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/larastan/larastan.git",
+                "reference": "d13ef96d652d1b2a8f34f1760ba6bf5b9c98112e"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/larastan/larastan/zipball/d13ef96d652d1b2a8f34f1760ba6bf5b9c98112e",
+                "reference": "d13ef96d652d1b2a8f34f1760ba6bf5b9c98112e",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "iamcal/sql-parser": "^0.6.0",
+                "illuminate/console": "^11.44.2 || ^12.4.1",
+                "illuminate/container": "^11.44.2 || ^12.4.1",
+                "illuminate/contracts": "^11.44.2 || ^12.4.1",
+                "illuminate/database": "^11.44.2 || ^12.4.1",
+                "illuminate/http": "^11.44.2 || ^12.4.1",
+                "illuminate/pipeline": "^11.44.2 || ^12.4.1",
+                "illuminate/support": "^11.44.2 || ^12.4.1",
+                "php": "^8.2",
+                "phpstan/phpstan": "^2.1.29"
+            },
+            "require-dev": {
+                "doctrine/coding-standard": "^13",
+                "laravel/framework": "^11.44.2 || ^12.7.2",
+                "mockery/mockery": "^1.6.12",
+                "nikic/php-parser": "^5.4",
+                "orchestra/canvas": "^v9.2.2 || ^10.0.1",
+                "orchestra/testbench-core": "^9.12.0 || ^10.1",
+                "phpstan/phpstan-deprecation-rules": "^2.0.1",
+                "phpunit/phpunit": "^10.5.35 || ^11.5.15"
+            },
+            "suggest": {
+                "orchestra/testbench": "Using Larastan for analysing a package needs Testbench",
+                "phpmyadmin/sql-parser": "Install to enable Larastan's optional phpMyAdmin-based SQL parser automatically"
+            },
+            "type": "phpstan-extension",
+            "extra": {
+                "phpstan": {
+                    "includes": [
+                        "extension.neon"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-master": "3.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Larastan\\Larastan\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Can Vural",
+                    "email": "can9119@gmail.com"
+                }
+            ],
+            "description": "Larastan - Discover bugs in your code without running it. A phpstan/phpstan extension for Laravel",
+            "keywords": [
+                "PHPStan",
+                "code analyse",
+                "code analysis",
+                "larastan",
+                "laravel",
+                "package",
+                "php",
+                "static analysis"
+            ],
+            "support": {
+                "issues": "https://github.com/larastan/larastan/issues",
+                "source": "https://github.com/larastan/larastan/tree/v3.8.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/canvural",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-10-27T23:09:14+00:00"
+        },
+        {
             "name": "phpstan/phpdoc-parser",
             "version": "1.33.0",
             "source": {
@@ -5840,6 +5979,59 @@
                 "source": "https://github.com/phpstan/phpdoc-parser/tree/1.33.0"
             },
             "time": "2024-10-13T11:25:22+00:00"
+        },
+        {
+            "name": "phpstan/phpstan",
+            "version": "2.1.32",
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/e126cad1e30a99b137b8ed75a85a676450ebb227",
+                "reference": "e126cad1e30a99b137b8ed75a85a676450ebb227",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.4|^8.0"
+            },
+            "conflict": {
+                "phpstan/phpstan-shim": "*"
+            },
+            "bin": [
+                "phpstan",
+                "phpstan.phar"
+            ],
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "bootstrap.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "PHPStan - PHP Static Analysis Tool",
+            "keywords": [
+                "dev",
+                "static analysis"
+            ],
+            "support": {
+                "docs": "https://phpstan.org/user-guide/getting-started",
+                "forum": "https://github.com/phpstan/phpstan/discussions",
+                "issues": "https://github.com/phpstan/phpstan/issues",
+                "security": "https://github.com/phpstan/phpstan/security/policy",
+                "source": "https://github.com/phpstan/phpstan-src"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/ondrejmirtes",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/phpstan",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-11-11T15:18:17+00:00"
         },
         {
             "name": "squizlabs/php_codesniffer",
@@ -5988,12 +6180,12 @@
     ],
     "aliases": [],
     "minimum-stability": "dev",
-    "stability-flags": {},
+    "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.2"
     },
-    "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "platform-dev": [],
+    "plugin-api-version": "2.3.0"
 }

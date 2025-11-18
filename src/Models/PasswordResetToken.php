@@ -1,9 +1,26 @@
 <?php
 
-namespace Equidna\SwifthAuth\Models;
+/**
+ * Provides persistence for SwiftAuth password reset tokens.
+ *
+ * PHP 8.2+
+ *
+ * @package   Equidna\SwiftAuth\Models
+ * @author    Gabriel Ruelas <gruelas@gruelas.com>
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @link      https://github.com/EquidnaMX/swift_auth
+ */
+
+namespace Equidna\SwiftAuth\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Represents a password reset token row keyed by email.
+ *
+ * @method static static updateOrCreate(array $attributes, array $values = [])
+ * @method static \Illuminate\Database\Eloquent\Builder|static where($column, $operator = null, $value = null)
+ */
 class PasswordResetToken extends Model
 {
     /**

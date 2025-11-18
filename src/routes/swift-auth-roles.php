@@ -5,11 +5,11 @@
  *
  * PHP 8.1+
  *
- * @package Equidna\SwifthAuth\Routes
+ * @package Equidna\SwiftAuth\Routes
  */
 
 use Illuminate\Support\Facades\Route;
-use Equidna\SwifthAuth\Http\Controllers\RoleController;
+use Equidna\SwiftAuth\Http\Controllers\RoleController;
 
 Route::prefix('roles')
     ->as('roles.')

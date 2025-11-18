@@ -1,0 +1,8 @@
+parameters:
+  level: max
+  treatPhpDocTypesAsCertain: false
+  bootstrapFiles:
+    - phpstan-bootstrap.php
+    - vendor/autoload.php
+  paths:
+    - src

@@ -5,13 +5,13 @@
  *
  * PHP 8.2+
  *
- * @package   Equidna\SwifthAuth\Http\Controllers
+ * @package   Equidna\SwiftAuth\Http\Controllers
  * @author    Gabriel Ruelas <gruelas@gruelas.com>
  * @license   https://opensource.org/licenses/MIT MIT License
  * @link      https://github.com/EquidnaMX/swift_auth
  */
 
-namespace Equidna\SwifthAuth\Http\Controllers;
+namespace Equidna\SwiftAuth\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -25,10 +25,10 @@ use Equidna\Toolkit\Exceptions\BadRequestException;
 use Equidna\Toolkit\Exceptions\ForbiddenException;
 use Equidna\Toolkit\Helpers\ResponseHelper;
 use Inertia\Response;
-use Equidna\SwifthAuth\Facades\SwiftAuth;
-use Equidna\SwifthAuth\Models\Role;
-use Equidna\SwifthAuth\Models\User;
-use Equidna\SwifthAuth\Traits\SelectiveRender;
+use Equidna\SwiftAuth\Facades\SwiftAuth;
+use Equidna\SwiftAuth\Models\Role;
+use Equidna\SwiftAuth\Models\User;
+use Equidna\SwiftAuth\Traits\SelectiveRender;
 
 /**
  * Manages SwiftAuth user lifecycle actions (listing, creation, updates, and deletion).

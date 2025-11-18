@@ -5,7 +5,7 @@
  *
  * PHP 8.1+
  *
- * @package Equidna\SwifthAuth\Config
+ * @package Equidna\SwiftAuth\Config
  */
 
 return [

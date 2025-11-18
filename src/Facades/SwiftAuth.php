@@ -1,6 +1,6 @@
 <?php
 
-namespace Equidna\SwifthAuth\Facades;
+namespace Equidna\SwiftAuth\Facades;
 
 use Illuminate\Support\Facades\Facade;
 
@@ -17,7 +17,15 @@ use Illuminate\Support\Facades\Facade;
  * SwiftAuth::user();
  * ```
  *
- * @see \Equidna\SwifthAuth\Services\SwiftSessionAuth
+ * @see \Equidna\SwiftAuth\Services\SwiftSessionAuth
+ *
+ * @method static bool login(array $credentials)
+ * @method static void logout()
+ * @method static bool check()
+ * @method static int|null id()
+ * @method static mixed user()
+ * @method static bool canPerformAction(string $action)
+ * @method static mixed userOrFail()
  */
 class SwiftAuth extends Facade
 {

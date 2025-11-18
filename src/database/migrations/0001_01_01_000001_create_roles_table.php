@@ -5,7 +5,7 @@
  *
  * PHP 8.1+
  *
- * @package Equidna\SwifthAuth\Database\Migrations
+ * @package Equidna\SwiftAuth\Database\Migrations
  */
 
 use Illuminate\Database\Migrations\Migration;

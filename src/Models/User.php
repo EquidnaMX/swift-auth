@@ -1,18 +1,30 @@
 <?php
 
-namespace Equidna\SwifthAuth\Models;
+/**
+ * Defines the SwiftAuth user model and related helpers.
+ *
+ * PHP 8.2+
+ *
+ * @package   Equidna\SwiftAuth\Models
+ * @author    Gabriel Ruelas <gruelas@gruelas.com>
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @link      https://github.com/EquidnaMX/swift_auth
+ */
+
+namespace Equidna\SwiftAuth\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * Class User
+ * Represents an authenticated SwiftAuth user record.
  *
  * @property int $id_user
  * @property string $name
  * @property string $email
  * @property string $password
+ * @property-read \Illuminate\Database\Eloquent\Collection|\Equidna\SwiftAuth\Models\Role[] $roles
  */
 class User extends Authenticatable
 {
@@ -53,13 +65,12 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed',
     ];
 
     /**
      * The roles associated with the user.
      *
-     * @return BelongsToMany<Role>
+     * @return BelongsToMany
      */
     public function roles(): BelongsToMany
     {

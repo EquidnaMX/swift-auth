@@ -1,6 +1,6 @@
 <?php
 
-namespace Equidna\SwifthAuth\Traits;
+namespace Equidna\SwiftAuth\Traits;
 
 use Illuminate\View\View;
 use Inertia\Response;
@@ -14,7 +14,7 @@ use Inertia\Inertia;
  * based on the configuration of the frontend. It also ensures that flash messages
  * (success, error, status) are passed to the view or component.
  *
- * @package Equidna\SwifthAuth\Traits
+ * @package Equidna\SwiftAuth\Traits
  */
 trait SelectiveRender
 {

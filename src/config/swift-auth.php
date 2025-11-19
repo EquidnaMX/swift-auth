@@ -103,6 +103,6 @@ return [
     | collisions with host applications. Leave empty for no prefix.
     |
     */
-    'table_prefix' => env('SWIFT_AUTH_TABLE_PREFIX', ''),
+    'table_prefix' => env('SWIFT_AUTH_TABLE_PREFIX', 'swift-auth_'),
     'route_prefix' => env('SWIFT_AUTH_ROUTE_PREFIX', 'swift-auth'),
 ];

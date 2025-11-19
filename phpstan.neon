@@ -1,0 +1,31 @@
+parameters:
+    level: 5
+    paths:
+        - src
+    bootstrapFiles:
+        - vendor/autoload.php
+    scanDirectories:
+        - vendor
+    ignoreErrors:
+        # Ignore all errors related to missing external toolkit dependency
+        - '#Equidna\\Toolkit\\#'
+        # Ignore facade magic methods
+        - '#Call to an undefined static method Equidna\\SwifthAuth\\Facades\\SwiftAuth::#'
+        # Ignore Laravel Eloquent magic methods and query builder methods
+        - '#Call to an undefined static method .*::findOrFail\(\)#'
+        - '#Call to an undefined static method .*::find\(\)#'
+        - '#Call to an undefined static method .*::search\(\)#'
+        - '#Call to an undefined static method .*::orderBy\(\)#'
+        - '#Call to an undefined static method .*::create\(\)#'
+        - '#Call to an undefined static method .*::firstOrCreate\(\)#'
+        - '#Call to an undefined static method .*::updateOrCreate\(\)#'
+        - '#Call to an undefined static method .*::where\(\)#'
+        # Ignore Laravel Request magic properties
+        - '#Access to an undefined property Illuminate\\Http\\Request::\$.*#'
+        # Ignore false positive isset checks
+        - '#Variable .* in isset\(\) always exists#'
+        # Ignore generic type issues with BelongsToMany (Laravel's limitation)
+        - '#Generic type .*BelongsToMany.* does not specify all template types#'
+        - '#should return .*BelongsToMany.* but returns .*BelongsToMany#'
+        # Ignore property issues from relationships
+        - '#Access to an undefined property .*::\$roles#'

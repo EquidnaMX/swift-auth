@@ -135,7 +135,13 @@ class User extends Authenticatable
      */
     public function scopeSearch(Builder $query, null|string $search): Builder
     {
-        return $query->where('name', 'LIKE', '%' . $search . '%')
-            ->orWhere('email', 'LIKE', '%' . $search . '%');
+        if (empty($search)) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($search) {
+            $q->where('name', 'LIKE', '%' . $search . '%')
+                ->orWhere('email', 'LIKE', '%' . $search . '%');
+        });
     }
 }

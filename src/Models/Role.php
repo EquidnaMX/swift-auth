@@ -70,6 +70,10 @@ class Role extends Model
      */
     public function scopeSearch(Builder $query, null|string $search): Builder
     {
+        if (empty($search)) {
+            return $query;
+        }
+
         return $query->where('name', 'LIKE', '%' . $search . '%');
     }
 }

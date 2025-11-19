@@ -68,6 +68,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Password Reset Verification Rate Limit
+    |--------------------------------------------------------------------------
+    |
+    | Limits password reset token *verification* attempts per email to
+    | prevent brute-force attacks on reset tokens. This is separate from
+    | the request rate limit above.
+    |
+    */
+
+    'password_reset_verify_attempts' => 10,
+    'password_reset_verify_decay_seconds' => 3600,
+
+    /*
+    |--------------------------------------------------------------------------
     | Available Actions
     |--------------------------------------------------------------------------
     |
@@ -89,6 +103,6 @@ return [
     | collisions with host applications. Leave empty for no prefix.
     |
     */
-    'table_prefix' => env('SWIFT_AUTH_TABLE_PREFIX', 'swift-auth_'),
+    'table_prefix' => env('SWIFT_AUTH_TABLE_PREFIX', ''),
     'route_prefix' => env('SWIFT_AUTH_ROUTE_PREFIX', 'swift-auth'),
 ];

@@ -1,16 +1,37 @@
+includes:
+    # Include Larastan extension for Laravel-specific analysis
+    # This provides better understanding of Laravel's magic methods and facades
+
 parameters:
     level: 5
     paths:
         - src
+    
+    # Bootstrap files to load Laravel and application dependencies
     bootstrapFiles:
         - vendor/autoload.php
+    
+    # Scan vendor directory for better type inference
     scanDirectories:
         - vendor
+    
+    # Universal object crates - helps with magic methods
+    universalObjectCratesClasses:
+        - Illuminate\Database\Eloquent\Model
+        - Illuminate\Http\Request
+    
+    # Paths to exclude from analysis
+    excludePaths:
+        - src/resources/views/*
+    
+    # Error suppression for unavoidable issues
     ignoreErrors:
         # Ignore all errors related to missing external toolkit dependency
         - '#Equidna\\Toolkit\\#'
-        # Ignore facade magic methods
+        
+        # Ignore facade magic methods (until Larastan is properly installed)
         - '#Call to an undefined static method Equidna\\SwifthAuth\\Facades\\SwiftAuth::#'
+        
         # Ignore Laravel Eloquent magic methods and query builder methods
         - '#Call to an undefined static method .*::findOrFail\(\)#'
         - '#Call to an undefined static method .*::find\(\)#'
@@ -20,12 +41,10 @@ parameters:
         - '#Call to an undefined static method .*::firstOrCreate\(\)#'
         - '#Call to an undefined static method .*::updateOrCreate\(\)#'
         - '#Call to an undefined static method .*::where\(\)#'
-        # Ignore Laravel Request magic properties
-        - '#Access to an undefined property Illuminate\\Http\\Request::\$.*#'
+        
         # Ignore false positive isset checks
         - '#Variable .* in isset\(\) always exists#'
+        
         # Ignore generic type issues with BelongsToMany (Laravel's limitation)
         - '#Generic type .*BelongsToMany.* does not specify all template types#'
         - '#should return .*BelongsToMany.* but returns .*BelongsToMany#'
-        # Ignore property issues from relationships
-        - '#Access to an undefined property .*::\$roles#'

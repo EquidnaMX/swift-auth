@@ -23,7 +23,8 @@ class PasswordResetMail extends Mailable implements ShouldQueue
 
     public function build()
     {
-        $resetUrl = url("/swift-auth/password/{$this->token}?email=" . urlencode($this->email));
+        $routePrefix = config('swift-auth.route_prefix', 'swift-auth');
+        $resetUrl = url("/{$routePrefix}/password/{$this->token}?email=" . urlencode($this->email));
 
         return $this->subject('Restablecer contraseña')
             ->view('swift-auth::emails.password_reset', [

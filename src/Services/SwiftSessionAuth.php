@@ -112,7 +112,7 @@ class SwiftSessionAuth
     {
         $id = $this->id();
 
-        if (!$id || !$user = User::find($id)) {
+        if (!$id || !($user = User::find($id))) {
             throw new ModelNotFoundException("User not found");
         }
 

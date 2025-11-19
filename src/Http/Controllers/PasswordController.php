@@ -168,8 +168,9 @@ class PasswordController extends Controller
      */
     public function resetPassword(Request $request): RedirectResponse|JsonResponse
     {
+        $prefix = config('swift-auth.table_prefix', '');
         $data = $request->validate([
-            'email' => 'required|email|exists:Users,email',
+            'email' => 'required|email|exists:' . $prefix . 'Users,email',
             'token' => 'required|string',
             'password' => 'required|min:6|confirmed',
         ]);

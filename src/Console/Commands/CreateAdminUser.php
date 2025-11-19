@@ -60,8 +60,6 @@ class CreateAdminUser extends Command
 
         $this->createAdminUser($userName, $email, $randomPassword, false);
         $this->info('Admin user created. Request a password reset for the new account to set a secure password.');
-
-        return;
     }
 
     private function createAdminUser(

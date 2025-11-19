@@ -28,7 +28,7 @@ class PasswordResetToken extends Model
      *
      * @var string
      */
-    protected $table = 'PasswordResetTokens';
+    protected $table;
 
     /**
      * The primary key for the model (email string).
@@ -44,6 +44,16 @@ class PasswordResetToken extends Model
      */
     public $incrementing = false;
     protected $keyType = 'string';
+
+    /**
+     * Initialize the model.
+     */
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $prefix = config('swift-auth.table_prefix', '');
+        $this->table = $prefix . 'PasswordResetTokens';
+    }
 
     /**
      * We manage created_at manually on the token row.

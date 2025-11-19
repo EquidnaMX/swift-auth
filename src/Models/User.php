@@ -31,12 +31,22 @@ class User extends Authenticatable
     /**
      * @var string
      */
-    protected $table = "Users";
+    protected $table;
 
     /**
      * @var string
      */
     protected $primaryKey = 'id_user';
+
+    /**
+     * Initialize the model.
+     */
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $prefix = config('swift-auth.table_prefix', '');
+        $this->table = $prefix . 'Users';
+    }
 
     /**
      * @var array<int, string>
@@ -50,6 +60,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'email_verified_at',
     ];
 
     /**
@@ -74,9 +85,10 @@ class User extends Authenticatable
      */
     public function roles(): BelongsToMany
     {
+        $prefix = config('swift-auth.table_prefix', '');
         return $this->belongsToMany(
             Role::class,
-            'UsersRoles',
+            $prefix . 'UsersRoles',
             'id_user',
             'id_role'
         );
@@ -135,7 +147,13 @@ class User extends Authenticatable
      */
     public function scopeSearch(Builder $query, null|string $search): Builder
     {
-        return $query->where('name', 'LIKE', '%' . $search . '%')
-            ->orWhere('email', 'LIKE', '%' . $search . '%');
+        if (empty($search)) {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($search) {
+            $q->where('name', 'LIKE', '%' . $search . '%')
+                ->orWhere('email', 'LIKE', '%' . $search . '%');
+        });
     }
 }

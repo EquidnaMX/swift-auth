@@ -82,10 +82,11 @@ class RoleController extends Controller
      */
     public function store(Request $request): RedirectResponse|JsonResponse
     {
+        $prefix = config('swift-auth.table_prefix', '');
         $validator = Validator::make(
             $request->all(),
             [
-                'name' => 'required|string|unique:Roles,name',
+                'name' => 'required|string|unique:' . $prefix . 'Roles,name',
                 'description' => 'required|string',
                 'actions' => 'required|array|min:1',
                 'actions.*' => 'string',

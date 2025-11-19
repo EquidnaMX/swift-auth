@@ -88,11 +88,12 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse|JsonResponse
     {
+        $prefix = config('swift-auth.table_prefix', '');
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:Users',
+            'email' => 'required|string|email|max:255|unique:' . $prefix . 'Users',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|exists:Roles,id_role',
+            'role' => 'required|exists:' . $prefix . 'Roles,id_role',
         ]);
 
         if ($validator->fails()) {
@@ -167,13 +168,14 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id_user);
 
+        $prefix = config('swift-auth.table_prefix', '');
         $validator = Validator::make(
             $request->all(),
             [
                 'name' => 'sometimes|string|max:255',
                 'roles' => 'sometimes|array',
-                'roles.*' => 'integer|exists:Roles,id_role',
-                'role' => 'sometimes|integer|exists:Roles,id_role',
+                'roles.*' => 'integer|exists:' . $prefix . 'Roles,id_role',
+                'role' => 'sometimes|integer|exists:' . $prefix . 'Roles,id_role',
             ]
         );
 

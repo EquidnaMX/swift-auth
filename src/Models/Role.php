@@ -19,12 +19,22 @@ class Role extends Model
     /**
      * @var string
      */
-    protected $table = 'Roles';
+    protected $table;
 
     /**
      * @var string
      */
     protected $primaryKey = 'id_role';
+
+    /**
+     * Initialize the model.
+     */
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $prefix = config('swift-auth.table_prefix', '');
+        $this->table = $prefix . 'Roles';
+    }
 
     /**
      * @var array<int, string>
@@ -42,9 +52,10 @@ class Role extends Model
      */
     public function users(): BelongsToMany
     {
+        $prefix = config('swift-auth.table_prefix', '');
         return $this->belongsToMany(
             User::class,
-            'UsersRoles',
+            $prefix . 'UsersRoles',
             'id_role',
             'id_user'
         );
@@ -59,6 +70,10 @@ class Role extends Model
      */
     public function scopeSearch(Builder $query, null|string $search): Builder
     {
+        if (empty($search)) {
+            return $query;
+        }
+
         return $query->where('name', 'LIKE', '%' . $search . '%');
     }
 }

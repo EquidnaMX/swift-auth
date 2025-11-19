@@ -24,6 +24,7 @@
         "inertiajs/inertia-laravel": "^1.0"
     },
     "require-dev": {
+        "larastan/larastan": "*",
         "laravel/framework": "^11.21",
         "squizlabs/php_codesniffer": "^4.0",
         "stevebauman/autodoc-facades": "^1.3"

@@ -69,7 +69,7 @@ class InstallSwiftAuth extends Command
         $this->call('migrate');
 
         $this->info('No automatic admin seeded. To create an administrator run:');
-        $this->info('  php artisan swift-auth:create-admin --default');
+        $this->info('  php artisan swift-auth:create-admin "Admin Name" "admin@example.com"');
         $this->info('Set `SWIFT_ADMIN_NAME` and `SWIFT_ADMIN_EMAIL` in the environment for non-interactive creation.');
 
         $this->info('Importando iconos...');

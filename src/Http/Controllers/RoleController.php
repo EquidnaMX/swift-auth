@@ -47,7 +47,7 @@ class RoleController extends Controller
             ->paginate(10);
 
         return $this->render(
-            'swift-auth::user.role.index',
+            'swift-auth::role.index',
             'role/Index',
             [
                 'roles' => $roles,
@@ -65,7 +65,7 @@ class RoleController extends Controller
     public function create(Request $request): View|Response
     {
         return $this->render(
-            'swift-auth::user.role.create',
+            'swift-auth::role.create',
             'role/Create',
             [
                 'actions' => Config::get('swift-auth.actions'),
@@ -82,10 +82,11 @@ class RoleController extends Controller
      */
     public function store(Request $request): RedirectResponse|JsonResponse
     {
+        $prefix = config('swift-auth.table_prefix', '');
         $validator = Validator::make(
             $request->all(),
             [
-                'name' => 'required|string|unique:Roles,name',
+                'name' => 'required|string|unique:' . $prefix . 'Roles,name',
                 'description' => 'required|string',
                 'actions' => 'required|array|min:1',
                 'actions.*' => 'string',

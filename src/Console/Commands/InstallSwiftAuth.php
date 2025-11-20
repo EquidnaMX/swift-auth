@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Artisan command to install SwiftAuth into a Laravel application.
+ *
+ * PHP 8.2+
+ *
+ * @package   Equidna\SwiftAuth\Console\Commands
+ * @author    Gabriel Ruelas <gruelas@gruelas.com>
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @link      https://github.com/EquidnaMX/swift_auth Package repository
+ */
+
 namespace Equidna\SwiftAuth\Console\Commands;
 
 use Illuminate\Console\Command;
@@ -16,14 +27,11 @@ class InstallSwiftAuth extends Command
     /**
      * The name and signature of the console command.
      *
-     * @var string
      */
     protected $signature = 'swift-auth:install';
 
     /**
      * The console command description.
-     *
-     * @var string
      */
     protected $description = 'Instala SwiftAuth: configura, migra y publica archivos';
 

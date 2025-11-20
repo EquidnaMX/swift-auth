@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Artisan command to create an administrator user for SwiftAuth.
+ *
+ * PHP 8.2+
+ *
+ * @package   Equidna\SwiftAuth\Console\Commands
+ * @author    Gabriel Ruelas <gruelas@gruelas.com>
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @link      https://github.com/EquidnaMX/swift_auth Package repository
+ */
+
 namespace Equidna\SwiftAuth\Console\Commands;
 
 use Illuminate\Console\Command;
@@ -17,7 +28,6 @@ class CreateAdminUser extends Command
     /**
      * The name and signature of the console command.
      *
-     * @var string
      */
     protected $signature = 'swift-auth:create-admin'
         . ' {name? : Admin name}'
@@ -25,7 +35,6 @@ class CreateAdminUser extends Command
     /**
      * The console command description.
      *
-     * @var string
      */
     protected $description = 'Crea un usuario administrador usando valores de .env o datos ingresados por el usuario';
 

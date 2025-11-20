@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
-use Illuminate\View\View;
+use Illuminate\Contracts\View\View;
 use Equidna\Toolkit\Exceptions\BadRequestException;
 use Equidna\Toolkit\Exceptions\NotFoundException;
 use Equidna\Toolkit\Helpers\ResponseHelper;
@@ -78,7 +78,7 @@ class PasswordController extends Controller
         $ipKey = 'password-reset:ip:' . $request->ip();
 
         // If too many attempts for this email, return a 429 with retry information
-        if (RateLimiter::tooManyAttempts($limiterKey, $attempts)) {
+        if (RateLimiter::tooManyAttempts($limiterKey, (int) $attempts)) {
             $availableIn = RateLimiter::availableIn($limiterKey);
 
             return response()->json([
@@ -87,7 +87,7 @@ class PasswordController extends Controller
         }
 
         // IP-level protection: high threshold to reduce noise but stop large scans
-        if (RateLimiter::tooManyAttempts($ipKey, max(50, $attempts * 10))) {
+        if (RateLimiter::tooManyAttempts($ipKey, (int) max(50, $attempts * 10))) {
             $availableIn = RateLimiter::availableIn($ipKey);
 
             return response()->json([
@@ -217,9 +217,7 @@ class PasswordController extends Controller
 
         $reset->delete();
         // Successful verification: clear the verify limiter for this target
-        if (isset($verifyLimiter)) {
-            RateLimiter::clear($verifyLimiter);
-        }
+        RateLimiter::clear($verifyLimiter);
         return ResponseHelper::success(
             message: 'Password updated successfully.',
             data: [

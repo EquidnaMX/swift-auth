@@ -1,7 +1,5 @@
 @extends('layouts.auth')
-
 @section('title', 'Users')
-
 @section('content')
     <h2 class="text-center">Usuarios</h2>
 

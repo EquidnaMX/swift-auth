@@ -1,10 +1,22 @@
 <?php
 
-namespace Equidna\SwifthAuth\Models;
+/**
+ * Represents a system role.
+ *
+ * PHP 8.2+
+ *
+ * @package   Equidna\SwiftAuth\Models
+ * @author    Gabriel Ruelas <gruelas@gruelas.com>
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @link      https://github.com/EquidnaMX/swift_auth Package repository
+ */
+
+namespace Equidna\SwiftAuth\Models;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Equidna\SwiftAuth\Models\User;
 
 /**
  * Class Role
@@ -13,17 +25,16 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $name
  * @property string|null $description
  * @property string $actions Comma-separated actions
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\Role> search(null|string $term)
+ * @method static static create(array<string,mixed> $attributes = [])
+ * @method static static findOrFail(string|int $id)
+ * @method static static firstOrCreate(array<string,mixed> $attributes, array<string,mixed> $values = [])
+ * @method static \Illuminate\Database\Eloquent\Builder orderBy(string $column, string $direction = 'asc')
  */
 class Role extends Model
 {
-    /**
-     * @var string
-     */
     protected $table;
-
-    /**
-     * @var string
-     */
     protected $primaryKey = 'id_role';
 
     /**
@@ -36,9 +47,6 @@ class Role extends Model
         $this->table = $prefix . 'Roles';
     }
 
-    /**
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'description',
@@ -48,7 +56,12 @@ class Role extends Model
     /**
      * The users that belong to this role.
      *
-     * @return BelongsToMany<User>
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<
+     *     \Equidna\SwiftAuth\Models\User,
+     *     $this,
+     *     \Illuminate\Database\Eloquent\Relations\Pivot,
+     *     'pivot'
+     * >
      */
     public function users(): BelongsToMany
     {
@@ -64,9 +77,9 @@ class Role extends Model
     /**
      * Scope a query to filter roles by name.
      *
-     * @param Builder $query
+     * @param \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\Role> $query
      * @param string|null $search
-     * @return Builder
+     * @return \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\Role>
      */
     public function scopeSearch(Builder $query, null|string $search): Builder
     {

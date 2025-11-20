@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Mailable used to send password reset instructions.
+ *
+ * PHP 8.2+
+ *
+ * @package   Equidna\SwiftAuth\Mail
+ * @author    Gabriel Ruelas <gruelas@gruelas.com>
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @link      https://github.com/EquidnaMX/swift_auth Package repository
+ */
+
 namespace Equidna\SwiftAuth\Mail;
 
 use Illuminate\Queue\SerializesModels;
@@ -21,6 +32,11 @@ class PasswordResetMail extends Mailable implements ShouldQueue
         $this->email = $email;
     }
 
+    /**
+     * Build the password reset email.
+     *
+     * @return $this
+     */
     public function build()
     {
         $routePrefix = config('swift-auth.route_prefix', 'swift-auth');

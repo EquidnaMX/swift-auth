@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * Service provider that registers and bootstraps SwiftAuth components.
+ *
+ * PHP 8.2+
+ *
+ * @package   Equidna\SwiftAuth\Providers
+ * @author    Gabriel Ruelas <gruelas@gruelas.com>
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @link      https://github.com/EquidnaMX/swift_auth Package repository
+ */
+
 namespace Equidna\SwiftAuth\Providers;
 
 use Illuminate\Support\ServiceProvider;

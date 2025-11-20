@@ -24,18 +24,18 @@ use Illuminate\Database\Eloquent\Builder;
  * @property string $name
  * @property string $email
  * @property string $password
- * @property-read \Illuminate\Database\Eloquent\Collection|\Equidna\SwiftAuth\Models\Role[] $roles
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \Equidna\SwiftAuth\Models\Role> $roles
+ *
+ * @method static Builder<\Equidna\SwiftAuth\Models\User> where(string $column, mixed $value = null)
+ * @method static Builder<\Equidna\SwiftAuth\Models\User> search(null|string $term)
+ * @method static static create(array<string,mixed> $attributes = [])
+ * @method static static find(string|int $id)
+ * @method static static findOrFail(string|int $id)
+ * @method static static firstOrCreate(array<string,mixed> $attributes, array<string,mixed> $values = [])
  */
 class User extends Authenticatable
 {
-    /**
-     * @var string
-     */
     protected $table;
-
-    /**
-     * @var string
-     */
     protected $primaryKey = 'id_user';
 
     /**
@@ -48,32 +48,17 @@ class User extends Authenticatable
         $this->table = $prefix . 'Users';
     }
 
-    /**
-     * @var array<int, string>
-     */
     protected $with = ['roles'];
-
-    /**
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
         'email_verified_at',
     ];
-
-    /**
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
-
-    /**
-     * @var array<string, string>
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
@@ -81,7 +66,12 @@ class User extends Authenticatable
     /**
      * The roles associated with the user.
      *
-     * @return BelongsToMany
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<
+     *     \Equidna\SwiftAuth\Models\Role,
+     *     $this,
+     *     \Illuminate\Database\Eloquent\Relations\Pivot,
+     *     'pivot'
+     * >
      */
     public function roles(): BelongsToMany
     {
@@ -141,9 +131,9 @@ class User extends Authenticatable
     /**
      * Scope a query to filter users by name or email.
      *
-     * @param Builder $query
+     * @param \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\User> $query
      * @param string|null $search
-     * @return Builder
+     * @return \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\User>
      */
     public function scopeSearch(Builder $query, null|string $search): Builder
     {

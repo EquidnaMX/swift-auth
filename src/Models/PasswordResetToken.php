@@ -14,34 +14,18 @@
 namespace Equidna\SwiftAuth\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Represents a password reset token row keyed by email.
  *
- * @method static static updateOrCreate(array $attributes, array $values = [])
- * @method static \Illuminate\Database\Eloquent\Builder|static where($column, $operator = null, $value = null)
+ * @method static static updateOrCreate(array<string,mixed> $attributes, array<string,mixed> $values = [])
+ * @method static Builder|static where(string $column, mixed $operator = null, mixed $value = null)
  */
 class PasswordResetToken extends Model
 {
-    /**
-     * Table backing the password reset tokens.
-     *
-     * @var string
-     */
     protected $table;
-
-    /**
-     * The primary key for the model (email string).
-     *
-     * @var string
-     */
     protected $primaryKey = 'email';
-
-    /**
-     * The primary key is non-incrementing and is a string.
-     *
-     * @var bool
-     */
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -55,27 +39,10 @@ class PasswordResetToken extends Model
         $this->table = $prefix . 'PasswordResetTokens';
     }
 
-    /**
-     * We manage created_at manually on the token row.
-     *
-     * @var bool
-     */
     public $timestamps = false;
-
-    /**
-     * Attribute casting.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'created_at' => 'datetime',
     ];
-
-    /**
-     * Mass assignable attributes.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'email',
         'token',

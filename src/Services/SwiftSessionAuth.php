@@ -26,18 +26,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
  */
 class SwiftSessionAuth
 {
-    /**
-     * The session store instance.
-     *
-     * @var Session
-     */
     protected Session $session;
-
-    /**
-     * The session key used to store the authenticated user ID.
-     *
-     * @var string
-     */
     protected string $sessionKey = 'swift_auth_user_id';
 
     /**
@@ -122,7 +111,7 @@ class SwiftSessionAuth
     /**
      * Check if the authenticated user is allowed to perform the given action(s).
      *
-     * @param string|array $actions The action or list of actions to validate.
+     * @param string|array<string,mixed> $actions The action or list of actions to validate.
      * @return bool True if the user has permission for at least one of the actions; otherwise, false.
      */
     public function canPerformAction(string|array $actions): bool
@@ -147,7 +136,7 @@ class SwiftSessionAuth
     /**
      * Check if the authenticated user has any of the given roles.
      *
-     * @param string|array $roles
+     * @param string|array<string,mixed> $roles
      * @return bool
      */
     public function hasRole(string|array $roles): bool

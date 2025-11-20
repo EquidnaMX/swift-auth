@@ -19,7 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\View\View;
+use Illuminate\Contracts\View\View;
 use Equidna\Toolkit\Exceptions\BadRequestException;
 use Equidna\Toolkit\Helpers\ResponseHelper;
 use Inertia\Response;

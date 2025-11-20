@@ -21,17 +21,19 @@
     "require": {
         "php": "^8.2",
         "equidna/laravel-toolkit": "^1.0",
-        "inertiajs/inertia-laravel": "^1.0"
+        "illuminate/support": "^11.21 || ^12.0",
+        "inertiajs/inertia-laravel": "^1.0",
+        "laravel/framework": "^11.21 || ^12.0",
+        "laravel/helpers": "^1.7"
     },
     "require-dev": {
-        "larastan/larastan": "*",
-        "laravel/framework": "^11.21",
-        "squizlabs/php_codesniffer": "^4.0",
-        "stevebauman/autodoc-facades": "^1.3"
+        "larastan/larastan": "^3.8",
+        "squizlabs/php_codesniffer": "*",
+        "stevebauman/autodoc-facades": "*"
     },
     "autoload": {
         "psr-4": {
-            "Equidna\\SwifthAuth\\": "src/"
+            "Equidna\\SwiftAuth\\": "src/"
         }
     },
     "scripts": {
@@ -40,7 +42,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Equidna\\SwifthAuth\\Providers\\SwiftAuthServiceProvider"
+                "Equidna\\SwiftAuth\\Providers\\SwiftAuthServiceProvider"
             ]
         }
     },

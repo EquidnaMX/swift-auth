@@ -1,8 +1,20 @@
 <?php
 
+/**
+ * Facade for the SwiftSessionAuth service.
+ *
+ * PHP 8.2+
+ *
+ * @package   Equidna\SwiftAuth\Facades
+ * @author    Gabriel Ruelas <gruelas@gruelas.com>
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @link      https://github.com/EquidnaMX/swift_auth Package repository
+ */
+
 namespace Equidna\SwiftAuth\Facades;
 
 use Illuminate\Support\Facades\Facade;
+use Equidna\SwiftAuth\Models\User;
 
 /**
  * Class SwiftAuth
@@ -19,13 +31,13 @@ use Illuminate\Support\Facades\Facade;
  *
  * @see \Equidna\SwiftAuth\Services\SwiftSessionAuth
  *
- * @method static bool login(array $credentials)
+ * @method static void login(User $user)
  * @method static void logout()
  * @method static bool check()
  * @method static int|null id()
- * @method static mixed user()
- * @method static bool canPerformAction(string $action)
- * @method static mixed userOrFail()
+ * @method static User|null user()
+ * @method static bool canPerformAction(string|array<string,mixed> $actions)
+ * @method static User userOrFail()
  */
 class SwiftAuth extends Facade
 {

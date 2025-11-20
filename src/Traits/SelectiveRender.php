@@ -1,8 +1,19 @@
 <?php
 
+/**
+ * Selective render helper for Blade or Inertia frontends.
+ *
+ * PHP 8.2+
+ *
+ * @package   Equidna\SwiftAuth\Traits
+ * @author    Gabriel Ruelas <gruelas@gruelas.com>
+ * @license   https://opensource.org/licenses/MIT MIT License
+ * @link      https://github.com/EquidnaMX/swift_auth Package repository
+ */
+
 namespace Equidna\SwiftAuth\Traits;
 
-use Illuminate\View\View;
+use Illuminate\Contracts\View\View;
 use Inertia\Response;
 use Illuminate\Support\Facades\Config;
 use Inertia\Inertia;
@@ -24,9 +35,9 @@ trait SelectiveRender
      *
      * @param string $bladeView The Blade view name to render (if frontend is Blade).
      * @param string $inertiaComponent The Inertia component name to render (if frontend is Inertia).
-     * @param array $data Additional data to pass to the view or component.
+     * @param array<string,mixed> $data Additional data to pass to the view or component.
      *
-     * @return View|Response The rendered Blade view or Inertia component.
+     * @return \Illuminate\Contracts\View\View|Response The rendered Blade view or Inertia component.
      */
     protected function render(string $bladeView, string $inertiaComponent, array $data = []): View|Response
     {

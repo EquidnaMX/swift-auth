@@ -89,12 +89,16 @@ class UserController extends Controller
     public function store(Request $request): RedirectResponse|JsonResponse
     {
         $prefix = config('swift-auth.table_prefix', '');
-        $validator = Validator::make($request->all(), [
+        $min = (int) config('swift-auth.password_min_length', 8);
+
+        $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:' . $prefix . 'Users',
-            'password' => 'required|string|min:6|confirmed',
+            'password' => ['required', 'string', 'confirmed', 'min:' . $min],
             'role' => 'required|exists:' . $prefix . 'Roles,id_role',
-        ]);
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             throw new BadRequestException(
@@ -105,10 +109,13 @@ class UserController extends Controller
 
         $payload = $validator->validated();
 
+        $driver = config('swift-auth.hash_driver');
+        $hashed = $driver ? Hash::driver($driver)->make($payload['password']) : Hash::make($payload['password']);
+
         $user = User::create([
             'name' => $payload['name'],
             'email' => $payload['email'],
-            'password' => Hash::make($payload['password']),
+            'password' => $hashed,
         ]);
 
         $user->roles()->attach($payload['role']);

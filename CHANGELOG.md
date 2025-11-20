@@ -2,15 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2] - 2025-11-20
+
+### Changed
+
+-   Config: removed `password_rules` and consolidated password policy into `password_min_length`.
+-   Config: added optional `hash_driver` option to allow explicit hash backend selection.
+-   Code: controllers and commands now use `password_min_length` and respect `hash_driver` when present.
+-   Docs: updated `README.md` and added `UPGRADING.md` with upgrade notes and provider instructions.
+-   Lint: ensured PSR-12 compliance via PHPCS.
+
+---
+
 ## [1.0.1] - 2025-11-17
 
 ### Changed
 
 -   Version bump for maintenance and dependency updates (see composer.json).
-
----
-
-## [1.0.0] - 2025-11-17
 
 ### Added
 

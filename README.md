@@ -66,6 +66,19 @@ This removes any plaintext-secret workflow and reduces accidental credential exp
 
 -   Reset emails are queued by default; run a queue worker in production to avoid blocking requests.
 
+## Password policy & hashing
+
+-   The package exposes configuration to control password validation and hashing behavior. After publishing `config/swift-auth.php` you can tune:
+
+```php
+'password_min_length' => 8,
+'hash_driver' => null, // e.g. 'argon' or 'bcrypt'
+```
+
+-   `password_min_length` controls the minimum allowed password length for creation/reset and login endpoints. `hash_driver` can be set to enforce a specific hashing backend; when `null` the application default is used.
+
+Update these values in the published config before deploying if you need a stronger default policy.
+
 ## Configuration
 
 Publishable file: `config/swift-auth.php`.

@@ -77,11 +77,14 @@ class CreateAdminUser extends Command
         string $textPassword,
         bool $verifyEmail = true
     ): void {
+        $driver = config('swift-auth.hash_driver');
+        $hashed = $driver ? Hash::driver($driver)->make($textPassword) : Hash::make($textPassword);
+
         $user = User::firstOrCreate(
             ['email' => $email],
             [
                 'name' => $userName,
-                'password' => Hash::make($textPassword),
+                'password' => $hashed,
                 'email_verified_at' => $verifyEmail ? now() : null,
             ]
         );

@@ -61,12 +61,17 @@ class AuthController extends Controller
     {
         $credentials = $request->validate([
             'email' => 'required|email',
-            'password' => 'required|min:6',
+            'password' => 'required|min:' . (int) config('swift-auth.password_min_length', 8),
         ]);
 
         $user = User::where('email', $credentials['email'])->first();
 
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        $driver = config('swift-auth.hash_driver');
+        $valid = $driver
+            ? Hash::driver($driver)->check($credentials['password'], $user?->password)
+            : Hash::check($credentials['password'], $user?->password);
+
+        if (!$user || !$valid) {
             throw new UnauthorizedException('Invalid credentials.');
         }
 

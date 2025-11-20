@@ -82,6 +82,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Password minimum length and hashing
+    |--------------------------------------------------------------------------
+    |
+    | `password_min_length` controls the minimum allowed password length for
+    | lightweight validations (e.g. login). Stronger validation for
+    | creation and reset flows is enforced by combining the required,
+    | confirmed and min rules in controllers using this value.
+    |
+    | `hash_driver` (optional) can be set to a specific Laravel hash
+    | driver name (e.g. `argon`, `bcrypt`). When null the application
+    | default Hash driver is used.
+    |
+    */
+
+    'password_min_length' => 8,
+    'hash_driver' => null,
+
+    /*
+    |--------------------------------------------------------------------------
     | Available Actions
     |--------------------------------------------------------------------------
     |

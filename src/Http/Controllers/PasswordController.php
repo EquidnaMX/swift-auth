@@ -169,10 +169,12 @@ class PasswordController extends Controller
     public function resetPassword(Request $request): RedirectResponse|JsonResponse
     {
         $prefix = config('swift-auth.table_prefix', '');
+        $min = (int) config('swift-auth.password_min_length', 8);
+
         $data = $request->validate([
             'email' => 'required|email|exists:' . $prefix . 'Users,email',
             'token' => 'required|string',
-            'password' => 'required|min:6|confirmed',
+            'password' => ['required', 'string', 'confirmed', 'min:' . $min],
         ]);
 
         // Protect verification endpoint from brute-force attempts.
@@ -211,8 +213,11 @@ class PasswordController extends Controller
             throw new NotFoundException('No user was found for the provided email.');
         }
 
+        $driver = config('swift-auth.hash_driver');
+        $hashed = $driver ? Hash::driver($driver)->make($data['password']) : Hash::make($data['password']);
+
         $user->update([
-            'password' => Hash::make($data['password'])
+            'password' => $hashed
         ]);
 
         $reset->delete();

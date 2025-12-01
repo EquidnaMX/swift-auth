@@ -24,8 +24,11 @@ return new class extends Migration {
             $table->id('id_role');
             $table->string('name')->unique();
             $table->string('description')->nullable();
-            $table->string('actions');
+            $table->json('actions'); // Changed from string to JSON for better data structure
             $table->timestamps();
+
+            // Performance indexes
+            $table->index('name');
         });
         Schema::create($prefix . 'UsersRoles', function (Blueprint $table) use ($prefix) {
             $table->unsignedBigInteger('id_user');

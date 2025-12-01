@@ -20,6 +20,7 @@
     ],
     "require": {
         "php": "^8.2",
+        "equidna/bird-flock": "^1.0",
         "equidna/laravel-toolkit": "^1.0",
         "illuminate/support": "^11.21 || ^12.0",
         "inertiajs/inertia-laravel": "^1.0",
@@ -28,12 +29,18 @@
     },
     "require-dev": {
         "larastan/larastan": "^3.8",
+        "phpunit/phpunit": "^12.4",
         "squizlabs/php_codesniffer": "*",
         "stevebauman/autodoc-facades": "*"
     },
     "autoload": {
         "psr-4": {
             "Equidna\\SwiftAuth\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Equidna\\SwiftAuth\\Tests\\": "tests/"
         }
     },
     "scripts": {

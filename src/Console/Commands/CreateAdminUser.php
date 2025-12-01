@@ -36,7 +36,7 @@ class CreateAdminUser extends Command
      * The console command description.
      *
      */
-    protected $description = 'Crea un usuario administrador usando valores de .env o datos ingresados por el usuario';
+    protected $description = 'Create an administrator user using .env values or user-provided data';
 
     /**
      * Execute the console command.
@@ -56,8 +56,8 @@ class CreateAdminUser extends Command
             return;
         }
 
-        if (!$this->confirm("¿Deseas crear el usuario administrador '{$userName}' con el correo '{$email}'?", true)) {
-            $this->info('Operación cancelada.');
+        if (!$this->confirm("Do you want to create the admin user '{$userName}' with email '{$email}'?", true)) {
+            $this->info('Operation cancelled.');
             return;
         }
 
@@ -92,11 +92,17 @@ class CreateAdminUser extends Command
         $role = Role::firstOrCreate(
             ['name' => 'root'],
             [
-                'description' => 'Admin del sistema',
-                'actions' => 'sw-admin',
+                'description' => 'System administrator',
+                'actions' => ['sw-admin'], // Now stored as JSON array
             ]
         );
 
         $user->roles()->syncWithoutDetaching([$role->id_role]);
+
+        logger()->info('Admin user created via CLI', [
+            'user_id' => $user->getKey(),
+            'email' => $user->email,
+            'role' => 'root',
+        ]);
     }
 }

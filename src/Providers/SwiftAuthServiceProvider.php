@@ -17,6 +17,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
 use Equidna\SwiftAuth\Console\Commands\InstallSwiftAuth;
 use Equidna\SwiftAuth\Console\Commands\CreateAdminUser;
+use Equidna\SwiftAuth\Console\Commands\UnlockUserCommand;
 use Equidna\SwiftAuth\Http\Middleware\RequireAuthentication;
 use Equidna\SwiftAuth\Http\Middleware\CanPerformAction;
 use Equidna\SwiftAuth\Services\SwiftSessionAuth;
@@ -58,6 +59,7 @@ final class SwiftAuthServiceProvider extends ServiceProvider
 
         // Load package resources
         $this->loadRoutesFrom(__DIR__ . '/../routes/swift-auth.php');
+        $this->loadRoutesFrom(__DIR__ . '/../routes/swift-auth-email-verification.php');
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'swift-auth');
 
@@ -101,6 +103,7 @@ final class SwiftAuthServiceProvider extends ServiceProvider
             $this->commands([
                 InstallSwiftAuth::class,
                 CreateAdminUser::class,
+                UnlockUserCommand::class,
             ]);
         }
     }

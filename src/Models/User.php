@@ -39,6 +39,11 @@ class User extends Authenticatable
     protected $primaryKey = 'id_user';
 
     /**
+     * Cached available actions to avoid repeated parsing.
+     */
+    private ?array $cachedActions = null;
+
+    /**
      * Initialize the model.
      */
     public function __construct(array $attributes = [])
@@ -108,6 +113,11 @@ class User extends Authenticatable
      */
     public function availableActions(): array
     {
+        // Return cached result if available
+        if ($this->cachedActions !== null) {
+            return $this->cachedActions;
+        }
+
         $actions = [];
 
         foreach ($this->roles as $role) {
@@ -115,17 +125,18 @@ class User extends Authenticatable
                 continue;
             }
 
-            $roleActions = array_filter(
-                array_map(
-                    static fn(string $action) => trim($action),
-                    explode(',', $role->actions)
-                )
-            );
+            // Actions are now stored as JSON array
+            $roleActions = is_array($role->actions)
+                ? $role->actions
+                : [];
 
             $actions = array_merge($actions, $roleActions);
         }
 
-        return array_values(array_unique($actions));
+        // Cache the result
+        $this->cachedActions = array_values(array_unique($actions));
+
+        return $this->cachedActions;
     }
 
     /**

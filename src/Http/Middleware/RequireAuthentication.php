@@ -45,7 +45,7 @@ class RequireAuthentication
         try {
             $user = SwiftAuth::userOrFail();
 
-            $request->attributes->add(['sw-user' => $user]);
+            $request->attributes->add(['swift_auth_user' => $user]);
         } catch (ModelNotFoundException $e) {
             return ResponseHelper::unauthorized(
                 message: 'Authenticated user not found on record.',

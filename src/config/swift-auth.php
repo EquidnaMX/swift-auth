@@ -124,4 +124,51 @@ return [
     */
     'table_prefix' => env('SWIFT_AUTH_TABLE_PREFIX', 'swift-auth_'),
     'route_prefix' => env('SWIFT_AUTH_ROUTE_PREFIX', 'swift-auth'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Email Verification
+    |--------------------------------------------------------------------------
+    |
+    | Enable email verification flow. When enabled, users must verify their
+    | email address before accessing protected resources.
+    |
+    */
+    'email_verification' => [
+        'required' => env('SWIFT_AUTH_REQUIRE_VERIFICATION', false),
+        'token_ttl' => 86400, // 24 hours
+        'resend_rate_limit' => [
+            'attempts' => 3,
+            'decay_seconds' => 300, // 5 minutes
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Account Lockout
+    |--------------------------------------------------------------------------
+    |
+    | Automatically lock accounts after repeated failed login attempts.
+    |
+    */
+    'account_lockout' => [
+        'enabled' => env('SWIFT_AUTH_LOCKOUT_ENABLED', true),
+        'max_attempts' => 5,
+        'lockout_duration' => 900, // 15 minutes
+        'reset_after' => 3600, // Reset counter after 1 hour of no attempts
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Bird Flock Messaging
+    |--------------------------------------------------------------------------
+    |
+    | Integration with bird-flock package for email notifications.
+    |
+    */
+    'bird_flock' => [
+        'enabled' => env('SWIFT_AUTH_BIRD_FLOCK_ENABLED', true),
+        'from_email' => env('SWIFT_AUTH_FROM_EMAIL', 'noreply@example.com'),
+        'from_name' => env('SWIFT_AUTH_FROM_NAME', 'SwiftAuth'),
+    ],
 ];

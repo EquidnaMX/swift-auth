@@ -120,6 +120,13 @@ class UserController extends Controller
 
         $user->roles()->attach($payload['role']);
 
+        logger()->info('User created', [
+            'user_id' => $user->getKey(),
+            'email' => $user->email,
+            'created_by' => SwiftAuth::id(),
+            'ip' => $request->ip(),
+        ]);
+
         if (SwiftAuth::check()) {
             return ResponseHelper::created(
                 message: 'Registration successful.',
@@ -211,6 +218,13 @@ class UserController extends Controller
             $user->roles()->sync($roleIds);
         }
 
+        logger()->info('User updated', [
+            'user_id' => $user->getKey(),
+            'updated_by' => SwiftAuth::id(),
+            'changes' => $payload,
+            'ip' => $request->ip(),
+        ]);
+
         return ResponseHelper::success(
             message: 'User updated successfully.',
             data: [
@@ -235,6 +249,14 @@ class UserController extends Controller
         }
 
         $user = User::findOrFail($id_user);
+
+        logger()->warning('User deleted', [
+            'user_id' => $user->getKey(),
+            'email' => $user->email,
+            'deleted_by' => SwiftAuth::id(),
+            'ip' => $request->ip(),
+        ]);
+
         $user->delete();
 
         return ResponseHelper::success(

@@ -20,6 +20,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Contracts\View\View;
+use Equidna\SwiftAuth\Facades\SwiftAuth;
 use Equidna\Toolkit\Exceptions\BadRequestException;
 use Equidna\Toolkit\Helpers\ResponseHelper;
 use Inertia\Response;
@@ -109,10 +110,17 @@ class RoleController extends Controller
             ),
         );
 
-        Role::create([
+        $role = Role::create([
             'name' => $payload['name'],
             'description' => $payload['description'],
-            'actions' => implode(',', $roleActions),
+            'actions' => $roleActions, // Now stored as JSON array
+        ]);
+
+        logger()->info('Role created', [
+            'role_id' => $role->getKey(),
+            'role_name' => $role->name,
+            'created_by' => SwiftAuth::id(),
+            'ip' => $request->ip(),
         ]);
 
         return ResponseHelper::created(
@@ -182,7 +190,15 @@ class RoleController extends Controller
 
         $role->update([
             'description' => $payload['description'],
-            'actions' => implode(',', $roleActions),
+            'actions' => $roleActions, // Now stored as JSON array
+        ]);
+
+        logger()->info('Role updated', [
+            'role_id' => $role->getKey(),
+            'role_name' => $role->name,
+            'updated_by' => SwiftAuth::id(),
+            'changes' => $payload,
+            'ip' => $request->ip(),
         ]);
 
         return ResponseHelper::success(
@@ -204,6 +220,13 @@ class RoleController extends Controller
     public function destroy(Request $request, string $id_role): RedirectResponse|JsonResponse
     {
         $role = Role::findOrFail($id_role);
+
+        logger()->warning('Role deleted', [
+            'role_id' => $role->getKey(),
+            'role_name' => $role->name,
+            'deleted_by' => SwiftAuth::id(),
+            'ip' => $request->ip(),
+        ]);
 
         $role->delete();
 

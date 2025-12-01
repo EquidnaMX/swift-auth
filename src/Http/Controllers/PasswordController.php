@@ -18,7 +18,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Support\Carbon;
@@ -27,9 +26,9 @@ use Equidna\Toolkit\Exceptions\BadRequestException;
 use Equidna\Toolkit\Exceptions\NotFoundException;
 use Equidna\Toolkit\Helpers\ResponseHelper;
 use Inertia\Response;
-use Equidna\SwiftAuth\Mail\PasswordResetMail;
 use Equidna\SwiftAuth\Models\PasswordResetToken;
 use Equidna\SwiftAuth\Models\User;
+use Equidna\SwiftAuth\Services\NotificationService;
 use Equidna\SwiftAuth\Traits\SelectiveRender;
 
 /**
@@ -58,10 +57,11 @@ class PasswordController extends Controller
     /**
      * Sends password reset instructions to the provided email.
      *
-     * @param  Request                   $request  HTTP request with the email address.
-     * @return RedirectResponse|JsonResponse       Context-aware success response.
+     * @param  Request                   $request             HTTP request with the email address.
+     * @param  NotificationService       $notificationService Email notification service.
+     * @return RedirectResponse|JsonResponse                 Context-aware success response.
      */
-    public function sendResetLink(Request $request): RedirectResponse|JsonResponse
+    public function sendResetLink(Request $request, NotificationService $notificationService): RedirectResponse|JsonResponse
     {
         $data = $request->validate(['email' => 'required|email']);
 
@@ -99,20 +99,25 @@ class PasswordController extends Controller
         RateLimiter::hit($limiterKey, $decay);
         RateLimiter::hit($ipKey, $decay);
 
-        // Generate token and persist (single active token per email)
-        $token = hash('sha256', Str::random(64));
+        // Generate raw token and hash for storage
+        $rawToken = Str::random(64);
+        $hashedToken = hash('sha256', $rawToken);
 
         PasswordResetToken::updateOrCreate(
             ['email' => $email],
-            ['token' => $token, 'created_at' => now()]
+            ['token' => $hashedToken, 'created_at' => now()]
         );
 
         try {
-            Mail::to($email)->queue(new PasswordResetMail($email, $token));
+            $messageId = $notificationService->sendPasswordReset($email, $rawToken);
+
+            logger()->info('swift-auth.password-reset.email-sent', [
+                'email_hash' => hash('sha256', $email),
+                'message_id' => $messageId,
+                'ip' => $request->ip(),
+            ]);
         } catch (\Throwable $e) {
-            // Log the error without including the full email address to reduce
-            // exposure of potentially sensitive identifiers in logs.
-            logger()->error('Failed to queue password reset mail', ['error' => $e->getMessage()]);
+            logger()->error('swift-auth.password-reset.send-failed', ['error' => $e->getMessage()]);
             throw new BadRequestException('Unable to process password reset at this time.');
         }
 
@@ -189,11 +194,10 @@ class PasswordController extends Controller
             ], 429);
         }
 
-        $reset = PasswordResetToken::where('email', $data['email'])
-            ->where('token', $data['token'])
-            ->first();
+        $reset = PasswordResetToken::where('email', $data['email'])->first();
 
-        if (!$reset) {
+        // Use constant-time comparison to prevent timing attacks
+        if (!$reset || !hash_equals($reset->token, $data['token'])) {
             // Increment the verify limiter to slow down brute-force.
             RateLimiter::hit($verifyLimiter, $verifyDecay);
             throw new BadRequestException('The reset token is invalid or has expired.');
@@ -218,6 +222,12 @@ class PasswordController extends Controller
 
         $user->update([
             'password' => $hashed
+        ]);
+
+        logger()->info('Password reset completed', [
+            'user_id' => $user->getKey(),
+            'email' => $user->email,
+            'ip' => $request->ip(),
         ]);
 
         $reset->delete();

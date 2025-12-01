@@ -24,7 +24,7 @@ use Equidna\SwiftAuth\Models\User;
  * @property int $id_role
  * @property string $name
  * @property string|null $description
- * @property string $actions Comma-separated actions
+ * @property array<int, string> $actions List of action identifiers
  *
  * @method static \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\Role> search(null|string $term)
  * @method static static create(array<string,mixed> $attributes = [])
@@ -51,6 +51,10 @@ class Role extends Model
         'name',
         'description',
         'actions',
+    ];
+
+    protected $casts = [
+        'actions' => 'array',
     ];
 
     /**

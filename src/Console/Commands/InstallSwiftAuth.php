@@ -12,15 +12,12 @@
  */
 
 namespace Equidna\SwiftAuth\Console\Commands;
-
 use Illuminate\Console\Command;
 
 /**
- * Class InstallSwiftAuth
+ * Installs SwiftAuth by publishing configuration, views, migrations, icons, and models.
  *
- * This command installs SwiftAuth by publishing configuration files,
- * views, migrations, icons, and models. It also allows the developer
- * to choose the desired frontend stack.
+ * Allows developers to choose the desired frontend stack (Blade, React+TS, React+JS).
  */
 class InstallSwiftAuth extends Command
 {
@@ -36,7 +33,7 @@ class InstallSwiftAuth extends Command
     protected $description = 'Install SwiftAuth: configure, migrate and publish files';
 
     /**
-     * Execute the console command.
+     * Executes the console command.
      *
      * @return void
      */
@@ -96,7 +93,7 @@ class InstallSwiftAuth extends Command
     }
 
     /**
-     * Publish Blade views.
+     * Publishes Blade views.
      *
      * @return void
      */
@@ -110,7 +107,8 @@ class InstallSwiftAuth extends Command
     }
 
     /**
-     * Publish React views with JavaScript.
+     * Publishes React views with JavaScript.
+     *
      * Displays a reminder to run npm commands.
      *
      * @return void
@@ -127,7 +125,8 @@ class InstallSwiftAuth extends Command
     }
 
     /**
-     * Publish React views with TypeScript.
+     * Publishes React views with TypeScript.
+     *
      * Displays a reminder to run npm commands.
      *
      * @return void

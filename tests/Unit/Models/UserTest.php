@@ -12,11 +12,12 @@
  */
 
 namespace Equidna\SwiftAuth\Tests\Unit\Models;
-
-use Equidna\SwiftAuth\Models\User;
-use Equidna\SwiftAuth\Models\Role;
 use Illuminate\Database\Eloquent\Collection;
+
 use PHPUnit\Framework\TestCase;
+
+use Equidna\SwiftAuth\Models\Role;
+use Equidna\SwiftAuth\Models\User;
 
 /**
  * Tests User model business logic in isolation.
@@ -24,7 +25,7 @@ use PHPUnit\Framework\TestCase;
 class UserTest extends TestCase
 {
     /**
-     * Test hasRoles returns true when user has the specified role.
+     * Tests hasRoles returns true when user has the specified role.
      */
     public function test_has_roles_returns_true_when_user_has_role(): void
     {
@@ -36,7 +37,7 @@ class UserTest extends TestCase
     }
 
     /**
-     * Test hasRoles returns false when user does not have the role.
+     * Tests hasRoles returns false when user does not have the role.
      */
     public function test_has_roles_returns_false_when_user_lacks_role(): void
     {
@@ -47,7 +48,7 @@ class UserTest extends TestCase
     }
 
     /**
-     * Test hasRoles is case-insensitive.
+     * Tests hasRoles is case-insensitive.
      */
     public function test_has_roles_is_case_insensitive(): void
     {
@@ -59,7 +60,7 @@ class UserTest extends TestCase
     }
 
     /**
-     * Test availableActions returns unique actions from all roles.
+     * Tests availableActions returns unique actions from all roles.
      */
     public function test_available_actions_returns_unique_actions_from_all_roles(): void
     {
@@ -77,7 +78,7 @@ class UserTest extends TestCase
     }
 
     /**
-     * Test availableActions returns empty array when user has no roles.
+     * Tests availableActions returns empty array when user has no roles.
      */
     public function test_available_actions_returns_empty_when_no_roles(): void
     {
@@ -87,7 +88,7 @@ class UserTest extends TestCase
     }
 
     /**
-     * Test availableActions returns empty array when roles have no actions.
+     * Tests availableActions returns empty array when roles have no actions.
      */
     public function test_available_actions_returns_empty_when_roles_have_no_actions(): void
     {
@@ -97,7 +98,7 @@ class UserTest extends TestCase
     }
 
     /**
-     * Test availableActions uses memoization (cached result).
+     * Tests availableActions uses memoization (cached result).
      */
     public function test_available_actions_uses_memoization(): void
     {
@@ -113,10 +114,10 @@ class UserTest extends TestCase
     }
 
     /**
-     * Create a User instance with mocked roles.
+     * Creates a User instance with mocked roles.
      *
-     * @param array<int, string> $roleNames
-     * @return User
+     * @param  array<int, string> $roleNames  Role names to assign.
+     * @return User                            Mocked user instance.
      */
     private function createUserWithRoles(array $roleNames): User
     {
@@ -144,10 +145,10 @@ class UserTest extends TestCase
     }
 
     /**
-     * Create a User instance with roles that have specific actions.
+     * Creates a User instance with roles that have specific actions.
      *
-     * @param array<int, array<int, string>> $roleActions Array of action arrays
-     * @return User
+     * @param  array<int, array<int, string>> $roleActions  Array of action arrays.
+     * @return User                                         Mocked user instance.
      */
     private function createUserWithActions(array $roleActions): User
     {

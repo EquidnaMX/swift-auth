@@ -12,11 +12,12 @@
  */
 
 namespace Equidna\SwiftAuth\Tests\Unit\Middleware;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
+
+use PHPUnit\Framework\TestCase;
 
 use Equidna\SwiftAuth\Http\Middleware\CanPerformAction;
-use Illuminate\Http\Request;
-use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Tests CanPerformAction middleware structure and signature.
@@ -25,6 +26,7 @@ class CanPerformActionTest extends TestCase
 {
     private CanPerformAction $middleware;
 
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -32,7 +34,7 @@ class CanPerformActionTest extends TestCase
     }
 
     /**
-     * Test middleware instance creation.
+     * Tests middleware instance creation.
      */
     public function test_middleware_can_be_instantiated(): void
     {
@@ -40,7 +42,7 @@ class CanPerformActionTest extends TestCase
     }
 
     /**
-     * Test middleware has handle method with correct signature.
+     * Tests middleware has handle method with correct signature.
      */
     public function test_middleware_has_handle_method_with_action_parameter(): void
     {
@@ -59,7 +61,7 @@ class CanPerformActionTest extends TestCase
     }
 
     /**
-     * Test handle method returns Response.
+     * Tests handle method returns Response.
      */
     public function test_handle_method_returns_response(): void
     {
@@ -71,7 +73,7 @@ class CanPerformActionTest extends TestCase
     }
 
     /**
-     * Test action parameter is string type.
+     * Tests action parameter is string type.
      */
     public function test_action_parameter_is_string_type(): void
     {

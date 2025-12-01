@@ -12,15 +12,13 @@
  */
 
 namespace Equidna\SwiftAuth\Models;
-
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
 use Equidna\SwiftAuth\Models\User;
 
 /**
- * Class Role
- *
  * @property int $id_role
  * @property string $name
  * @property string|null $description
@@ -43,7 +41,11 @@ class Role extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $prefix = config('swift-auth.table_prefix', '');
+        try {
+            $prefix = config('swift-auth.table_prefix', '');
+        } catch (\Throwable $e) {
+            $prefix = '';
+        }
         $this->table = $prefix . 'Roles';
     }
 
@@ -62,14 +64,18 @@ class Role extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<
      *     \Equidna\SwiftAuth\Models\User,
-     *     $this,
-     *     \Illuminate\Database\Eloquent\Relations\Pivot,
-     *     'pivot'
+     *     $this
      * >
      */
     public function users(): BelongsToMany
     {
         $prefix = config('swift-auth.table_prefix', '');
+        try {
+            $prefix = config('swift-auth.table_prefix', '');
+        } catch (\Throwable $e) {
+            $prefix = '';
+        }
+
         return $this->belongsToMany(
             User::class,
             $prefix . 'UsersRoles',
@@ -79,11 +85,11 @@ class Role extends Model
     }
 
     /**
-     * Scope a query to filter roles by name.
+     * Scopes a query to filter roles by name.
      *
-     * @param \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\Role> $query
-     * @param string|null $search
-     * @return \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\Role>
+     * @param  \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\Role> $query   Query builder instance.
+     * @param  string|null                                                              $search  Search term.
+     * @return \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\Role>          Filtered query.
      */
     public function scopeSearch(Builder $query, null|string $search): Builder
     {

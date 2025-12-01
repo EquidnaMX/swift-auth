@@ -12,50 +12,72 @@
  */
 
 namespace Equidna\SwiftAuth\Providers;
-
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Routing\Router;
-use Equidna\SwiftAuth\Console\Commands\InstallSwiftAuth;
+use Illuminate\Support\ServiceProvider;
+
 use Equidna\SwiftAuth\Console\Commands\CreateAdminUser;
+use Equidna\SwiftAuth\Console\Commands\InstallSwiftAuth;
+use Equidna\SwiftAuth\Console\Commands\PreviewEmailTemplates;
 use Equidna\SwiftAuth\Console\Commands\UnlockUserCommand;
-use Equidna\SwiftAuth\Http\Middleware\RequireAuthentication;
+use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
 use Equidna\SwiftAuth\Http\Middleware\CanPerformAction;
+use Equidna\SwiftAuth\Http\Middleware\RequireAuthentication;
+use Equidna\SwiftAuth\Http\Middleware\SecurityHeaders;
+use Equidna\SwiftAuth\Providers\RateLimitServiceProvider;
+use Equidna\SwiftAuth\Repositories\EloquentUserRepository;
 use Equidna\SwiftAuth\Services\SwiftSessionAuth;
 
 /**
- * SwiftAuthServiceProvider
+ * Registers and bootstraps SwiftAuth components.
  *
- * Registers and bootstraps SwiftAuth components: middleware, views, migrations,
- * config, commands, and publishes related assets.
+ * Handles middleware registration, view/migration loading, config merging, command registration,
+ * and publishes related assets.
  */
 final class SwiftAuthServiceProvider extends ServiceProvider
 {
     /**
-     * Register bindings in the container.
+     * Registers bindings in the container.
      *
-     * - Merges the package configuration.
-     * - Binds the 'swift-auth' service as a singleton.
+     * Merges the package configuration and binds the 'swift-auth' service as a singleton.
+     *
+     * @return void
      */
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__ . '/../config/swift-auth.php', 'swift-auth');
 
+        // Bind user repository interface
+        $this->app->singleton(UserRepositoryInterface::class, EloquentUserRepository::class);
+
+        // Bind SwiftAuth service
         $this->app->singleton('swift-auth', function ($app) {
-            return new SwiftSessionAuth($app['session.store']);
+            return new SwiftSessionAuth(
+                $app['session.store'],
+                $app->make(UserRepositoryInterface::class)
+            );
         });
     }
 
     /**
-     * Bootstrap any application services.
+     * Bootstraps any application services.
      *
-     * @param Router $router
+     * Registers middleware aliases, loads routes/views/migrations, and publishes assets.
+     * Validates configuration on boot to catch misconfigurations early.
+     *
+     * @param  Router $router  Laravel router instance.
      * @return void
      */
     public function boot(Router $router): void
     {
+        $this->validateConfiguration();
+
+        // Register rate limiting
+        $this->app->register(RateLimitServiceProvider::class);
+
         // Register middleware
         $router->aliasMiddleware('SwiftAuth.RequireAuthentication', RequireAuthentication::class);
         $router->aliasMiddleware('SwiftAuth.CanPerformAction', CanPerformAction::class);
+        $router->aliasMiddleware('SwiftAuth.SecurityHeaders', SecurityHeaders::class);
 
         // Load package resources
         $this->loadRoutesFrom(__DIR__ . '/../routes/swift-auth.php');
@@ -73,9 +95,9 @@ final class SwiftAuthServiceProvider extends ServiceProvider
             __DIR__ . '/../Models' => app_path('Models'),
         ], 'swift-auth:models');
 
-        // Publish Blade views
+        // Publish Blade views (into a vendor subfolder to avoid overwriting app views)
         $this->publishes([
-            __DIR__ . '/../resources/views' => resource_path('views'),
+            __DIR__ . '/../resources/views' => resource_path('views/vendor/swift-auth'),
         ], 'swift-auth:views');
 
         // Publish migrations
@@ -104,6 +126,49 @@ final class SwiftAuthServiceProvider extends ServiceProvider
                 InstallSwiftAuth::class,
                 CreateAdminUser::class,
                 UnlockUserCommand::class,
+                PreviewEmailTemplates::class,
+            ]);
+        }
+    }
+
+    /**
+     * Validates swift-auth configuration and logs warnings for invalid values.
+     *
+     * @return void
+     */
+    private function validateConfiguration(): void
+    {
+        $maxAttempts = config('swift-auth.account_lockout.max_attempts', 5);
+        $lockoutDuration = config('swift-auth.account_lockout.lockout_duration', 900);
+        $passwordMinLength = config('swift-auth.password_min_length', 8);
+
+        if ($maxAttempts < 1) {
+            logger()->warning('swift-auth.config.invalid-max-attempts', [
+                'value' => $maxAttempts,
+                'default' => 5,
+            ]);
+        }
+
+        if ($lockoutDuration < 60) {
+            logger()->warning('swift-auth.config.invalid-lockout-duration', [
+                'value' => $lockoutDuration,
+                'minimum' => 60,
+                'default' => 900,
+            ]);
+        }
+
+        if ($passwordMinLength < 8 || $passwordMinLength > 128) {
+            logger()->warning('swift-auth.config.invalid-password-min-length', [
+                'value' => $passwordMinLength,
+                'default' => 8,
+            ]);
+        }
+
+        $hashDriver = config('swift-auth.hash_driver');
+        if ($hashDriver !== null && !in_array($hashDriver, ['bcrypt', 'argon', 'argon2id'], true)) {
+            logger()->warning('swift-auth.config.invalid-hash-driver', [
+                'value' => $hashDriver,
+                'supported' => ['bcrypt', 'argon', 'argon2id', 'null (default)'],
             ]);
         }
     }

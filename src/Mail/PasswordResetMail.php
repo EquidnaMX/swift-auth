@@ -12,11 +12,10 @@
  */
 
 namespace Equidna\SwiftAuth\Mail;
-
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Mail\Mailable;
+use Illuminate\Queue\SerializesModels;
 
 class PasswordResetMail extends Mailable implements ShouldQueue
 {
@@ -25,6 +24,7 @@ class PasswordResetMail extends Mailable implements ShouldQueue
 
     public string $token;
     public string $email;
+
 
     public function __construct(string $email, string $token)
     {

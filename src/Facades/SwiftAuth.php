@@ -12,16 +12,15 @@
  */
 
 namespace Equidna\SwiftAuth\Facades;
-
 use Illuminate\Support\Facades\Facade;
+
 use Equidna\SwiftAuth\Models\User;
 
 /**
- * Class SwiftAuth
+ * Provides a static interface to the SwiftSessionAuth service.
  *
- * This is the facade for the SwiftSessionAuth service.
- * It provides an easy static interface to access session-based authentication logic
- * registered as 'swift-auth' in the service container.
+ * Simplifies access to session-based authentication logic registered as 'swift-auth'
+ * in the service container.
  *
  * Example usage:
  * ```php
@@ -42,9 +41,9 @@ use Equidna\SwiftAuth\Models\User;
 class SwiftAuth extends Facade
 {
     /**
-     * Get the registered name of the component in the container.
+     * Returns the registered name of the component in the container.
      *
-     * @return string
+     * @return string  Service container binding key.
      */
     protected static function getFacadeAccessor(): string
     {

@@ -12,24 +12,25 @@
  */
 
 namespace Equidna\SwiftAuth\Http\Controllers;
-
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-use Illuminate\Support\Carbon;
-use Illuminate\Contracts\View\View;
-use Equidna\Toolkit\Exceptions\BadRequestException;
-use Equidna\Toolkit\Exceptions\NotFoundException;
-use Equidna\Toolkit\Helpers\ResponseHelper;
+
 use Inertia\Response;
+
 use Equidna\SwiftAuth\Models\PasswordResetToken;
 use Equidna\SwiftAuth\Models\User;
 use Equidna\SwiftAuth\Services\NotificationService;
 use Equidna\SwiftAuth\Traits\SelectiveRender;
+use Equidna\Toolkit\Exceptions\BadRequestException;
+use Equidna\Toolkit\Exceptions\NotFoundException;
+use Equidna\Toolkit\Helpers\ResponseHelper;
 
 /**
  * Coordinates SwiftAuth password reset UX, from request to completion.
@@ -43,8 +44,8 @@ class PasswordController extends Controller
     /**
      * Shows the password reset request form.
      *
-     * @param  Request       $request  HTTP request context.
-     * @return View|Response           Blade or Inertia response.
+     * @param  Request        $request  HTTP request context.
+     * @return View|Response            Blade or Inertia response.
      */
     public function showRequestForm(Request $request): View|Response
     {
@@ -57,9 +58,13 @@ class PasswordController extends Controller
     /**
      * Sends password reset instructions to the provided email.
      *
-     * @param  Request                   $request             HTTP request with the email address.
-     * @param  NotificationService       $notificationService Email notification service.
-     * @return RedirectResponse|JsonResponse                 Context-aware success response.
+     * Enforces rate limiting per email and IP to prevent abuse, generates a secure token,
+     * and dispatches reset email via notification service.
+     *
+     * @param  Request                    $request              HTTP request with the email address.
+     * @param  NotificationService        $notificationService  Email notification service.
+     * @return RedirectResponse|JsonResponse                    Context-aware success response.
+     * @throws BadRequestException                              When email dispatch fails.
      */
     public function sendResetLink(Request $request, NotificationService $notificationService): RedirectResponse|JsonResponse
     {
@@ -67,9 +72,10 @@ class PasswordController extends Controller
 
         $email = strtolower($data['email']);
 
+        /** @var array{attempts?:int,decay_seconds?:int}|mixed $rateConfig */
         $rateConfig = config('swift-auth.password_reset_rate_limit', []);
-        $attempts = $rateConfig['attempts'] ?? 5;
-        $decay = $rateConfig['decay_seconds'] ?? 60;
+        $attempts = (int) ($rateConfig['attempts'] ?? 5);
+        $decay = (int) ($rateConfig['decay_seconds'] ?? 60);
 
         // Limit requests per-target (email) to prevent abuse and enumeration.
         $limiterKey = 'password-reset:email:' . hash('sha256', $email);
@@ -78,7 +84,7 @@ class PasswordController extends Controller
         $ipKey = 'password-reset:ip:' . $request->ip();
 
         // If too many attempts for this email, return a 429 with retry information
-        if (RateLimiter::tooManyAttempts($limiterKey, (int) $attempts)) {
+        if (RateLimiter::tooManyAttempts($limiterKey, $attempts)) {
             $availableIn = RateLimiter::availableIn($limiterKey);
 
             return response()->json([
@@ -87,7 +93,8 @@ class PasswordController extends Controller
         }
 
         // IP-level protection: high threshold to reduce noise but stop large scans
-        if (RateLimiter::tooManyAttempts($ipKey, (int) max(50, $attempts * 10))) {
+        $ipThreshold = max(50, $attempts * 10);
+        if (RateLimiter::tooManyAttempts($ipKey, $ipThreshold)) {
             $availableIn = RateLimiter::availableIn($ipKey);
 
             return response()->json([
@@ -194,6 +201,7 @@ class PasswordController extends Controller
             ], 429);
         }
 
+        /** @var array{email:string} $data */
         $reset = PasswordResetToken::where('email', $data['email'])->first();
 
         // Use constant-time comparison to prevent timing attacks
@@ -205,7 +213,9 @@ class PasswordController extends Controller
 
         // Enforce TTL
         $ttl = config('swift-auth.password_reset_ttl', 900);
-        if (!$reset->created_at || now()->diffInSeconds($reset->created_at) > $ttl) {
+        /** @var \Illuminate\Support\Carbon|null $createdAt */
+        $createdAt = $reset->created_at;
+        if (!$createdAt || $createdAt->diffInSeconds(now()) > $ttl) {
             // remove expired token and reject
             $reset->delete();
             throw new BadRequestException('The reset token is invalid or has expired.');
@@ -218,7 +228,14 @@ class PasswordController extends Controller
         }
 
         $driver = config('swift-auth.hash_driver');
-        $hashed = $driver ? Hash::driver($driver)->make($data['password']) : Hash::make($data['password']);
+        $driver = is_string($driver) ? $driver : null;
+        if ($driver) {
+            /** @var \Illuminate\Contracts\Hashing\Hasher $hasher */
+            $hasher = Hash::driver($driver);
+            $hashed = $hasher->make($data['password']);
+        } else {
+            $hashed = Hash::make($data['password']);
+        }
 
         $user->update([
             'password' => $hashed

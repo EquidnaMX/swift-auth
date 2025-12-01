@@ -12,14 +12,15 @@
  */
 
 namespace Equidna\SwiftAuth\Tests\Unit\Middleware;
-
-use Equidna\SwiftAuth\Http\Middleware\RequireAuthentication;
-use Equidna\SwiftAuth\Facades\SwiftAuth;
-use Equidna\SwiftAuth\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use PHPUnit\Framework\TestCase;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+
+use PHPUnit\Framework\TestCase;
+
+use Equidna\SwiftAuth\Facades\SwiftAuth;
+use Equidna\SwiftAuth\Http\Middleware\RequireAuthentication;
+use Equidna\SwiftAuth\Models\User;
 
 /**
  * Tests RequireAuthentication middleware in isolation.
@@ -27,6 +28,7 @@ use Symfony\Component\HttpFoundation\Response;
 class RequireAuthenticationTest extends TestCase
 {
     private RequireAuthentication $middleware;
+
 
     protected function setUp(): void
     {

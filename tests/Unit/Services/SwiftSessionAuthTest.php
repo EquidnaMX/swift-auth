@@ -12,12 +12,13 @@
  */
 
 namespace Equidna\SwiftAuth\Tests\Unit\Services;
-
-use Equidna\SwiftAuth\Services\SwiftSessionAuth;
-use Equidna\SwiftAuth\Models\User;
-use Illuminate\Session\Store as Session;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Session\Store as Session;
+
 use PHPUnit\Framework\TestCase;
+
+use Equidna\SwiftAuth\Models\User;
+use Equidna\SwiftAuth\Services\SwiftSessionAuth;
 
 /**
  * Tests SwiftSessionAuth service in isolation with mocked dependencies.
@@ -25,18 +26,21 @@ use PHPUnit\Framework\TestCase;
 class SwiftSessionAuthTest extends TestCase
 {
     private Session $session;
+    private \Equidna\SwiftAuth\Contracts\UserRepositoryInterface $userRepository;
     private SwiftSessionAuth $auth;
+
 
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->session = $this->createMock(Session::class);
-        $this->auth = new SwiftSessionAuth($this->session);
+        $this->userRepository = $this->createMock(\Equidna\SwiftAuth\Contracts\UserRepositoryInterface::class);
+        $this->auth = new SwiftSessionAuth($this->session, $this->userRepository);
     }
 
     /**
-     * Test login stores user ID in session.
+     * Tests login stores user ID in session.
      */
     public function test_login_stores_user_id_in_session(): void
     {
@@ -52,7 +56,7 @@ class SwiftSessionAuthTest extends TestCase
     }
 
     /**
-     * Test logout removes user ID from session.
+     * Tests logout removes user ID from session.
      */
     public function test_logout_removes_user_id_from_session(): void
     {
@@ -65,7 +69,7 @@ class SwiftSessionAuthTest extends TestCase
     }
 
     /**
-     * Test check returns true when session has user ID.
+     * Tests check returns true when session has user ID.
      */
     public function test_check_returns_true_when_session_has_user_id(): void
     {
@@ -78,7 +82,7 @@ class SwiftSessionAuthTest extends TestCase
     }
 
     /**
-     * Test check returns false when session has no user ID.
+     * Tests check returns false when session has no user ID.
      */
     public function test_check_returns_false_when_session_has_no_user_id(): void
     {
@@ -91,7 +95,7 @@ class SwiftSessionAuthTest extends TestCase
     }
 
     /**
-     * Test id returns user ID from session.
+     * Tests id returns user ID from session.
      */
     public function test_id_returns_user_id_from_session(): void
     {
@@ -104,7 +108,7 @@ class SwiftSessionAuthTest extends TestCase
     }
 
     /**
-     * Test id returns null when no user in session.
+     * Tests id returns null when no user in session.
      */
     public function test_id_returns_null_when_no_user_in_session(): void
     {
@@ -117,7 +121,7 @@ class SwiftSessionAuthTest extends TestCase
     }
 
     /**
-     * Test canPerformAction returns false when user not authenticated.
+     * Tests canPerformAction returns false when user not authenticated.
      */
     public function test_can_perform_action_returns_false_when_not_authenticated(): void
     {
@@ -129,26 +133,31 @@ class SwiftSessionAuthTest extends TestCase
     }
 
     /**
-     * Test canPerformAction returns true when user has sw-admin action.
+     * Tests canPerformAction returns true when user has sw-admin action.
      */
     public function test_can_perform_action_returns_true_for_sw_admin(): void
     {
         $user = $this->createMock(User::class);
         $user->method('availableActions')->willReturn(['sw-admin']);
 
-        // Mock the static User::find() call
+        $userRepository = $this->createMock(\Equidna\SwiftAuth\Contracts\UserRepositoryInterface::class);
+        $userRepository->method('findById')->with(1)->willReturn($user);
+
         $this->session
             ->method('get')
             ->with('swift_auth_user_id')
             ->willReturn(1);
 
-        // We can't easily mock static methods, so this test demonstrates the logic
-        // In a real feature test, you'd use a database
-        $this->assertTrue(true); // Placeholder - would need feature test
+        $auth = new SwiftSessionAuth($this->session, $userRepository);
+
+        // User with sw-admin should be able to perform any action
+        $this->assertTrue($auth->canPerformAction('create_user'));
+        $this->assertTrue($auth->canPerformAction('delete_user'));
+        $this->assertTrue($auth->canPerformAction(['manage_roles', 'view_reports']));
     }
 
     /**
-     * Test hasRole returns false when user not authenticated.
+     * Tests hasRole returns false when user not authenticated.
      */
     public function test_has_role_returns_false_when_not_authenticated(): void
     {
@@ -160,7 +169,7 @@ class SwiftSessionAuthTest extends TestCase
     }
 
     /**
-     * Test userOrFail throws exception when user not found.
+     * Tests userOrFail throws exception when user not found.
      */
     public function test_user_or_fail_throws_exception_when_user_not_found(): void
     {

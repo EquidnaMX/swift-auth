@@ -12,16 +12,16 @@
  */
 
 namespace Equidna\SwiftAuth\Console\Commands;
-
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
+
 use Equidna\SwiftAuth\Models\Role;
 use Equidna\SwiftAuth\Models\User;
 
 /**
- * Class InstallSwiftAuth
+ * Creates an administrator user for SwiftAuth.
  *
- * This command stores a record for the admin user from the env file data or user given data
+ * Accepts admin name and email from CLI arguments or environment variables.
  */
 class CreateAdminUser extends Command
 {
@@ -39,18 +39,20 @@ class CreateAdminUser extends Command
     protected $description = 'Create an administrator user using .env values or user-provided data';
 
     /**
-     * Execute the console command.
+     * Executes the console command.
      *
      * @return void
      */
     public function handle(): void
     {
+        // Retrieve raw inputs (may be mixed/null) then normalize to strings.
+        $rawName = $this->argument('name') ?? env('SWIFT_ADMIN_NAME');
+        $rawEmail = $this->argument('email') ?? env('SWIFT_ADMIN_EMAIL');
 
-        // Require name and email to be provided via CLI arguments or environment.
-        $userName = $this->argument('name') ?? env('SWIFT_ADMIN_NAME');
-        $email = $this->argument('email') ?? env('SWIFT_ADMIN_EMAIL');
+        $userName = is_string($rawName) ? trim($rawName) : '';
+        $email = is_string($rawEmail) ? trim($rawEmail) : '';
 
-        if (empty($userName) || empty($email)) {
+        if ($userName === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $this->info('Aborting: provide admin name and email via command arguments.');
             $this->info('Or set SWIFT_ADMIN_NAME and SWIFT_ADMIN_EMAIL in the environment.');
             return;
@@ -78,7 +80,14 @@ class CreateAdminUser extends Command
         bool $verifyEmail = true
     ): void {
         $driver = config('swift-auth.hash_driver');
-        $hashed = $driver ? Hash::driver($driver)->make($textPassword) : Hash::make($textPassword);
+        $driver = is_string($driver) ? $driver : null;
+        if ($driver) {
+            /** @var \Illuminate\Contracts\Hashing\Hasher $hasher */
+            $hasher = Hash::driver($driver);
+            $hashed = $hasher->make($textPassword);
+        } else {
+            $hashed = Hash::make($textPassword);
+        }
 
         $user = User::firstOrCreate(
             ['email' => $email],

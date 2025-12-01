@@ -12,10 +12,9 @@
  */
 
 namespace Equidna\SwiftAuth\Models;
-
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Represents an authenticated SwiftAuth user record.
@@ -49,7 +48,12 @@ class User extends Authenticatable
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $prefix = config('swift-auth.table_prefix', '');
+        try {
+            $prefix = config('swift-auth.table_prefix', '');
+        } catch (\Throwable $e) {
+            $prefix = '';
+        }
+
         $this->table = $prefix . 'Users';
     }
 
@@ -73,9 +77,7 @@ class User extends Authenticatable
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<
      *     \Equidna\SwiftAuth\Models\Role,
-     *     $this,
-     *     \Illuminate\Database\Eloquent\Relations\Pivot,
-     *     'pivot'
+     *     $this
      * >
      */
     public function roles(): BelongsToMany
@@ -90,10 +92,10 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if the user has any of the given roles (by name).
+     * Checks if the user has any of the given roles (by name).
      *
-     * @param string|array<string> $roles List of role names to check.
-     * @return bool True if the user has at least one of the roles.
+     * @param  string|array<string> $roles  List of role names to check.
+     * @return bool                          True if the user has at least one of the roles.
      */
     public function hasRoles(string|array $roles): bool
     {
@@ -107,9 +109,9 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the list of available actions from all assigned roles.
+     * Returns the list of available actions from all assigned roles.
      *
-     * @return array<int, string> Unique list of actions the user can perform.
+     * @return array<int, string>  Unique list of actions the user can perform.
      */
     public function availableActions(): array
     {
@@ -140,11 +142,11 @@ class User extends Authenticatable
     }
 
     /**
-     * Scope a query to filter users by name or email.
+     * Scopes a query to filter users by name or email.
      *
-     * @param \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\User> $query
-     * @param string|null $search
-     * @return \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\User>
+     * @param  \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\User> $query   Query builder instance.
+     * @param  string|null                                                               $search  Search term.
+     * @return \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\User>          Filtered query.
      */
     public function scopeSearch(Builder $query, null|string $search): Builder
     {

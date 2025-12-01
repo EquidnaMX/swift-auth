@@ -12,20 +12,21 @@
  */
 
 namespace Equidna\SwiftAuth\Http\Controllers;
-
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Contracts\View\View;
-use Equidna\SwiftAuth\Facades\SwiftAuth;
-use Equidna\Toolkit\Exceptions\BadRequestException;
-use Equidna\Toolkit\Helpers\ResponseHelper;
+
 use Inertia\Response;
+
+use Equidna\SwiftAuth\Facades\SwiftAuth;
 use Equidna\SwiftAuth\Models\Role;
 use Equidna\SwiftAuth\Traits\SelectiveRender;
+use Equidna\Toolkit\Exceptions\BadRequestException;
+use Equidna\Toolkit\Helpers\ResponseHelper;
 
 /**
  * Administers SwiftAuth roles through list, create, update, and delete endpoints.

@@ -12,7 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Http\Controllers;
-
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,14 +20,18 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Contracts\View\View;
-use Equidna\Toolkit\Exceptions\UnauthorizedException;
-use Equidna\Toolkit\Helpers\ResponseHelper;
+
 use Inertia\Response;
+
+use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
 use Equidna\SwiftAuth\Facades\SwiftAuth;
+use Equidna\SwiftAuth\Http\Requests\LoginRequest;
 use Equidna\SwiftAuth\Models\User;
+use Equidna\SwiftAuth\Services\AccountLockoutService;
 use Equidna\SwiftAuth\Services\NotificationService;
 use Equidna\SwiftAuth\Traits\SelectiveRender;
+use Equidna\Toolkit\Exceptions\UnauthorizedException;
+use Equidna\Toolkit\Helpers\ResponseHelper;
 
 /**
  * Orchestrates SwiftAuth authentication flows across login/logout endpoints.
@@ -41,8 +45,8 @@ class AuthController extends Controller
     /**
      * Shows the login form view.
      *
-     * @param  Request       $request  HTTP request with context info.
-     * @return View|Response           Blade or Inertia response.
+     * @param  Request        $request  HTTP request with context info.
+     * @return View|Response            Blade or Inertia response.
      */
     public function showLoginForm(Request $request): View|Response
     {
@@ -55,17 +59,22 @@ class AuthController extends Controller
     /**
      * Authenticates the user using SwiftAuth.
      *
-     * @param  Request                   $request             HTTP request with credentials.
-     * @param  NotificationService       $notificationService Email notification service.
-     * @return RedirectResponse|JsonResponse                 Context-aware success response.
-     * @throws UnauthorizedException                         When credentials are invalid or account locked.
+     * Enforces rate limiting per email and IP, checks account lockout status, validates credentials,
+     * and manages login attempt tracking with automatic account lockout.
+     *
+     * @param  \Equidna\SwiftAuth\Http\Requests\LoginRequest $request         Validated login request.
+     * @param  UserRepositoryInterface                          $userRepository  User data access layer.
+     * @param  AccountLockoutService                            $lockoutService  Lockout management service.
+     * @return RedirectResponse|JsonResponse                                   Context-aware success response.
+     * @throws UnauthorizedException                                           When credentials invalid or account locked.
      */
-    public function login(Request $request, NotificationService $notificationService): RedirectResponse|JsonResponse
-    {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required|min:' . (int) config('swift-auth.password_min_length', 8),
-        ]);
+    public function login(
+        LoginRequest $request,
+        UserRepositoryInterface $userRepository,
+        AccountLockoutService $lockoutService
+    ): RedirectResponse|JsonResponse {
+        /** @var array{email:string,password:string} $credentials */
+        $credentials = $request->validated();
 
         // Rate limit login attempts per email to prevent brute-force attacks
         $loginLimiter = 'login:email:' . hash('sha256', strtolower($credentials['email']));
@@ -85,12 +94,11 @@ class AuthController extends Controller
             );
         }
 
-        $user = User::where('email', $credentials['email'])->first();
+        $user = $userRepository->findByEmail($credentials['email']);
 
         // Check if account is locked
-        if ($user && $user->locked_until && $user->locked_until->isFuture()) {
-            $remainingSeconds = $user->locked_until->diffInSeconds(now());
-            $remainingMinutes = ceil($remainingSeconds / 60);
+        if ($user && $lockoutService->isLocked($user)) {
+            $remainingMinutes = $lockoutService->getRemainingLockoutMinutes($user);
 
             logger()->warning('swift-auth.login.account-locked', [
                 'user_id' => $user->getKey(),
@@ -104,47 +112,31 @@ class AuthController extends Controller
             );
         }
 
+        // Always perform hash check to prevent timing attacks (constant-time comparison)
+        // Use dummy bcrypt hash when user doesn't exist to maintain consistent timing
+        $dummyHash = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'; // bcrypt of 'password'
+        $passwordToCheck = $user ? $user->password : $dummyHash;
+
         $driver = config('swift-auth.hash_driver');
-        $valid = $driver
-            ? Hash::driver($driver)->check($credentials['password'], $user?->password)
-            : Hash::check($credentials['password'], $user?->password);
+        $driver = is_string($driver) ? $driver : null;
+        if ($driver) {
+            /** @var \Illuminate\Contracts\Hashing\Hasher $hasher */
+            $hasher = Hash::driver($driver);
+            $valid = $hasher->check($credentials['password'], $passwordToCheck);
+        } else {
+            $valid = Hash::check($credentials['password'], $passwordToCheck);
+        }
 
         if (!$user || !$valid) {
-            // Increment failed login attempts
-            if ($user && config('swift-auth.account_lockout.enabled', true)) {
-                $user->failed_login_attempts++;
-                $user->last_failed_login_at = now();
+            // Record failed attempt and trigger lockout if threshold reached
+            if ($user) {
+                $ip = (string) ($request->ip() ?? '');
+                $wasLocked = $lockoutService->recordFailedAttempt($user, $ip);
 
-                $maxAttempts = config('swift-auth.account_lockout.max_attempts', 5);
-                $lockoutDuration = config('swift-auth.account_lockout.lockout_duration', 900);
-
-                if ($user->failed_login_attempts >= $maxAttempts) {
-                    $user->locked_until = now()->addSeconds($lockoutDuration);
-                    $user->save();
-
-                    logger()->warning('swift-auth.login.account-locked-triggered', [
-                        'user_id' => $user->getKey(),
-                        'email' => $user->email,
-                        'failed_attempts' => $user->failed_login_attempts,
-                        'locked_until' => $user->locked_until,
-                        'ip' => $request->ip(),
-                    ]);
-
-                    // Send lockout notification
-                    try {
-                        $notificationService->sendAccountLockout($user->email, $lockoutDuration);
-                    } catch (\Throwable $e) {
-                        logger()->error('swift-auth.login.lockout-notification-failed', [
-                            'email' => $user->email,
-                            'error' => $e->getMessage(),
-                        ]);
-                    }
-
+                if ($wasLocked) {
                     throw new UnauthorizedException(
                         'Account has been locked due to too many failed login attempts.'
                     );
-                } else {
-                    $user->save();
                 }
             }
 
@@ -161,13 +153,8 @@ class AuthController extends Controller
             throw new UnauthorizedException('Invalid credentials.');
         }
 
-        // Reset failed login attempts and unlock account on successful login
-        if ($user->failed_login_attempts > 0 || $user->locked_until) {
-            $user->failed_login_attempts = 0;
-            $user->locked_until = null;
-            $user->last_failed_login_at = null;
-            $user->save();
-        }
+        // Reset failed login attempts on successful login
+        $lockoutService->resetAttempts($user);
 
         // Clear rate limiter on successful login
         RateLimiter::clear($loginLimiter);
@@ -182,20 +169,32 @@ class AuthController extends Controller
         SwiftAuth::login($user);
         $request->session()->regenerate();
 
-        return ResponseHelper::success(
+        /** @var JsonResponse|RedirectResponse|string $response */
+        $response = ResponseHelper::success(
             message: 'Login successful.',
             data: [
                 'user_id' => $user->getKey(),
             ],
             forward_url: Config::get('swift-auth.success_url'),
         );
+
+        // Normalize potential non-response return into JsonResponse
+        if (is_string($response)) {
+            $response = response()->json([
+                'message' => 'Login successful.',
+                'user_id' => $user->getKey(),
+                'forward_url' => Config::get('swift-auth.success_url'),
+            ]);
+        }
+        /** @var JsonResponse|RedirectResponse $response */
+        return $response;
     }
 
     /**
      * Logs out the current user and clears the session.
      *
-     * @param  Request                   $request  HTTP request carrying the session.
-     * @return RedirectResponse|JsonResponse       Context-aware success response.
+     * @param  Request                    $request  HTTP request carrying the session.
+     * @return RedirectResponse|JsonResponse        Context-aware success response.
      */
     public function logout(Request $request): RedirectResponse|JsonResponse
     {
@@ -211,10 +210,20 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return ResponseHelper::success(
+        /** @var JsonResponse|RedirectResponse|string $response */
+        $response = ResponseHelper::success(
             message: 'Logged out successfully.',
             data: null,
             forward_url: route('swift-auth.login.form'),
         );
+
+        if (is_string($response)) {
+            $response = response()->json([
+                'message' => 'Logged out successfully.',
+                'forward_url' => route('swift-auth.login.form'),
+            ]);
+        }
+        /** @var JsonResponse|RedirectResponse $response */
+        return $response;
     }
 }

@@ -11,9 +11,9 @@
  */
 
 namespace Equidna\SwiftAuth\Console\Commands;
+use Illuminate\Console\Command;
 
 use Equidna\SwiftAuth\Models\User;
-use Illuminate\Console\Command;
 
 /**
  * Unlocks a user account that has been locked due to failed login attempts.
@@ -35,13 +35,19 @@ final class UnlockUserCommand extends Command
     protected $description = 'Unlock a user account that has been locked due to failed login attempts';
 
     /**
-     * Execute the console command.
+     * Executes the console command.
      *
-     * @return int Exit code (0 on success).
+     * @return int  Exit code (0 on success, 1 on failure).
      */
     public function handle(): int
     {
-        $email = $this->argument('email');
+        $rawEmail = $this->argument('email');
+        $email = is_string($rawEmail) ? trim($rawEmail) : '';
+
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->error('Invalid email argument provided.');
+            return 1;
+        }
 
         $user = User::where('email', $email)->first();
 

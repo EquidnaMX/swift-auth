@@ -11,9 +11,10 @@
  */
 
 namespace Equidna\SwiftAuth\Tests\Unit\Models;
+use PHPUnit\Framework\TestCase;
 
 use Equidna\SwiftAuth\Models\PasswordResetToken;
-use PHPUnit\Framework\TestCase;
+
 use ReflectionClass;
 
 /**

@@ -24,6 +24,13 @@ return [
     'frontend' => env('SWIFT_AUTH_FRONTEND', 'typescript'),
 
     /*
+    |
+    | Enable public registration
+    |
+    */
+    'allow_registration' => env('SWIFT_AUTH_ALLOW_REGISTRATION', true),
+
+    /*
     |--------------------------------------------------------------------------
     | Success Redirect URL
     |--------------------------------------------------------------------------
@@ -170,5 +177,19 @@ return [
         'enabled' => env('SWIFT_AUTH_BIRD_FLOCK_ENABLED', true),
         'from_email' => env('SWIFT_AUTH_FROM_EMAIL', 'noreply@example.com'),
         'from_name' => env('SWIFT_AUTH_FROM_NAME', 'SwiftAuth'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Security Headers
+    |--------------------------------------------------------------------------
+    |
+    | Configure HTTP security headers applied by SecurityHeaders middleware.
+    | CSP and Permissions-Policy are optional; leave null to skip.
+    |
+    */
+    'security_headers' => [
+        'csp' => env('SWIFT_AUTH_CSP', null), // e.g., "default-src 'self'; script-src 'self' 'unsafe-inline'"
+        'permissions_policy' => env('SWIFT_AUTH_PERMISSIONS_POLICY', null), // e.g., "geolocation=(), microphone=()"
     ],
 ];

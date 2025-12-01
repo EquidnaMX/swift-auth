@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 
 $routePrefix = config('swift-auth.route_prefix', 'swift-auth');
 
-Route::middleware('web')
+Route::middleware(['web', 'SwiftAuth.SecurityHeaders'])
     ->prefix($routePrefix)
     ->as($routePrefix . '.')
     ->group(
@@ -26,11 +26,23 @@ Route::middleware('web')
 
             Route::match(['get', 'post'], 'logout', [AuthController::class, 'logout'])->name('logout');
 
+            // Public registration routes (optional)
+            if (config('swift-auth.allow_registration', true)) {
+                Route::get('users/register', [\Equidna\SwiftAuth\Http\Controllers\UserController::class, 'register'])
+                    ->name('users.register');
+
+                Route::post('users', [\Equidna\SwiftAuth\Http\Controllers\UserController::class, 'store'])
+                    ->middleware('throttle:swift-auth-registration')
+                    ->name('users.store');
+            }
+
             Route::prefix('password')->as('password.')
                 ->group(
                     function () {
                         Route::get('', [PasswordController::class, 'showRequestForm'])->name('request.form');
-                        Route::post('', [PasswordController::class, 'sendResetLink'])->name('request.send');
+                        Route::post('', [PasswordController::class, 'sendResetLink'])
+                            ->middleware('throttle:swift-auth-password-reset')
+                            ->name('request.send');
 
                         Route::get('sent', [PasswordController::class, 'showRequestSent'])->name('request.sent');
                         Route::get('{token}', [PasswordController::class, 'showResetForm'])->name('reset.form');

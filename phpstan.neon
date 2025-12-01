@@ -1,5 +1,5 @@
 parameters:
-    level: 5
+    level: max
     paths:
         - src
     treatPhpDocTypesAsCertain: false
@@ -21,8 +21,8 @@ parameters:
     # Paths to exclude from analysis
     excludePaths:
         - src/resources/views/*
+        - src/database/migrations/deprecated/*
 
     # Error suppression for unavoidable issues
     ignoreErrors:
-        # Ignore all errors related to missing external toolkit dependency
-        # - 'This is an example'
+        # Keep empty for now; prefer fixing types at source

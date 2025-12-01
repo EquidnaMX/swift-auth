@@ -11,9 +11,11 @@
  */
 
 namespace Equidna\SwiftAuth\Services;
-
 use Equidna\BirdFlock\BirdFlock;
 use Equidna\BirdFlock\DTO\FlightPlan;
+use Equidna\SwiftAuth\DTO\NotificationResult;
+
+use RuntimeException;
 
 /**
  * Handles email notifications using Bird Flock messaging bus.
@@ -21,243 +23,193 @@ use Equidna\BirdFlock\DTO\FlightPlan;
 final class NotificationService
 {
     /**
-     * Send password reset email.
+     * Sends password reset email.
      *
-     * @param  string $email Recipient email address.
-     * @param  string $token Password reset token.
-     * @return string        Message ID from Bird Flock.
+     * @param  string              $email  Recipient email address.
+     * @param  string              $token  Password reset token.
+     * @return NotificationResult          Dispatch result with success status and message ID or error.
      */
-    public function sendPasswordReset(string $email, string $token): string
+    public function sendPasswordReset(string $email, string $token): NotificationResult
     {
-        $routePrefix = config('swift-auth.route_prefix', 'swift-auth');
-        $resetUrl = url("/{$routePrefix}/password/{$token}?email=" . urlencode($email));
+        try {
+            $routePrefix = config('swift-auth.route_prefix', 'swift-auth');
+            $resetUrl = url("/{$routePrefix}/password/{$token}?email=" . urlencode($email));
 
-        $flight = new FlightPlan(
-            channel: 'email',
-            to: $email,
-            subject: 'Password Reset Request',
-            html: $this->getPasswordResetHtml($resetUrl, $email),
-            text: $this->getPasswordResetText($resetUrl),
-            idempotencyKey: "swift-auth:password-reset:{$email}:{$token}"
-        );
+            $flight = new FlightPlan(
+                channel: 'email',
+                to: $email,
+                subject: 'Password Reset Request',
+                html: $this->getPasswordResetHtml($resetUrl, $email),
+                text: $this->getPasswordResetText($resetUrl),
+                idempotencyKey: "swift-auth:password-reset:{$email}:{$token}"
+            );
 
-        return BirdFlock::dispatch($flight);
+            $messageId = BirdFlock::dispatch($flight);
+
+            return NotificationResult::success($messageId);
+        } catch (RuntimeException $e) {
+            logger()->error('swift-auth.notification.password-reset-failed', [
+                'email' => $email,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return NotificationResult::failure($e->getMessage());
+        }
     }
 
     /**
-     * Send email verification email.
+     * Sends email verification email.
      *
-     * @param  string $email Recipient email address.
-     * @param  string $token Email verification token.
-     * @return string        Message ID from Bird Flock.
+     * @param  string              $email  Recipient email address.
+     * @param  string              $token  Email verification token.
+     * @return NotificationResult          Dispatch result with success status and message ID or error.
      */
-    public function sendEmailVerification(string $email, string $token): string
+    public function sendEmailVerification(string $email, string $token): NotificationResult
     {
-        $routePrefix = config('swift-auth.route_prefix', 'swift-auth');
-        $verifyUrl = url("/{$routePrefix}/email/verify/{$token}?email=" . urlencode($email));
+        try {
+            $routePrefix = config('swift-auth.route_prefix', 'swift-auth');
+            $verifyUrl = url("/{$routePrefix}/email/verify/{$token}?email=" . urlencode($email));
 
-        $flight = new FlightPlan(
-            channel: 'email',
-            to: $email,
-            subject: 'Verify Your Email Address',
-            html: $this->getEmailVerificationHtml($verifyUrl, $email),
-            text: $this->getEmailVerificationText($verifyUrl),
-            idempotencyKey: "swift-auth:email-verification:{$email}:{$token}"
-        );
+            $flight = new FlightPlan(
+                channel: 'email',
+                to: $email,
+                subject: 'Verify Your Email Address',
+                html: $this->getEmailVerificationHtml($verifyUrl, $email),
+                text: $this->getEmailVerificationText($verifyUrl),
+                idempotencyKey: "swift-auth:email-verification:{$email}:{$token}"
+            );
 
-        return BirdFlock::dispatch($flight);
+            $messageId = BirdFlock::dispatch($flight);
+
+            return NotificationResult::success($messageId);
+        } catch (RuntimeException $e) {
+            logger()->error('swift-auth.notification.email-verification-failed', [
+                'email' => $email,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return NotificationResult::failure($e->getMessage());
+        }
     }
 
     /**
-     * Send account lockout notification.
+     * Sends account lockout notification.
      *
-     * @param  string $email    Recipient email address.
-     * @param  int    $duration Lockout duration in seconds.
-     * @return string           Message ID from Bird Flock.
+     * @param  string              $email     Recipient email address.
+     * @param  int                 $duration  Lockout duration in seconds.
+     * @return NotificationResult             Dispatch result with success status and message ID or error.
      */
-    public function sendAccountLockout(string $email, int $duration): string
+    public function sendAccountLockout(string $email, int $duration): NotificationResult
     {
-        $minutes = (int) ceil($duration / 60);
+        try {
+            $minutes = (int) ceil($duration / 60);
 
-        $flight = new FlightPlan(
-            channel: 'email',
-            to: $email,
-            subject: 'Account Temporarily Locked',
-            html: $this->getAccountLockoutHtml($email, $minutes),
-            text: $this->getAccountLockoutText($minutes),
-            idempotencyKey: "swift-auth:account-lockout:{$email}:" . now()->timestamp
-        );
+            $flight = new FlightPlan(
+                channel: 'email',
+                to: $email,
+                subject: 'Account Temporarily Locked',
+                html: $this->getAccountLockoutHtml($email, $minutes),
+                text: $this->getAccountLockoutText($minutes),
+                idempotencyKey: "swift-auth:account-lockout:{$email}:" . now()->getTimestamp()
+            );
 
-        return BirdFlock::dispatch($flight);
+            $messageId = BirdFlock::dispatch($flight);
+
+            return NotificationResult::success($messageId);
+        } catch (RuntimeException $e) {
+            logger()->error('swift-auth.notification.account-lockout-failed', [
+                'email' => $email,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return NotificationResult::failure($e->getMessage());
+        }
     }
 
     /**
-     * Get password reset HTML email body.
+     * Returns password reset HTML email body.
      *
-     * @param  string $resetUrl Password reset URL.
-     * @param  string $email    Recipient email.
-     * @return string           HTML email content.
-     */
-    private function getPasswordResetHtml(string $resetUrl, string $email): string
-    {
-        return <<<HTML
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Password Reset Request</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #2563eb;">Password Reset Request</h2>
-                <p>You are receiving this email because we received a password reset request for your account: <strong>{$email}</strong></p>
-                <p>Click the button below to reset your password:</p>
-                <p style="text-align: center; margin: 30px 0;">
-                    <a href="{$resetUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a>
-                </p>
-                <p>Or copy and paste this URL into your browser:</p>
-                <p style="word-break: break-all; color: #666;">{$resetUrl}</p>
-                <p style="margin-top: 30px; color: #666; font-size: 14px;">
-                    This password reset link will expire in 15 minutes.<br>
-                    If you did not request a password reset, no further action is required.
-                </p>
-            </div>
-        </body>
-        </html>
-        HTML;
-    }
-
-    /**
-     * Get password reset plain text email body.
-     *
-     * @param  string $resetUrl Password reset URL.
-     * @return string           Plain text email content.
-     */
-    private function getPasswordResetText(string $resetUrl): string
-    {
-        return <<<TEXT
-        Password Reset Request
-
-        You are receiving this email because we received a password reset request for your account.
-
-        Reset your password by visiting this URL:
-        {$resetUrl}
-
-        This password reset link will expire in 15 minutes.
-
-        If you did not request a password reset, no further action is required.
-        TEXT;
-    }
-
-    /**
-     * Get email verification HTML email body.
-     *
-     * @param  string $verifyUrl Email verification URL.
+     * @param  string $resetUrl  Password reset URL.
      * @param  string $email     Recipient email.
      * @return string            HTML email content.
      */
-    private function getEmailVerificationHtml(string $verifyUrl, string $email): string
+    private function getPasswordResetHtml(string $resetUrl, string $email): string
     {
-        return <<<HTML
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Verify Your Email Address</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #2563eb;">Verify Your Email Address</h2>
-                <p>Thank you for registering! Please verify your email address: <strong>{$email}</strong></p>
-                <p>Click the button below to verify your email:</p>
-                <p style="text-align: center; margin: 30px 0;">
-                    <a href="{$verifyUrl}" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Verify Email</a>
-                </p>
-                <p>Or copy and paste this URL into your browser:</p>
-                <p style="word-break: break-all; color: #666;">{$verifyUrl}</p>
-                <p style="margin-top: 30px; color: #666; font-size: 14px;">
-                    This verification link will expire in 24 hours.<br>
-                    If you did not create an account, please ignore this email.
-                </p>
-            </div>
-        </body>
-        </html>
-        HTML;
+        return view('swift-auth::emails.password_reset', [
+            'resetUrl' => $resetUrl,
+            'email' => $email,
+        ])->render();
     }
 
     /**
-     * Get email verification plain text email body.
+     * Returns password reset plain text email body.
      *
-     * @param  string $verifyUrl Email verification URL.
+     * @param  string $resetUrl  Password reset URL.
      * @return string            Plain text email content.
+     */
+    private function getPasswordResetText(string $resetUrl): string
+    {
+        return view('swift-auth::emails.password_reset_text', [
+            'resetUrl' => $resetUrl,
+        ])->render();
+    }
+
+    /**
+     * Returns email verification HTML email body.
+     *
+     * @param  string $verifyUrl  Email verification URL.
+     * @param  string $email      Recipient email.
+     * @return string             HTML email content.
+     */
+    private function getEmailVerificationHtml(string $verifyUrl, string $email): string
+    {
+        return view('swift-auth::emails.verification', [
+            'verifyUrl' => $verifyUrl,
+            'email' => $email,
+        ])->render();
+    }
+
+    /**
+     * Returns email verification plain text email body.
+     *
+     * @param  string $verifyUrl  Email verification URL.
+     * @return string             Plain text email content.
      */
     private function getEmailVerificationText(string $verifyUrl): string
     {
-        return <<<TEXT
-        Verify Your Email Address
-
-        Thank you for registering! Please verify your email address.
-
-        Verify your email by visiting this URL:
-        {$verifyUrl}
-
-        This verification link will expire in 24 hours.
-
-        If you did not create an account, please ignore this email.
-        TEXT;
+        return view('swift-auth::emails.verification_text', [
+            'verifyUrl' => $verifyUrl,
+        ])->render();
     }
 
     /**
-     * Get account lockout HTML email body.
+     * Returns account lockout HTML email body.
      *
-     * @param  string $email   Recipient email.
-     * @param  int    $minutes Lockout duration in minutes.
-     * @return string          HTML email content.
+     * @param  string $email    Recipient email.
+     * @param  int    $minutes  Lockout duration in minutes.
+     * @return string           HTML email content.
      */
     private function getAccountLockoutHtml(string $email, int $minutes): string
     {
-        return <<<HTML
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="UTF-8">
-            <title>Account Temporarily Locked</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <h2 style="color: #dc2626;">Account Temporarily Locked</h2>
-                <p>Your account (<strong>{$email}</strong>) has been temporarily locked due to multiple failed login attempts.</p>
-                <p style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0;">
-                    <strong>Lockout Duration:</strong> {$minutes} minutes
-                </p>
-                <p>If this wasn't you, please contact support immediately as someone may be attempting to access your account.</p>
-                <p style="margin-top: 30px; color: #666; font-size: 14px;">
-                    Your account will automatically unlock after the lockout duration expires.
-                </p>
-            </div>
-        </body>
-        </html>
-        HTML;
+        return view('swift-auth::emails.account_lockout', [
+            'email' => $email,
+            'minutes' => $minutes,
+        ])->render();
     }
 
     /**
-     * Get account lockout plain text email body.
+     * Returns account lockout plain text email body.
      *
-     * @param  int $minutes Lockout duration in minutes.
-     * @return string       Plain text email content.
+     * @param  int    $minutes  Lockout duration in minutes.
+     * @return string           Plain text email content.
      */
     private function getAccountLockoutText(int $minutes): string
     {
-        return <<<TEXT
-        Account Temporarily Locked
-
-        Your account has been temporarily locked due to multiple failed login attempts.
-
-        Lockout Duration: {$minutes} minutes
-
-        If this wasn't you, please contact support immediately as someone may be attempting to access your account.
-
-        Your account will automatically unlock after the lockout duration expires.
-        TEXT;
+        return view('swift-auth::emails.account_lockout_text', [
+            'minutes' => $minutes,
+        ])->render();
     }
 }

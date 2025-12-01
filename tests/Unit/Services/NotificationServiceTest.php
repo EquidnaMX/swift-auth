@@ -12,11 +12,11 @@
  */
 
 namespace Equidna\SwiftAuth\Tests\Unit\Services;
+use PHPUnit\Framework\TestCase;
 
-use Equidna\SwiftAuth\Services\NotificationService;
 use Equidna\BirdFlock\BirdFlock;
 use Equidna\BirdFlock\DTO\FlightPlan;
-use PHPUnit\Framework\TestCase;
+use Equidna\SwiftAuth\Services\NotificationService;
 
 /**
  * Tests NotificationService business logic in isolation.

@@ -5,7 +5,7 @@
 @section('content')
     <h2 class="text-center">Registro de usuario</h2>
 
-    <form method="POST" action="{{ route('swift-auth.store') }}">
+    <form method="POST" action="{{ route('swift-auth.users.store') }}">
         @csrf
 
         <div class="mb-3">

@@ -18,7 +18,7 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        $prefix = config('swift-auth.table_prefix', '');
+        $prefix = config('swift-auth.table_prefix', 'swift-auth_');
         $tableName = $prefix . 'PasswordResetTokens';
 
         if (Schema::hasTable($tableName)) {
@@ -40,7 +40,7 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        $prefix = config('swift-auth.table_prefix', '');
+        $prefix = config('swift-auth.table_prefix', 'swift-auth_');
         Schema::dropIfExists($prefix . 'PasswordResetTokens');
     }
 };

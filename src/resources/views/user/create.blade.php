@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.auth')
 
 @section('content')
     <h2>Crear usuario</h2>
@@ -23,6 +23,15 @@
         <div class="mb-3">
             <label for="password_confirmation" class="form-label">Confirmar contraseña:</label>
             <input type="password" name="password_confirmation" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="role" class="form-label">Rol:</label>
+            <select name="role" class="form-select" required>
+                @foreach($roles as $role)
+                    <option value="{{ $role->id_role }}">{{ $role->name }}</option>
+                @endforeach
+            </select>
         </div>
 
         <button type="submit" class="btn btn-success">Crear</button>

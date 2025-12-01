@@ -16,13 +16,17 @@ Route::prefix('users')
     ->group(
         function () {
             Route::get('', [UserController::class, 'index'])->name('index');
-            Route::post('', [UserController::class, 'store'])->name('store');
 
-            Route::get('register', [UserController::class, 'register'])->name('register');
+            // Admin create page
+            Route::get('create', [UserController::class, 'create'])->name('create');
+
 
             Route::prefix('{id_user}')->group(
                 function () {
                     Route::get('', [UserController::class, 'show'])->name('show');
+
+                    // Admin edit page
+                    Route::get('edit', [UserController::class, 'edit'])->name('edit');
 
                     Route::put('', [UserController::class, 'update'])->name('update');
                     Route::delete('', [UserController::class, 'destroy'])->name('destroy');

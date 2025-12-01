@@ -12,17 +12,16 @@
  */
 
 namespace Equidna\SwiftAuth\Services;
-
-use Equidna\SwiftAuth\Models\User;
-use Illuminate\Session\Store as Session;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Session\Store as Session;
+
+use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
+use Equidna\SwiftAuth\Models\User;
 
 /**
- * Class SwiftSessionAuth
- *
  * Provides session-based authentication handling for users.
- * This class handles login, logout, session checks, and user retrieval
- * using Laravel's session storage.
+ *
+ * Handles login, logout, session checks, and user retrieval using Laravel's session storage.
  */
 class SwiftSessionAuth
 {
@@ -30,19 +29,22 @@ class SwiftSessionAuth
     protected string $sessionKey = 'swift_auth_user_id';
 
     /**
-     * Create a new SwiftSessionAuth instance.
+     * Creates a new SwiftSessionAuth instance.
      *
-     * @param Session $session
+     * @param  Session                  $session         Laravel session store instance.
+     * @param  UserRepositoryInterface  $userRepository  User data access layer.
      */
-    public function __construct(Session $session)
-    {
+    public function __construct(
+        Session $session,
+        private UserRepositoryInterface $userRepository
+    ) {
         $this->session = $session;
     }
 
     /**
-     * Log in a user by storing their ID in the session.
+     * Logs in a user by storing their ID in the session.
      *
-     * @param User $user
+     * @param  User $user  User instance to authenticate.
      * @return void
      */
     public function login(User $user): void
@@ -51,7 +53,7 @@ class SwiftSessionAuth
     }
 
     /**
-     * Log out the user by removing their ID from the session.
+     * Logs out the user by removing their ID from the session.
      *
      * @return void
      */
@@ -61,9 +63,9 @@ class SwiftSessionAuth
     }
 
     /**
-     * Determine if a user is currently authenticated via session.
+     * Determines if a user is currently authenticated via session.
      *
-     * @return bool
+     * @return bool  True if authenticated, false otherwise.
      */
     public function check(): bool
     {
@@ -71,9 +73,9 @@ class SwiftSessionAuth
     }
 
     /**
-     * Get the authenticated user's ID from the session.
+     * Returns the authenticated user's ID from the session.
      *
-     * @return int|null
+     * @return int|null  User ID or null if not authenticated.
      */
     public function id(): null|int
     {
@@ -81,27 +83,27 @@ class SwiftSessionAuth
     }
 
     /**
-     * Get the authenticated User model instance, or null if not found.
+     * Returns the authenticated User model instance, or null if not found.
      *
-     * @return User|null
+     * @return User|null  Authenticated user or null.
      */
     public function user(): null|User
     {
         $id = $this->id();
-        return $id ? User::find($id) : null;
+        return $id ? $this->userRepository->findById($id) : null;
     }
 
     /**
-     * Get the authenticated User model instance or throw exception if not found.
+     * Returns the authenticated User model instance or throws exception if not found.
      *
-     * @throws ModelNotFoundException
-     * @return User
+     * @return User                    Authenticated user instance.
+     * @throws ModelNotFoundException  When user ID not in session or user record not found.
      */
     public function userOrFail(): User
     {
         $id = $this->id();
 
-        if (!$id || !($user = User::find($id))) {
+        if (!$id || !($user = $this->userRepository->findById($id))) {
             throw new ModelNotFoundException("User not found");
         }
 
@@ -109,10 +111,10 @@ class SwiftSessionAuth
     }
 
     /**
-     * Check if the authenticated user is allowed to perform the given action(s).
+     * Checks if the authenticated user is allowed to perform the given action(s).
      *
-     * @param string|array<string,mixed> $actions The action or list of actions to validate.
-     * @return bool True if the user has permission for at least one of the actions; otherwise, false.
+     * @param  string|array<string,mixed> $actions  Action or list of actions to validate.
+     * @return bool                                  True if user has permission for at least one action.
      */
     public function canPerformAction(string|array $actions): bool
     {
@@ -134,10 +136,10 @@ class SwiftSessionAuth
     }
 
     /**
-     * Check if the authenticated user has any of the given roles.
+     * Checks if the authenticated user has any of the given roles.
      *
-     * @param string|array<string,mixed> $roles
-     * @return bool
+     * @param  string|array<string,mixed> $roles  Role name(s) to check.
+     * @return bool                                True if user has at least one role.
      */
     public function hasRole(string|array $roles): bool
     {
@@ -147,7 +149,8 @@ class SwiftSessionAuth
             return false;
         }
 
-        if ($user->hasRoles('root')) {
+        // sw-admin action implies all role checks pass
+        if ($this->canPerformAction('sw-admin')) {
             return true;
         }
 

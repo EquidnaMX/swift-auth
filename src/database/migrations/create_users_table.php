@@ -18,13 +18,18 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        $prefix = config('swift-auth.table_prefix', '');
+        $prefix = config('swift-auth.table_prefix', 'swift-auth_');
 
         Schema::create($prefix . 'Users', function (Blueprint $table) {
             $table->id('id_user');
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
+            $table->string('email_verification_token')->nullable();
+            $table->timestamp('email_verification_sent_at')->nullable();
+            $table->unsignedTinyInteger('failed_login_attempts')->default(0);
+            $table->timestamp('locked_until')->nullable();
+            $table->timestamp('last_failed_login_at')->nullable();
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
@@ -39,7 +44,7 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        $prefix = config('swift-auth.table_prefix', '');
+        $prefix = config('swift-auth.table_prefix', 'swift-auth_');
         Schema::dropIfExists($prefix . 'Users');
     }
 };

@@ -12,6 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Contracts;
+
 use Equidna\SwiftAuth\Models\User;
 
 /**
@@ -67,5 +68,8 @@ interface UserRepositoryInterface
      * @param  int  $seconds  Lockout duration in seconds.
      * @return void
      */
-    public function lockAccount(User $user, int $seconds): void;
+    public function lockAccount(
+        User $user,
+        int $seconds,
+    ): void;
 }

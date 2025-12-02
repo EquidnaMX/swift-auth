@@ -9,6 +9,7 @@
  */
 
 namespace Equidna\SwiftAuth\Http\Middleware;
+
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -34,7 +35,10 @@ class RequireAuthentication
      * @return Response           Response after handling the request.
      * @throws ModelNotFoundException  When authenticated user ID exists but user record not found.
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(
+        Request $request,
+        Closure $next,
+    ): Response
     {
         if (!SwiftAuth::check()) {
             return ResponseHelper::unauthorized(

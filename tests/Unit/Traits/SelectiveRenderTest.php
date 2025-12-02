@@ -12,6 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Tests\Unit\Traits;
+
 use PHPUnit\Framework\TestCase;
 
 use Equidna\SwiftAuth\Traits\SelectiveRender;

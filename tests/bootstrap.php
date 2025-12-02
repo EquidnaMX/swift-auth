@@ -6,8 +6,11 @@
  */
 
 if (!function_exists('config')) {
-    function config(?string $key = null, $default = null)
-    {
+function config(
+    ?string $key = null,
+    $default = null,
+)
+{
         static $cfg = null;
         if ($cfg === null) {
             $cfg = ['swift-auth' => []];

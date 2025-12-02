@@ -11,6 +11,7 @@
  */
 
 namespace Equidna\SwiftAuth\Providers;
+
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -37,7 +38,10 @@ final class RateLimitServiceProvider extends ServiceProvider
                 return Limit::perMinute(5)
                     ->by($request->ip())
                     ->response(
-                        function (Request $request, array $headers) {
+                        function (
+                            Request $request,
+                            array $headers,
+                        ) {
                             return response()->json(
                                 ['message' => 'Too many registration attempts. Please try again later.'],
                                 429,
@@ -57,7 +61,10 @@ final class RateLimitServiceProvider extends ServiceProvider
                 return Limit::perMinutes($decaySeconds / 60, $attempts)
                     ->by($request->input('email', $request->ip()))
                     ->response(
-                        function (Request $request, array $headers) {
+                        function (
+                            Request $request,
+                            array $headers,
+                        ) {
                             return response()->json(
                                 ['message' => 'Too many password reset requests. Please wait before trying again.'],
                                 429,
@@ -77,7 +84,10 @@ final class RateLimitServiceProvider extends ServiceProvider
                 return Limit::perMinutes($decaySeconds / 60, $attempts)
                     ->by($request->input('email', $request->ip()))
                     ->response(
-                        function (Request $request, array $headers) {
+                        function (
+                            Request $request,
+                            array $headers,
+                        ) {
                             return response()->json(
                                 ['message' => 'Too many email verification requests. Please check your inbox or try again later.'],
                                 429,

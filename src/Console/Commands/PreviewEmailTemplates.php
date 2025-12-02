@@ -11,6 +11,7 @@
  */
 
 namespace Equidna\SwiftAuth\Console\Commands;
+
 use Illuminate\Console\Command;
 
 final class PreviewEmailTemplates extends Command

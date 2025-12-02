@@ -11,7 +11,9 @@
  */
 
 namespace Equidna\SwiftAuth\Http\Requests;
+
 use Equidna\Toolkit\Http\Requests\EquidnaFormRequest;
+use Equidna\SwiftAuth\Services\PasswordPolicy;
 
 /**
  * Validates registration payload with email uniqueness and password strength.
@@ -38,7 +40,7 @@ final class RegisterUserRequest extends EquidnaFormRequest
     public function rules(): array
     {
         $prefix = config('swift-auth.table_prefix', '');
-        $minLength = (int) config('swift-auth.password_min_length', 8);
+        $passwordRules = PasswordPolicy::rules();
 
         return [
             'name' => [
@@ -57,7 +59,7 @@ final class RegisterUserRequest extends EquidnaFormRequest
                 'required',
                 'string',
                 'confirmed',
-                'min:' . $minLength,
+                ...$passwordRules,
             ],
             'role' => [
                 'sometimes',

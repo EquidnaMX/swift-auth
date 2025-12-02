@@ -8,11 +8,11 @@
  * @package Equidna\SwiftAuth\Routes
  */
 
-use Equidna\SwiftAuth\Http\Middleware\RequireAuthentication;
+use Illuminate\Support\Facades\Route;
+use Equidna\SwiftAuth\Http\Controllers\AuthController;
 use Equidna\SwiftAuth\Http\Controllers\PasswordController;
 use Equidna\SwiftAuth\Http\Middleware\CanPerformAction;
-use Equidna\SwiftAuth\Http\Controllers\AuthController;
-use Illuminate\Support\Facades\Route;
+use Equidna\SwiftAuth\Http\Middleware\RequireAuthentication;
 
 $routePrefix = config('swift-auth.route_prefix', 'swift-auth');
 
@@ -50,15 +50,20 @@ Route::middleware(['web', 'SwiftAuth.SecurityHeaders'])
                     }
                 );
 
-            Route::middleware(
-                [
-                    RequireAuthentication::class,
-                    CanPerformAction::class . ':sw-admin'
-                ]
-            )->group(
+            Route::middleware([
+                RequireAuthentication::class,
+            ])->group(
                 function () {
-                    require __DIR__ . '/swift-auth-users.php';
-                    require __DIR__ . '/swift-auth-roles.php';
+                    require __DIR__ . '/swift-auth-sessions.php';
+
+                    Route::middleware(CanPerformAction::class . ':sw-admin')
+                        ->group(
+                            function () {
+                                require __DIR__ . '/swift-auth-users.php';
+                                require __DIR__ . '/swift-auth-roles.php';
+                                require __DIR__ . '/swift-auth-admin-sessions.php';
+                            }
+                        );
                 }
             );
         }

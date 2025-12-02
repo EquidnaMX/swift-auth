@@ -11,6 +11,7 @@
  */
 
 namespace Equidna\SwiftAuth\Http\Requests;
+
 use Equidna\Toolkit\Http\Requests\EquidnaFormRequest;
 
 /**
@@ -46,6 +47,10 @@ final class LoginRequest extends EquidnaFormRequest
                 'required',
                 'string',
                 'min:' . $min,
+            ],
+            'remember' => [
+                'sometimes',
+                'boolean',
             ],
         ];
     }

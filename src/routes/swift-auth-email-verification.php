@@ -14,8 +14,9 @@ use Illuminate\Support\Facades\Route;
 use Equidna\SwiftAuth\Http\Controllers\EmailVerificationController;
 
 $prefix = config('swift-auth.route_prefix', 'swift-auth');
+$namePrefix = config('swift-auth.route_prefix', 'swift-auth');
 
-Route::prefix($prefix)->name('swift-auth.')->group(function () {
+Route::prefix($prefix)->name($namePrefix . '.')->group(function () {
     Route::post('/email/send', [EmailVerificationController::class, 'send'])
         ->name('email.send');
 

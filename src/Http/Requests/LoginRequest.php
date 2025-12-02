@@ -48,6 +48,10 @@ final class LoginRequest extends EquidnaFormRequest
                 'string',
                 'min:' . $min,
             ],
+            'remember_me' => [
+                'sometimes',
+                'boolean',
+            ],
         ];
     }
 }

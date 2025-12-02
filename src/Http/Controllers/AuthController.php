@@ -187,7 +187,8 @@ class AuthController extends Controller
             'user_agent' => $request->userAgent(),
         ]);
 
-        SwiftAuth::login($user);
+        $remember = (bool) $request->boolean('remember_me');
+        SwiftAuth::login($user, $remember);
         $request->session()->regenerate();
 
         /** @var JsonResponse|RedirectResponse|string $response */

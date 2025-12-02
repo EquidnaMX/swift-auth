@@ -48,10 +48,12 @@ class SwiftSessionAuth
      *
      * @param  Session                  $session         Laravel session store instance.
      * @param  UserRepositoryInterface  $userRepository  User data access layer.
+     * @param  Dispatcher               $events          Event dispatcher instance.
      */
     public function __construct(
         Session $session,
-        private UserRepositoryInterface $userRepository
+        private UserRepositoryInterface $userRepository,
+        private Dispatcher $events
     ) {
         $this->session = $session;
         $this->rememberCookieName = (string) $this->getConfig(
@@ -991,5 +993,179 @@ class SwiftSessionAuth
         }
 
         return $user->hasRoles($roles);
+    }
+
+    /**
+     * Dispatches a session eviction event when a session limit is enforced.
+     *
+     * @param  User   $user             User whose sessions are being limited.
+     * @param  string $evictedSessionId Identifier of the evicted session.
+     * @return void
+     */
+    public function enforceSessionLimit(User $user, string $evictedSessionId): void
+    {
+        $this->dispatchEvent(new SessionEvicted(
+            $user->getKey(),
+            $evictedSessionId,
+            $this->getClientIp(),
+            $this->getDriverMetadata()
+        ));
+    }
+
+    /**
+     * Dispatches an event indicating a multi-factor authentication challenge has started.
+     *
+     * @param  User $user  User undergoing MFA challenge.
+     * @return void
+     */
+    public function startMfaChallenge(User $user): void
+    {
+        $this->dispatchEvent(new MfaChallengeStarted(
+            $user->getKey(),
+            $this->getSessionId(),
+            $this->getClientIp(),
+            $this->getDriverMetadata()
+        ));
+    }
+
+    /**
+     * Dispatches events via the configured dispatcher.
+     *
+     * @param  object $event  Event instance to dispatch.
+     * @return void
+     */
+    private function dispatchEvent(object $event): void
+    {
+        $this->events->dispatch($event);
+    }
+
+    /**
+     * Returns metadata about the session storage driver and handler.
+     *
+     * @return array<string, string>
+     */
+    private function getDriverMetadata(): array
+    {
+        $handler = $this->session->getHandler();
+
+        return [
+            'handler' => $handler instanceof SessionHandlerInterface ? SessionHandlerInterface::class : (string) $handler,
+            'name' => $this->session->getName(),
+            'store' => $this->session::class,
+        ];
+    }
+
+    /**
+     * Returns the current session identifier.
+     *
+     * @return string
+     */
+    private function getSessionId(): string
+    {
+        return (string) $this->session->getId();
+    }
+
+    /**
+     * Attempts to determine the client's IP address.
+     *
+     * @return string|null
+     */
+    private function getClientIp(): ?string
+    {
+        if (function_exists('request') && request()) {
+            return request()->ip();
+        }
+
+        return $_SERVER['REMOTE_ADDR'] ?? null;
+     * Attempts to reauthenticate a user using a remember-me cookie.
+     */
+    protected function attemptRememberReauthentication(CarbonImmutable $now): bool
+    {
+        if (!config('swift-auth.session.remember_me.enabled', true)) {
+            return false;
+        }
+
+        $rememberValue = Cookie::get($this->rememberCookie);
+
+        if (!$rememberValue || !str_contains($rememberValue, '|')) {
+            return false;
+        }
+
+        [$userId, $token, $expires] = array_pad(explode('|', $rememberValue, 3), 3, null);
+
+        if (!$userId || !$token || !$expires) {
+            $this->clearRememberCookie();
+            return false;
+        }
+
+        if ($now->getTimestamp() >= (int) $expires) {
+            $this->purgeRememberToken((int) $userId);
+            return false;
+        }
+
+        $user = $this->userRepository->findById((int) $userId);
+
+        if (!$user || !hash_equals((string) $user->remember_token, hash('sha256', $token))) {
+            $this->purgeRememberToken((int) $userId);
+            return false;
+        }
+
+        $this->login($user, false);
+
+        if (config('swift-auth.session.remember_me.rotate', true)) {
+            $this->createRememberToken($user, $now);
+        }
+
+        return true;
+    }
+
+    /**
+     * Creates and queues a remember-me token and cookie for the user.
+     */
+    protected function createRememberToken(User $user, CarbonImmutable $now): void
+    {
+        $ttl = (int) config('swift-auth.session.remember_me.ttl', 60 * 60 * 24 * 14);
+        $token = Str::random(60);
+        $hashedToken = hash('sha256', $token);
+        $user->remember_token = $hashedToken;
+        $user->save();
+
+        $expiresAt = $now->addSeconds($ttl);
+        $minutes = max(1, (int) ceil($ttl / 60));
+
+        Cookie::queue(cookie(
+            $this->rememberCookie,
+            implode('|', [$user->getKey(), $token, $expiresAt->getTimestamp()]),
+            $minutes,
+            null,
+            null,
+            false,
+            true,
+            false,
+            'Strict',
+        ));
+    }
+
+    /**
+     * Clears remember-me state for a user and cookie.
+     */
+    protected function purgeRememberToken(int $userId): void
+    {
+        $user = $this->userRepository->findById($userId);
+
+        if ($user) {
+            $user->remember_token = null;
+            $user->save();
+        }
+
+        $this->clearRememberCookie();
+    }
+
+    /**
+     * Queues removal of the remember-me cookie.
+     */
+    protected function clearRememberCookie(): void
+    {
+        Cookie::queue(Cookie::forget($this->rememberCookie));
     }
 }

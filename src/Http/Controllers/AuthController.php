@@ -226,6 +226,12 @@ class AuthController extends Controller
             deviceName: (string) $request->header('X-Device-Name', ''),
             remember: $remember,
         );
+        $remember = (bool) $request->boolean('remember_me');
+        SwiftAuth::login($user, $remember);
+        $request->session()->regenerate();
+
+        $evictedSessionIds = (array) $request->session()->pull('swift-auth.evicted_session_ids', []);
+        $evictionPolicy = $request->session()->pull('swift-auth.eviction_policy');
 
         /** @var JsonResponse|RedirectResponse|string $response */
         $response = ResponseHelper::success(
@@ -246,6 +252,36 @@ class AuthController extends Controller
                 'evicted_session_ids' => $loginResult['evicted_session_ids'] ?? [],
             ]);
         }
+
+        if (!empty($evictedSessionIds)) {
+            $evictionMessage = $this->getEvictionMessage($evictionPolicy);
+
+            if ($response instanceof JsonResponse) {
+                /** @var array{status?:mixed,message?:mixed,data?:array<string,mixed>,forward_url?:mixed} $payload */
+                $payload = $response->getData(true);
+
+                $payload['data'] = ($payload['data'] ?? []) + [
+                    'evicted_session_ids' => $evictedSessionIds,
+                    'eviction_policy' => $evictionPolicy,
+                ];
+
+                if ($evictionMessage !== null) {
+                    $payload['data']['eviction_message'] = $evictionMessage;
+                }
+
+                $response->setData($payload);
+            }
+
+            if ($response instanceof RedirectResponse) {
+                $request->session()->flash('evicted_session_ids', $evictedSessionIds);
+                $request->session()->flash('eviction_policy', $evictionPolicy);
+
+                if ($evictionMessage !== null) {
+                    $request->session()->flash('eviction_message', $evictionMessage);
+                }
+            }
+        }
+
         /** @var JsonResponse|RedirectResponse $response */
         return $response;
     }
@@ -311,5 +347,12 @@ class AuthController extends Controller
         return in_array($driver, ['otp', 'webauthn'], true)
             ? $driver
             : 'otp';
+    private function getEvictionMessage(null|string $policy): ?string
+    {
+        return match ($policy) {
+            'newest' => __('swift-auth::session.evicted_newest'),
+            'oldest' => __('swift-auth::session.evicted_oldest'),
+            default => null,
+        };
     }
 }

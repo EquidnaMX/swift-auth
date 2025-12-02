@@ -132,6 +132,74 @@ return [
     'session_limits' => [
         'max_sessions' => env('SWIFT_AUTH_MAX_SESSIONS', null),
         'eviction' => env('SWIFT_AUTH_SESSION_EVICTION', 'oldest'), // oldest | newest
+    | Session Timeouts & Remember Me
+    |--------------------------------------------------------------------------
+    |
+    | `idle_timeout` defines how long (in seconds) a session can remain idle
+    | before it is considered expired. `absolute_timeout` limits the maximum
+    | lifetime of a session regardless of activity. Set either value to null to
+    | disable the related timeout.
+    |
+    | Remember-me cookies are controlled by the nested configuration. `ttl`
+    | specifies how long (in seconds) a remember token stays valid. When
+    | `rotate` is true, the token is regenerated after a successful
+    | reauthentication to reduce replay risk.
+    */
+
+    'session' => [
+        'idle_timeout' => env('SWIFT_AUTH_IDLE_TIMEOUT'),
+        'absolute_timeout' => env('SWIFT_AUTH_ABSOLUTE_TIMEOUT'),
+        'remember_me' => [
+            'enabled' => env('SWIFT_AUTH_REMEMBER_ENABLED', true),
+            'ttl' => env('SWIFT_AUTH_REMEMBER_TTL', 60 * 60 * 24 * 14), // 14 days
+            'rotate' => env('SWIFT_AUTH_REMEMBER_ROTATE', true),
+        ],
+    ],
+  
+    | Multi-Factor Authentication (MFA)
+    |--------------------------------------------------------------------------
+    |
+    | Configure how MFA challenges are verified. Each method defines the
+    | verification endpoint and driver name that will be forwarded during
+    | validation. Session keys track pending MFA state between challenge and
+    | verification.
+    |
+    */
+
+    'mfa' => [
+        'pending_user_session_key' => 'swift_auth_pending_user_id',
+        'pending_method_session_key' => 'swift_auth_pending_mfa_method',
+
+        'otp' => [
+            'verification_url' => env('SWIFT_AUTH_OTP_VERIFICATION_URL', null),
+            'driver' => env('SWIFT_AUTH_OTP_DRIVER', 'otp'),
+        ],
+
+        'webauthn' => [
+            'verification_url' => env('SWIFT_AUTH_WEBAUTHN_VERIFICATION_URL', null),
+            'driver' => env('SWIFT_AUTH_WEBAUTHN_DRIVER', 'webauthn'),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Login Rate Limits
+    |--------------------------------------------------------------------------
+    |
+    | Tune rate limits for login attempts by email and IP. Each limiter
+    | contains the allowed attempts within a decay window (seconds).
+    |
+    */
+
+    'login_rate_limits' => [
+        'email' => [
+            'attempts' => 5,
+            'decay_seconds' => 300,
+        ],
+        'ip' => [
+            'attempts' => 20,
+            'decay_seconds' => 300,
+        ],
     ],
 
     /*
@@ -261,6 +329,26 @@ return [
 
     'actions' => [
         'sw-admin' => 'Swift Auth admin', // !! DO NOT REMOVE THIS ACTION: used in core SwiftAuth functions
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remember Me Token Matching
+    |--------------------------------------------------------------------------
+    |
+    | Controls how persisted remember-me tokens are validated against incoming
+    | requests. Strict policy requires IP, user agent and device (when present)
+    | to match exactly. Lenient policy allows IP subnet tolerance and accepts a
+    | match when either user agent or device aligns.
+    |
+    */
+
+    'remember_me' => [
+        'policy' => env('SWIFT_AUTH_REMEMBER_POLICY', 'strict'), // strict|lenient
+        'allow_same_subnet' => env('SWIFT_AUTH_REMEMBER_ALLOW_SUBNET', true),
+        'subnet_mask' => env('SWIFT_AUTH_REMEMBER_SUBNET_MASK', 24),
+        'device_header' => env('SWIFT_AUTH_REMEMBER_DEVICE_HEADER', 'X-Device-Id'),
+        'require_device_header' => env('SWIFT_AUTH_REMEMBER_REQUIRE_DEVICE', false),
     ],
     /*
     |--------------------------------------------------------------------------

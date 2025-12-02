@@ -11,6 +11,7 @@
 use Equidna\SwiftAuth\Http\Middleware\RequireAuthentication;
 use Equidna\SwiftAuth\Http\Controllers\PasswordController;
 use Equidna\SwiftAuth\Http\Middleware\CanPerformAction;
+use Equidna\SwiftAuth\Http\Controllers\MfaController;
 use Equidna\SwiftAuth\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +24,15 @@ Route::middleware(['web', 'SwiftAuth.SecurityHeaders'])
         function () {
             Route::get('login', [AuthController::class, 'showLoginForm'])->name('login.form');
             Route::post('login', [AuthController::class, 'login'])->name('login');
+
+            Route::prefix('mfa')->as('mfa.')
+                ->group(
+                    function () {
+                        Route::post('otp/verify', [MfaController::class, 'verifyOtp'])->name('otp.verify');
+                        Route::post('webauthn/verify', [MfaController::class, 'verifyWebAuthn'])
+                            ->name('webauthn.verify');
+                    }
+                );
 
             Route::match(['get', 'post'], 'logout', [AuthController::class, 'logout'])->name('logout');
 

@@ -160,7 +160,13 @@ class UserController extends Controller
             );
         }
 
-        SwiftAuth::login($user);
+        SwiftAuth::login(
+            user: $user,
+            ipAddress: $request->ip(),
+            userAgent: $request->userAgent(),
+            deviceName: (string) $request->header('X-Device-Name', ''),
+            remember: false,
+        );
 
         return ResponseHelper::created(
             message: 'Registration successful.',

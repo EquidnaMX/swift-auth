@@ -44,6 +44,94 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Login Rate Limits
+    |--------------------------------------------------------------------------
+    |
+    | Tune rate limits for login attempts by email and IP. Each limiter
+    | contains the allowed attempts within a decay window (seconds).
+    |
+    */
+
+    'login_rate_limits' => [
+        'email' => [
+            'attempts' => 5,
+            'decay_seconds' => 300,
+        ],
+        'ip' => [
+            'attempts' => 20,
+            'decay_seconds' => 300,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session Lifetimes
+    |--------------------------------------------------------------------------
+    |
+    | Controls how long sessions remain valid. The idle timeout resets whenever
+    | activity occurs, while the absolute timeout caps the total lifespan from
+    | the moment of login. Set values to null to disable either limit.
+    |
+    */
+
+    'session_lifetimes' => [
+        'idle_timeout_seconds' => env('SWIFT_AUTH_SESSION_IDLE_TIMEOUT', 1800), // 30 minutes
+        'absolute_timeout_seconds' => env('SWIFT_AUTH_SESSION_ABSOLUTE_TIMEOUT', 86400), // 24 hours
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remember Me Tokens
+    |--------------------------------------------------------------------------
+    |
+    | Controls persistent login tokens stored as signed cookies. When enabled,
+    | users can opt into a long-lived cookie that is rotated on use and
+    | revocable server-side. Cookie attributes may be tuned for your deployment.
+    |
+    */
+
+    'remember_me' => [
+        'enabled' => env('SWIFT_AUTH_REMEMBER_ENABLED', true),
+        'cookie_name' => env('SWIFT_AUTH_REMEMBER_COOKIE', 'swift_auth_remember'),
+        'ttl_seconds' => env('SWIFT_AUTH_REMEMBER_TTL', 1209600), // 14 days
+        'rotate_on_use' => env('SWIFT_AUTH_REMEMBER_ROTATE', true),
+        'secure' => env('SWIFT_AUTH_REMEMBER_SECURE', true),
+        'same_site' => env('SWIFT_AUTH_REMEMBER_SAMESITE', 'lax'),
+        'domain' => env('SWIFT_AUTH_REMEMBER_DOMAIN', null),
+        'path' => env('SWIFT_AUTH_REMEMBER_PATH', '/'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session Cleanup
+    |--------------------------------------------------------------------------
+    |
+    | Automated cleanup of stale session rows in the persistence table. The
+    | cutoff defaults to the longest configured session lifetime; adjust the
+    | grace period to keep limited historical data if desired.
+    |
+    */
+
+    'session_cleanup' => [
+        'enabled' => env('SWIFT_AUTH_SESSION_CLEANUP_ENABLED', true),
+        'grace_seconds' => env('SWIFT_AUTH_SESSION_CLEANUP_GRACE', 0),
+        'schedule' => env('SWIFT_AUTH_SESSION_CLEANUP_CRON', 'daily'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Concurrent Session Limits
+    |--------------------------------------------------------------------------
+    |
+    | Caps the number of simultaneous sessions per user. When the limit is
+    | exceeded, SwiftAuth will evict either the oldest or newest sessions based
+    | on the eviction policy. Set `max_sessions` to null to disable.
+    |
+    */
+
+    'session_limits' => [
+        'max_sessions' => env('SWIFT_AUTH_MAX_SESSIONS', null),
+        'eviction' => env('SWIFT_AUTH_SESSION_EVICTION', 'oldest'), // oldest | newest
     | Session Timeouts & Remember Me
     |--------------------------------------------------------------------------
     |
@@ -158,6 +246,24 @@ return [
 
     'password_reset_verify_attempts' => 10,
     'password_reset_verify_decay_seconds' => 3600,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Multi-factor Authentication (OTP/WebAuthn)
+    |--------------------------------------------------------------------------
+    |
+    | Enable this to require a second factor after primary credential
+    | verification. The driver flag allows clients to display the correct UI
+    | (e.g., OTP code entry or WebAuthn prompt). Verification is expected to be
+    | completed by the host application using the provided verification URL.
+    |
+    */
+
+    'mfa' => [
+        'enabled' => env('SWIFT_AUTH_MFA_ENABLED', false),
+        'driver' => env('SWIFT_AUTH_MFA_DRIVER', 'otp'), // otp | webauthn
+        'verification_url' => env('SWIFT_AUTH_MFA_VERIFICATION_URL', '/mfa/verify'),
+    ],
 
     /*
     |--------------------------------------------------------------------------

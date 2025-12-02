@@ -180,6 +180,36 @@ class AuthController extends Controller
         // Clear rate limiter on successful login
         RateLimiter::clear($loginLimiter);
 
+        $mfaConfig = config('swift-auth.mfa', []);
+
+        if ($this->shouldRequestMfa($mfaConfig)) {
+            $driver = $this->resolveMfaDriver($mfaConfig);
+            $verificationUrl = (string) ($mfaConfig['verification_url'] ?? '');
+
+            SwiftAuth::startMfaChallenge(
+                user: $user,
+                driver: $driver,
+                ipAddress: $request->ip(),
+                userAgent: $request->userAgent(),
+            );
+
+            logger()->info('swift-auth.login.mfa-required', [
+                'user_id' => $user->getKey(),
+                'driver' => $driver,
+                'ip' => $request->ip(),
+            ]);
+
+            return ResponseHelper::success(
+                message: 'Additional verification required.',
+                data: [
+                    'mfa_required' => true,
+                    'driver' => $driver,
+                    'verification_url' => $verificationUrl,
+                    'user_id' => $user->getKey(),
+                ],
+            );
+        }
+
         logger()->info('swift-auth.login.success', [
             'user_id' => $user->getKey(),
             'email' => $user->email,
@@ -187,6 +217,15 @@ class AuthController extends Controller
             'user_agent' => $request->userAgent(),
         ]);
 
+        $remember = (bool) $request->boolean('remember', false);
+
+        $loginResult = SwiftAuth::login(
+            user: $user,
+            ipAddress: $request->ip(),
+            userAgent: $request->userAgent(),
+            deviceName: (string) $request->header('X-Device-Name', ''),
+            remember: $remember,
+        );
         $remember = (bool) $request->boolean('remember_me');
         SwiftAuth::login($user, $remember);
         $request->session()->regenerate();
@@ -199,6 +238,7 @@ class AuthController extends Controller
             message: 'Login successful.',
             data: [
                 'user_id' => $user->getKey(),
+                'evicted_session_ids' => $loginResult['evicted_session_ids'] ?? [],
             ],
             forward_url: Config::get('swift-auth.success_url'),
         );
@@ -209,6 +249,7 @@ class AuthController extends Controller
                 'message' => 'Login successful.',
                 'user_id' => $user->getKey(),
                 'forward_url' => Config::get('swift-auth.success_url'),
+                'evicted_session_ids' => $loginResult['evicted_session_ids'] ?? [],
             ]);
         }
 
@@ -282,6 +323,30 @@ class AuthController extends Controller
         return $response;
     }
 
+    /**
+     * Determines whether an MFA challenge should be triggered.
+     *
+     * @param  array<string, mixed> $mfaConfig  MFA configuration values.
+     * @return bool
+     */
+    private function shouldRequestMfa(array $mfaConfig): bool
+    {
+        return (bool) ($mfaConfig['enabled'] ?? false);
+    }
+
+    /**
+     * Resolves the MFA driver name from configuration.
+     *
+     * @param  array<string, mixed> $mfaConfig  MFA configuration values.
+     * @return string
+     */
+    private function resolveMfaDriver(array $mfaConfig): string
+    {
+        $driver = (string) ($mfaConfig['driver'] ?? 'otp');
+
+        return in_array($driver, ['otp', 'webauthn'], true)
+            ? $driver
+            : 'otp';
     private function getEvictionMessage(null|string $policy): ?string
     {
         return match ($policy) {

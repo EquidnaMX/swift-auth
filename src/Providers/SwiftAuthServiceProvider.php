@@ -13,14 +13,16 @@
 
 namespace Equidna\SwiftAuth\Providers;
 
-use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 
 use Equidna\SwiftAuth\Console\Commands\CreateAdminUser;
 use Equidna\SwiftAuth\Console\Commands\InstallSwiftAuth;
+use Equidna\SwiftAuth\Console\Commands\ListSessions;
 use Equidna\SwiftAuth\Console\Commands\PreviewEmailTemplates;
 use Equidna\SwiftAuth\Console\Commands\PurgeExpiredTokens;
+use Equidna\SwiftAuth\Console\Commands\PurgeStaleSessions;
+use Equidna\SwiftAuth\Console\Commands\RevokeUserSessions;
 use Equidna\SwiftAuth\Console\Commands\UnlockUserCommand;
 use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
 use Equidna\SwiftAuth\Events\MfaChallengeStarted;
@@ -139,17 +141,32 @@ final class SwiftAuthServiceProvider extends ServiceProvider
         // Register Artisan commands
         if ($this->app->runningInConsole()) {
             $this->commands([
-                InstallSwiftAuth::class,
                 CreateAdminUser::class,
-                UnlockUserCommand::class,
+                InstallSwiftAuth::class,
+                ListSessions::class,
                 PreviewEmailTemplates::class,
                 PurgeExpiredTokens::class,
+                PurgeStaleSessions::class,
+                RevokeUserSessions::class,
+                UnlockUserCommand::class,
             ]);
 
             $this->callAfterResolving(
                 \Illuminate\Console\Scheduling\Schedule::class,
                 function (\Illuminate\Console\Scheduling\Schedule $schedule): void {
                     $schedule->command(PurgeExpiredTokens::class)->hourly();
+
+                    if (config('swift-auth.session_cleanup.enabled', true)) {
+                        $frequency = (string) config('swift-auth.session_cleanup.schedule', 'daily');
+
+                        $event = $schedule->command(PurgeStaleSessions::class);
+
+                        if (method_exists($event, $frequency)) {
+                            $event->{$frequency}();
+                        } else {
+                            $event->cron($frequency);
+                        }
+                    }
                 }
             );
         }

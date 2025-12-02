@@ -31,13 +31,16 @@ use Equidna\SwiftAuth\Models\User;
  *
  * @see \Equidna\SwiftAuth\Services\SwiftSessionAuth
  *
- * @method static void login(User $user)
+ * @method static array login(User $user, null|string $ipAddress = null, null|string $userAgent = null, null|string $deviceName = null, bool $remember = false)
  * @method static void logout()
  * @method static bool check()
  * @method static int|null id()
  * @method static User|null user()
  * @method static bool canPerformAction(string|array<string,mixed> $actions)
  * @method static User userOrFail()
+ * @method static \Illuminate\Support\Collection<int, \Equidna\SwiftAuth\Models\UserSession> sessionsForUser(int $userId)
+ * @method static void revokeSession(int $userId, string $sessionId)
+ * @method static void startMfaChallenge(User $user, string $driver, null|string $ipAddress = null, null|string $userAgent = null)
  */
 class SwiftAuth extends Facade
 {

@@ -11,6 +11,7 @@
  */
 
 namespace Equidna\SwiftAuth\Http\Controllers;
+
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -34,7 +35,10 @@ final class EmailVerificationController
      * @param  NotificationService  $notificationService  Email service.
      * @return JsonResponse                               Success or error response.
      */
-    public function send(Request $request, NotificationService $notificationService): JsonResponse
+    public function send(
+        Request $request,
+        NotificationService $notificationService,
+    ): JsonResponse
     {
         $rawEmail = $request->input('email');
         $email = is_string($rawEmail) ? trim($rawEmail) : '';
@@ -45,14 +49,25 @@ final class EmailVerificationController
             );
         }
 
+        /** @var array{attempts?:int,decay_seconds?:int}|mixed $ipRateLimit */
+        $ipRateLimit = config('swift-auth.email_verification.ip_rate_limit', []);
+        $ipAttempts = (int) ($ipRateLimit['attempts'] ?? 5);
+        $ipDecay = (int) ($ipRateLimit['decay_seconds'] ?? 60);
+
         // Rate limit per IP to prevent abuse
         $ipLimiter = 'email-verification:ip:' . $request->ip();
-        if (RateLimiter::tooManyAttempts($ipLimiter, 5)) {
+        if (RateLimiter::tooManyAttempts(
+            $ipLimiter,
+            $ipAttempts,
+        )) {
             $seconds = RateLimiter::availableIn($ipLimiter);
-            logger()->warning('swift-auth.email-verification.ip-rate-limit-exceeded', [
-                'ip' => $request->ip(),
-                'email' => $email,
-            ]);
+            logger()->warning(
+                'swift-auth.email-verification.ip-rate-limit-exceeded',
+                [
+                    'ip' => $request->ip(),
+                    'email' => $email,
+                ],
+            );
 
             return ResponseHelper::tooManyRequests(
                 message: "Too many verification requests. Please try again in {$seconds} seconds."
@@ -65,22 +80,34 @@ final class EmailVerificationController
         $attempts = (int) ($rateLimitConfig['attempts'] ?? 3);
         $decaySeconds = (int) ($rateLimitConfig['decay_seconds'] ?? 300);
 
-        if (RateLimiter::tooManyAttempts($rateLimitKey, $attempts)) {
+        if (RateLimiter::tooManyAttempts(
+            $rateLimitKey,
+            $attempts,
+        )) {
             $seconds = RateLimiter::availableIn($rateLimitKey);
-            logger()->warning('swift-auth.email-verification.rate-limit-exceeded', [
-                'email' => $email,
-                'ip' => $request->ip(),
-            ]);
+            logger()->warning(
+                'swift-auth.email-verification.rate-limit-exceeded',
+                [
+                    'email' => $email,
+                    'ip' => $request->ip(),
+                ],
+            );
 
             return ResponseHelper::tooManyRequests(
                 message: "Too many verification emails sent. Please try again in {$seconds} seconds."
             );
         }
 
-        $user = User::where('email', $email)->first();
+        $user = User::where(
+            'email',
+            $email,
+        )->first();
 
         if (!$user) {
-            RateLimiter::hit($rateLimitKey, $decaySeconds);
+            RateLimiter::hit(
+                $rateLimitKey,
+                $decaySeconds,
+            );
             return ResponseHelper::notFound(
                 message: 'User not found.'
             );
@@ -97,7 +124,10 @@ final class EmailVerificationController
         $user->email_verification_sent_at = now();
         $user->save();
 
-        $result = $notificationService->sendEmailVerification($email, $token);
+        $result = $notificationService->sendEmailVerification(
+            $email,
+            $token,
+        );
 
         if (!$result->success) {
             return ResponseHelper::error(
@@ -105,15 +135,24 @@ final class EmailVerificationController
             );
         }
 
-        RateLimiter::hit($rateLimitKey, $decaySeconds);
-        RateLimiter::hit($ipLimiter, 60); // 1 minute decay
+        RateLimiter::hit(
+            $rateLimitKey,
+            $decaySeconds,
+        );
+        RateLimiter::hit(
+            $ipLimiter,
+            $ipDecay,
+        );
 
-        logger()->info('swift-auth.email-verification.sent', [
-            'user_id' => $user->id_user,
-            'email' => $email,
-            'message_id' => $result->messageId,
-            'ip' => $request->ip(),
-        ]);
+        logger()->info(
+            'swift-auth.email-verification.sent',
+            [
+                'user_id' => $user->id_user,
+                'email' => $email,
+                'message_id' => $result->messageId,
+                'ip' => $request->ip(),
+            ],
+        );
 
         return ResponseHelper::success(
             message: 'Verification email sent successfully.',
@@ -143,15 +182,24 @@ final class EmailVerificationController
         }
 
         $hashedToken = hash('sha256', $token);
-        $user = User::where('email', $email)
-            ->where('email_verification_token', $hashedToken)
+        $user = User::where(
+            'email',
+            $email,
+        )
+            ->where(
+                'email_verification_token',
+                $hashedToken,
+            )
             ->first();
 
         if (!$user) {
-            logger()->warning('swift-auth.email-verification.invalid-token', [
-                'email' => $email,
-                'ip' => $request->ip(),
-            ]);
+            logger()->warning(
+                'swift-auth.email-verification.invalid-token',
+                [
+                    'email' => $email,
+                    'ip' => $request->ip(),
+                ],
+            );
 
             return ResponseHelper::badRequest(
                 message: 'Invalid or expired verification token.'
@@ -161,11 +209,14 @@ final class EmailVerificationController
         $ttl = config('swift-auth.email_verification.token_ttl', 86400);
         $sentAt = $user->email_verification_sent_at;
         if ($sentAt && $sentAt->addSeconds($ttl)->isPast()) {
-            logger()->warning('swift-auth.email-verification.token-expired', [
-                'user_id' => $user->id_user,
-                'email' => $email,
-                'sent_at' => $sentAt,
-            ]);
+            logger()->warning(
+                'swift-auth.email-verification.token-expired',
+                [
+                    'user_id' => $user->id_user,
+                    'email' => $email,
+                    'sent_at' => $sentAt,
+                ],
+            );
 
             return ResponseHelper::badRequest(
                 message: 'Verification token has expired.'
@@ -177,11 +228,14 @@ final class EmailVerificationController
         $user->email_verification_sent_at = null;
         $user->save();
 
-        logger()->info('swift-auth.email-verification.verified', [
-            'user_id' => $user->id_user,
-            'email' => $email,
-            'ip' => $request->ip(),
-        ]);
+        logger()->info(
+            'swift-auth.email-verification.verified',
+            [
+                'user_id' => $user->id_user,
+                'email' => $email,
+                'ip' => $request->ip(),
+            ],
+        );
 
         return ResponseHelper::success(
             message: 'Email verified successfully.',

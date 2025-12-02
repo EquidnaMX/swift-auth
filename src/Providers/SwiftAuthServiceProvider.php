@@ -12,12 +12,14 @@
  */
 
 namespace Equidna\SwiftAuth\Providers;
+
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 
 use Equidna\SwiftAuth\Console\Commands\CreateAdminUser;
 use Equidna\SwiftAuth\Console\Commands\InstallSwiftAuth;
 use Equidna\SwiftAuth\Console\Commands\PreviewEmailTemplates;
+use Equidna\SwiftAuth\Console\Commands\PurgeExpiredTokens;
 use Equidna\SwiftAuth\Console\Commands\UnlockUserCommand;
 use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
 use Equidna\SwiftAuth\Http\Middleware\CanPerformAction;
@@ -127,7 +129,15 @@ final class SwiftAuthServiceProvider extends ServiceProvider
                 CreateAdminUser::class,
                 UnlockUserCommand::class,
                 PreviewEmailTemplates::class,
+                PurgeExpiredTokens::class,
             ]);
+
+            $this->callAfterResolving(
+                \Illuminate\Console\Scheduling\Schedule::class,
+                function (\Illuminate\Console\Scheduling\Schedule $schedule): void {
+                    $schedule->command(PurgeExpiredTokens::class)->hourly();
+                }
+            );
         }
     }
 

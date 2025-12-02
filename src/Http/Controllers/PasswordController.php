@@ -12,6 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Http\Controllers;
+
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -27,6 +28,7 @@ use Inertia\Response;
 use Equidna\SwiftAuth\Models\PasswordResetToken;
 use Equidna\SwiftAuth\Models\User;
 use Equidna\SwiftAuth\Services\NotificationService;
+use Equidna\SwiftAuth\Services\PasswordPolicy;
 use Equidna\SwiftAuth\Traits\SelectiveRender;
 use Equidna\Toolkit\Exceptions\BadRequestException;
 use Equidna\Toolkit\Exceptions\NotFoundException;
@@ -66,7 +68,10 @@ class PasswordController extends Controller
      * @return RedirectResponse|JsonResponse                    Context-aware success response.
      * @throws BadRequestException                              When email dispatch fails.
      */
-    public function sendResetLink(Request $request, NotificationService $notificationService): RedirectResponse|JsonResponse
+    public function sendResetLink(
+        Request $request,
+        NotificationService $notificationService,
+    ): RedirectResponse|JsonResponse
     {
         $data = $request->validate(['email' => 'required|email']);
 
@@ -181,12 +186,15 @@ class PasswordController extends Controller
     public function resetPassword(Request $request): RedirectResponse|JsonResponse
     {
         $prefix = config('swift-auth.table_prefix', '');
-        $min = (int) config('swift-auth.password_min_length', 8);
+        $passwordRules = PasswordPolicy::rules();
 
         $data = $request->validate([
             'email' => 'required|email|exists:' . $prefix . 'Users,email',
             'token' => 'required|string',
-            'password' => ['required', 'string', 'confirmed', 'min:' . $min],
+            'password' => array_merge(
+                ['required', 'string', 'confirmed'],
+                $passwordRules,
+            ),
         ]);
 
         // Protect verification endpoint from brute-force attempts.
@@ -258,4 +266,5 @@ class PasswordController extends Controller
             forward_url: route('swift-auth.login.form'),
         );
     }
+
 }

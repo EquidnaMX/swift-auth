@@ -160,7 +160,10 @@ trait TestHelpers
      * @param  string $roleName Role name to check.
      * @return void
      */
-    protected function assertUserHasRole(User $user, string $roleName): void
+    protected function assertUserHasRole(
+        User $user,
+        string $roleName,
+    ): void
     {
         $this->assertTrue(
             $user->fresh(['roles'])->hasRoles($roleName),
@@ -175,7 +178,10 @@ trait TestHelpers
      * @param  string $roleName Role name to check.
      * @return void
      */
-    protected function assertUserDoesNotHaveRole(User $user, string $roleName): void
+    protected function assertUserDoesNotHaveRole(
+        User $user,
+        string $roleName,
+    ): void
     {
         $this->assertFalse(
             $user->fresh(['roles'])->hasRoles($roleName),
@@ -190,7 +196,10 @@ trait TestHelpers
      * @param  string $action Action to check (e.g., 'users.create').
      * @return void
      */
-    protected function assertUserCanPerformAction(User $user, string $action): void
+    protected function assertUserCanPerformAction(
+        User $user,
+        string $action,
+    ): void
     {
         $actions = $user->fresh(['roles'])->availableActions();
         $this->assertContains(
@@ -273,7 +282,10 @@ trait TestHelpers
      * @param  int  $attempts Number of failed attempts.
      * @return User           Updated user instance.
      */
-    protected function simulateFailedLoginAttempts(User $user, int $attempts): User
+    protected function simulateFailedLoginAttempts(
+        User $user,
+        int $attempts,
+    ): User
     {
         $user->failed_login_attempts = $attempts;
         $user->last_failed_login_at = now();

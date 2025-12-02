@@ -9,6 +9,7 @@
  */
 
 namespace Equidna\SwiftAuth\Http\Middleware;
+
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 

@@ -12,6 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Models;
+
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -91,7 +92,10 @@ class Role extends Model
      * @param  string|null                                                              $search  Search term.
      * @return \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\Role>          Filtered query.
      */
-    public function scopeSearch(Builder $query, null|string $search): Builder
+    public function scopeSearch(
+        Builder $query,
+        null|string $search,
+    ): Builder
     {
         if (empty($search)) {
             return $query;

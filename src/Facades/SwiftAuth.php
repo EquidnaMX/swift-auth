@@ -12,6 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Facades;
+
 use Illuminate\Support\Facades\Facade;
 
 use Equidna\SwiftAuth\Models\User;

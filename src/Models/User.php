@@ -12,6 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Models;
+
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -70,6 +71,8 @@ class User extends Authenticatable
     ];
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'locked_until' => 'datetime',
+        'last_failed_login_at' => 'datetime',
     ];
 
     /**
@@ -148,7 +151,10 @@ class User extends Authenticatable
      * @param  string|null                                                               $search  Search term.
      * @return \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\User>          Filtered query.
      */
-    public function scopeSearch(Builder $query, null|string $search): Builder
+    public function scopeSearch(
+        Builder $query,
+        null|string $search,
+    ): Builder
     {
         if (empty($search)) {
             return $query;

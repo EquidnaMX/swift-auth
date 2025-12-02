@@ -28,7 +28,10 @@ class AccountLockoutServiceTest extends TestCase
     private function createNotificationDouble(): object
     {
         return new class {
-            public function sendAccountLockout(string $email, int $duration): ?string
+            public function sendAccountLockout(
+                string $email,
+                int $duration,
+            ): ?string
             {
                 return 'test-message-id';
             }

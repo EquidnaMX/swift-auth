@@ -12,6 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Tests\Unit\Middleware;
+
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;

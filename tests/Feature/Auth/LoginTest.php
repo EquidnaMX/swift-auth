@@ -365,4 +365,57 @@ class LoginTest extends TestCase
             ->once()
             ->with('swift-auth.login.failed', \Mockery::type('array'));
     }
+
+    public function test_login_response_includes_eviction_metadata_when_present(): void
+    {
+        // Arrange
+        $this->createTestUser([
+            'email' => 'user@example.com',
+            'password' => bcrypt('password123'),
+        ]);
+
+        $evicted = ['sess-1', 'sess-2'];
+
+        // Act
+        $response = $this
+            ->withSession([
+                'swift-auth.evicted_session_ids' => $evicted,
+                'swift-auth.eviction_policy' => 'oldest',
+            ])
+            ->postJson('/swift-auth/login', [
+                'email' => 'user@example.com',
+                'password' => 'password123',
+            ]);
+
+        // Assert
+        $response->assertStatus(200);
+        $response->assertJsonPath('data.evicted_session_ids', $evicted);
+        $response->assertJsonPath('data.eviction_policy', 'oldest');
+        $response->assertJsonPath('data.eviction_message', __('swift-auth::session.evicted_oldest'));
+    }
+
+    public function test_login_response_uses_localized_message_for_newest_policy(): void
+    {
+        // Arrange
+        $this->createTestUser([
+            'email' => 'user@example.com',
+            'password' => bcrypt('password123'),
+        ]);
+
+        // Act
+        $response = $this
+            ->withSession([
+                'swift-auth.evicted_session_ids' => ['latest-only'],
+                'swift-auth.eviction_policy' => 'newest',
+            ])
+            ->postJson('/swift-auth/login', [
+                'email' => 'user@example.com',
+                'password' => 'password123',
+            ]);
+
+        // Assert
+        $response->assertStatus(200);
+        $response->assertJsonPath('data.evicted_session_ids', ['latest-only']);
+        $response->assertJsonPath('data.eviction_message', __('swift-auth::session.evicted_newest'));
+    }
 }

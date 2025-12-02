@@ -86,6 +86,7 @@ final class SwiftAuthServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(__DIR__ . '/../routes/swift-auth-email-verification.php');
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'swift-auth');
+        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'swift-auth');
 
         // Publish config
         $this->publishes([
@@ -101,6 +102,11 @@ final class SwiftAuthServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../resources/views' => resource_path('views/vendor/swift-auth'),
         ], 'swift-auth:views');
+
+        // Publish translations
+        $this->publishes([
+            __DIR__ . '/../resources/lang' => resource_path('lang/vendor/swift-auth'),
+        ], 'swift-auth:lang');
 
         // Publish migrations
         $this->publishes([

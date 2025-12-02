@@ -12,6 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Services;
+
 use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
 use Equidna\SwiftAuth\Models\User;
 
@@ -73,11 +74,16 @@ final class AccountLockoutService
      * @param  string $ip    IP address of failed attempt.
      * @return bool          True if account was locked, false otherwise.
      */
-    public function recordFailedAttempt(User $user, string $ip): bool
+    public function recordFailedAttempt(
+        User $user,
+        string $ip,
+    ): bool
     {
         if (!config('swift-auth.account_lockout.enabled', true)) {
             return false;
         }
+
+        $this->refreshAttemptsAfterInactivity($user);
 
         $this->userRepository->incrementFailedLogins($user);
 
@@ -113,6 +119,33 @@ final class AccountLockoutService
     public function resetAttempts(User $user): void
     {
         if ($user->failed_login_attempts > 0 || $user->locked_until) {
+            $this->userRepository->resetFailedLogins($user);
+        }
+    }
+
+    /**
+     * Clears lockout counters when the idle window has elapsed.
+     *
+     * @param  User $user  User to refresh.
+     * @return void
+     */
+    public function refreshAttemptsAfterInactivity(User $user): void
+    {
+        $resetAfter = (int) config('swift-auth.account_lockout.reset_after', 0);
+
+        if ($resetAfter <= 0) {
+            return;
+        }
+
+        if ($user->locked_until && $user->locked_until->isFuture()) {
+            return;
+        }
+
+        if (!$user->last_failed_login_at) {
+            return;
+        }
+
+        if ($user->last_failed_login_at->diffInSeconds(now()) >= $resetAfter) {
             $this->userRepository->resetFailedLogins($user);
         }
     }

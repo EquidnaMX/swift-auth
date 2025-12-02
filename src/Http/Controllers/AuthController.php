@@ -12,6 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Http\Controllers;
+
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -76,18 +77,32 @@ class AuthController extends Controller
         /** @var array{email:string,password:string} $credentials */
         $credentials = $request->validated();
 
+        $loginRateLimit = config('swift-auth.login_rate_limits', []);
+        $emailLimiterConfig = is_array($loginRateLimit['email'] ?? null)
+            ? $loginRateLimit['email']
+            : [];
+        $ipLimiterConfig = is_array($loginRateLimit['ip'] ?? null)
+            ? $loginRateLimit['ip']
+            : [];
+
         // Rate limit login attempts per email to prevent brute-force attacks
         $loginLimiter = 'login:email:' . hash('sha256', strtolower($credentials['email']));
         $ipLimiter = 'login:ip:' . $request->ip();
 
-        if (RateLimiter::tooManyAttempts($loginLimiter, 5)) {
+        $emailAttempts = (int) ($emailLimiterConfig['attempts'] ?? 5);
+        $emailDecay = (int) ($emailLimiterConfig['decay_seconds'] ?? 300);
+
+        if (RateLimiter::tooManyAttempts($loginLimiter, $emailAttempts)) {
             $availableIn = RateLimiter::availableIn($loginLimiter);
             throw new UnauthorizedException(
                 'Too many login attempts. Please try again in ' . $availableIn . ' seconds.'
             );
         }
 
-        if (RateLimiter::tooManyAttempts($ipLimiter, 20)) {
+        $ipAttempts = (int) ($ipLimiterConfig['attempts'] ?? 20);
+        $ipDecay = (int) ($ipLimiterConfig['decay_seconds'] ?? 300);
+
+        if (RateLimiter::tooManyAttempts($ipLimiter, $ipAttempts)) {
             $availableIn = RateLimiter::availableIn($ipLimiter);
             throw new UnauthorizedException(
                 'Too many login attempts from this network. Please try again in ' . $availableIn . ' seconds.'
@@ -95,6 +110,10 @@ class AuthController extends Controller
         }
 
         $user = $userRepository->findByEmail($credentials['email']);
+
+        if ($user) {
+            $lockoutService->refreshAttemptsAfterInactivity($user);
+        }
 
         // Check if account is locked
         if ($user && $lockoutService->isLocked($user)) {
@@ -130,6 +149,8 @@ class AuthController extends Controller
         if (!$user || !$valid) {
             // Record failed attempt and trigger lockout if threshold reached
             if ($user) {
+                $lockoutService->refreshAttemptsAfterInactivity($user);
+
                 $ip = (string) ($request->ip() ?? '');
                 $wasLocked = $lockoutService->recordFailedAttempt($user, $ip);
 
@@ -141,8 +162,8 @@ class AuthController extends Controller
             }
 
             // Increment rate limiter on failed login
-            RateLimiter::hit($loginLimiter, 300); // 5 minutes
-            RateLimiter::hit($ipLimiter, 300);
+            RateLimiter::hit($loginLimiter, $emailDecay); // 5 minutes
+            RateLimiter::hit($ipLimiter, $ipDecay);
 
             logger()->warning('swift-auth.login.failed', [
                 'email' => $credentials['email'],

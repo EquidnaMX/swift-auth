@@ -12,6 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Http\Controllers;
+
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -138,7 +139,10 @@ class RoleController extends Controller
      * @param  string        $id_role  Identifier for the role.
      * @return View|Response           Blade or Inertia response with role data.
      */
-    public function edit(Request $request, string $id_role): View|Response
+    public function edit(
+        Request $request,
+        string $id_role,
+    ): View|Response
     {
         $role = Role::findOrFail($id_role);
 
@@ -160,7 +164,10 @@ class RoleController extends Controller
      * @return RedirectResponse|JsonResponse       Context-aware success response.
      * @throws BadRequestException                 When validation fails.
      */
-    public function update(Request $request, string $id_role): RedirectResponse|JsonResponse
+    public function update(
+        Request $request,
+        string $id_role,
+    ): RedirectResponse|JsonResponse
     {
         $role = Role::findOrFail($id_role);
 
@@ -218,7 +225,10 @@ class RoleController extends Controller
      * @param  string                    $id_role  Identifier of the role to delete.
      * @return RedirectResponse|JsonResponse       Context-aware success response.
      */
-    public function destroy(Request $request, string $id_role): RedirectResponse|JsonResponse
+    public function destroy(
+        Request $request,
+        string $id_role,
+    ): RedirectResponse|JsonResponse
     {
         $role = Role::findOrFail($id_role);
 

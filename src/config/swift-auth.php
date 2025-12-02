@@ -44,6 +44,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Login Rate Limits
+    |--------------------------------------------------------------------------
+    |
+    | Tune rate limits for login attempts by email and IP. Each limiter
+    | contains the allowed attempts within a decay window (seconds).
+    |
+    */
+
+    'login_rate_limits' => [
+        'email' => [
+            'attempts' => 5,
+            'decay_seconds' => 300,
+        ],
+        'ip' => [
+            'attempts' => 20,
+            'decay_seconds' => 300,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Password Reset Token TTL
     |--------------------------------------------------------------------------
     |
@@ -108,6 +129,38 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Password Complexity
+    |--------------------------------------------------------------------------
+    |
+    | Optional complexity requirements layered on top of the minimum length.
+    | Enable the booleans to enforce the related rule. The `common_passwords`
+    | list is only used when `disallow_common_passwords` is true.
+    |
+    */
+
+    'password_requirements' => [
+        'require_letters' => false,
+        'require_mixed_case' => false,
+        'require_numbers' => false,
+        'require_symbols' => false,
+        'disallow_common_passwords' => false,
+        'common_passwords' => [
+            'password',
+            'password1',
+            '123456',
+            '12345678',
+            '123456789',
+            'qwerty',
+            'abc123',
+            'iloveyou',
+            'welcome',
+            'admin',
+            'letmein',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Available Actions
     |--------------------------------------------------------------------------
     |
@@ -147,6 +200,10 @@ return [
         'resend_rate_limit' => [
             'attempts' => 3,
             'decay_seconds' => 300, // 5 minutes
+        ],
+        'ip_rate_limit' => [
+            'attempts' => 5,
+            'decay_seconds' => 60, // 1 minute
         ],
     ],
 
@@ -191,5 +248,15 @@ return [
     'security_headers' => [
         'csp' => env('SWIFT_AUTH_CSP', null), // e.g., "default-src 'self'; script-src 'self' 'unsafe-inline'"
         'permissions_policy' => env('SWIFT_AUTH_PERMISSIONS_POLICY', null), // e.g., "geolocation=(), microphone=()"
+        'hsts' => [
+            'enabled' => true,
+            'max_age' => 31536000,
+            'include_subdomains' => true,
+            'preload' => false,
+        ],
+        'cross_origin_opener_policy' => env('SWIFT_AUTH_COOP', null), // e.g., "same-origin"
+        'cross_origin_embedder_policy' => env('SWIFT_AUTH_COEP', null), // e.g., "require-corp"
+        'cross_origin_resource_policy' => env('SWIFT_AUTH_CORP', null), // e.g., "same-origin"
+        'referrer_policy' => env('SWIFT_AUTH_REFERRER_POLICY', 'strict-origin-when-cross-origin'),
     ],
 ];

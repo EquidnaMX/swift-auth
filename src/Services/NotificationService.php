@@ -11,6 +11,7 @@
  */
 
 namespace Equidna\SwiftAuth\Services;
+
 use Equidna\BirdFlock\BirdFlock;
 use Equidna\BirdFlock\DTO\FlightPlan;
 use Equidna\SwiftAuth\DTO\NotificationResult;
@@ -29,11 +30,22 @@ final class NotificationService
      * @param  string              $token  Password reset token.
      * @return NotificationResult          Dispatch result with success status and message ID or error.
      */
-    public function sendPasswordReset(string $email, string $token): NotificationResult
+    public function sendPasswordReset(
+        string $email,
+        string $token,
+    ): NotificationResult
     {
         try {
-            $routePrefix = config('swift-auth.route_prefix', 'swift-auth');
-            $resetUrl = url("/{$routePrefix}/password/{$token}?email=" . urlencode($email));
+            $routeNamePrefix = config('swift-auth.route_prefix', 'swift-auth');
+
+            $resetUrl = route(
+                $routeNamePrefix . '.password.reset.form',
+                parameters: [
+                    'token' => $token,
+                    'email' => $email,
+                ],
+                absolute: true,
+            );
 
             $flight = new FlightPlan(
                 channel: 'email',
@@ -41,18 +53,21 @@ final class NotificationService
                 subject: 'Password Reset Request',
                 html: $this->getPasswordResetHtml($resetUrl, $email),
                 text: $this->getPasswordResetText($resetUrl),
-                idempotencyKey: "swift-auth:password-reset:{$email}:{$token}"
+                idempotencyKey: "swift-auth:password-reset:{$email}:{$token}",
             );
 
             $messageId = BirdFlock::dispatch($flight);
 
             return NotificationResult::success($messageId);
         } catch (RuntimeException $e) {
-            logger()->error('swift-auth.notification.password-reset-failed', [
-                'email' => $email,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+            logger()->error(
+                'swift-auth.notification.password-reset-failed',
+                [
+                    'email' => $email,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ],
+            );
 
             return NotificationResult::failure($e->getMessage());
         }
@@ -65,11 +80,22 @@ final class NotificationService
      * @param  string              $token  Email verification token.
      * @return NotificationResult          Dispatch result with success status and message ID or error.
      */
-    public function sendEmailVerification(string $email, string $token): NotificationResult
+    public function sendEmailVerification(
+        string $email,
+        string $token,
+    ): NotificationResult
     {
         try {
-            $routePrefix = config('swift-auth.route_prefix', 'swift-auth');
-            $verifyUrl = url("/{$routePrefix}/email/verify/{$token}?email=" . urlencode($email));
+            $routeNamePrefix = config('swift-auth.route_prefix', 'swift-auth');
+
+            $verifyUrl = route(
+                $routeNamePrefix . '.email.verify',
+                parameters: [
+                    'token' => $token,
+                    'email' => $email,
+                ],
+                absolute: true,
+            );
 
             $flight = new FlightPlan(
                 channel: 'email',
@@ -77,18 +103,21 @@ final class NotificationService
                 subject: 'Verify Your Email Address',
                 html: $this->getEmailVerificationHtml($verifyUrl, $email),
                 text: $this->getEmailVerificationText($verifyUrl),
-                idempotencyKey: "swift-auth:email-verification:{$email}:{$token}"
+                idempotencyKey: "swift-auth:email-verification:{$email}:{$token}",
             );
 
             $messageId = BirdFlock::dispatch($flight);
 
             return NotificationResult::success($messageId);
         } catch (RuntimeException $e) {
-            logger()->error('swift-auth.notification.email-verification-failed', [
-                'email' => $email,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+            logger()->error(
+                'swift-auth.notification.email-verification-failed',
+                [
+                    'email' => $email,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ],
+            );
 
             return NotificationResult::failure($e->getMessage());
         }
@@ -101,7 +130,10 @@ final class NotificationService
      * @param  int                 $duration  Lockout duration in seconds.
      * @return NotificationResult             Dispatch result with success status and message ID or error.
      */
-    public function sendAccountLockout(string $email, int $duration): NotificationResult
+    public function sendAccountLockout(
+        string $email,
+        int $duration,
+    ): NotificationResult
     {
         try {
             $minutes = (int) ceil($duration / 60);
@@ -112,18 +144,21 @@ final class NotificationService
                 subject: 'Account Temporarily Locked',
                 html: $this->getAccountLockoutHtml($email, $minutes),
                 text: $this->getAccountLockoutText($minutes),
-                idempotencyKey: "swift-auth:account-lockout:{$email}:" . now()->getTimestamp()
+                idempotencyKey: "swift-auth:account-lockout:{$email}:" . now()->getTimestamp(),
             );
 
             $messageId = BirdFlock::dispatch($flight);
 
             return NotificationResult::success($messageId);
         } catch (RuntimeException $e) {
-            logger()->error('swift-auth.notification.account-lockout-failed', [
-                'email' => $email,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+            logger()->error(
+                'swift-auth.notification.account-lockout-failed',
+                [
+                    'email' => $email,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ],
+            );
 
             return NotificationResult::failure($e->getMessage());
         }
@@ -136,12 +171,18 @@ final class NotificationService
      * @param  string $email     Recipient email.
      * @return string            HTML email content.
      */
-    private function getPasswordResetHtml(string $resetUrl, string $email): string
+    private function getPasswordResetHtml(
+        string $resetUrl,
+        string $email,
+    ): string
     {
-        return view('swift-auth::emails.password_reset', [
-            'resetUrl' => $resetUrl,
-            'email' => $email,
-        ])->render();
+        return view(
+            'swift-auth::emails.password_reset',
+            [
+                'resetUrl' => $resetUrl,
+                'email' => $email,
+            ],
+        )->render();
     }
 
     /**
@@ -152,9 +193,12 @@ final class NotificationService
      */
     private function getPasswordResetText(string $resetUrl): string
     {
-        return view('swift-auth::emails.password_reset_text', [
-            'resetUrl' => $resetUrl,
-        ])->render();
+        return view(
+            'swift-auth::emails.password_reset_text',
+            [
+                'resetUrl' => $resetUrl,
+            ],
+        )->render();
     }
 
     /**
@@ -164,12 +208,18 @@ final class NotificationService
      * @param  string $email      Recipient email.
      * @return string             HTML email content.
      */
-    private function getEmailVerificationHtml(string $verifyUrl, string $email): string
+    private function getEmailVerificationHtml(
+        string $verifyUrl,
+        string $email,
+    ): string
     {
-        return view('swift-auth::emails.verification', [
-            'verifyUrl' => $verifyUrl,
-            'email' => $email,
-        ])->render();
+        return view(
+            'swift-auth::emails.verification',
+            [
+                'verifyUrl' => $verifyUrl,
+                'email' => $email,
+            ],
+        )->render();
     }
 
     /**
@@ -180,9 +230,12 @@ final class NotificationService
      */
     private function getEmailVerificationText(string $verifyUrl): string
     {
-        return view('swift-auth::emails.verification_text', [
-            'verifyUrl' => $verifyUrl,
-        ])->render();
+        return view(
+            'swift-auth::emails.verification_text',
+            [
+                'verifyUrl' => $verifyUrl,
+            ],
+        )->render();
     }
 
     /**
@@ -192,12 +245,18 @@ final class NotificationService
      * @param  int    $minutes  Lockout duration in minutes.
      * @return string           HTML email content.
      */
-    private function getAccountLockoutHtml(string $email, int $minutes): string
+    private function getAccountLockoutHtml(
+        string $email,
+        int $minutes,
+    ): string
     {
-        return view('swift-auth::emails.account_lockout', [
-            'email' => $email,
-            'minutes' => $minutes,
-        ])->render();
+        return view(
+            'swift-auth::emails.account_lockout',
+            [
+                'email' => $email,
+                'minutes' => $minutes,
+            ],
+        )->render();
     }
 
     /**
@@ -208,8 +267,11 @@ final class NotificationService
      */
     private function getAccountLockoutText(int $minutes): string
     {
-        return view('swift-auth::emails.account_lockout_text', [
-            'minutes' => $minutes,
-        ])->render();
+        return view(
+            'swift-auth::emails.account_lockout_text',
+            [
+                'minutes' => $minutes,
+            ],
+        )->render();
     }
 }

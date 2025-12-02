@@ -11,6 +11,7 @@
  */
 
 namespace Equidna\SwiftAuth\Http\Requests;
+
 use Equidna\Toolkit\Http\Requests\EquidnaFormRequest;
 
 /**

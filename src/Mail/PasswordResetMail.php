@@ -12,6 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Mail;
+
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -26,7 +27,10 @@ class PasswordResetMail extends Mailable implements ShouldQueue
     public string $email;
 
 
-    public function __construct(string $email, string $token)
+    public function __construct(
+        string $email,
+        string $token,
+    )
     {
         $this->token = $token;
         $this->email = $email;
@@ -43,10 +47,13 @@ class PasswordResetMail extends Mailable implements ShouldQueue
         $resetUrl = url("/{$routePrefix}/password/{$this->token}?email=" . urlencode($this->email));
 
         return $this->subject('Restablecer contraseña')
-            ->view('swift-auth::emails.password_reset', [
-                'resetUrl' => $resetUrl,
-                'email' => $this->email,
-                'token' => $this->token,
-            ]);
+            ->view(
+                'swift-auth::emails.password_reset',
+                [
+                    'resetUrl' => $resetUrl,
+                    'email' => $this->email,
+                    'token' => $this->token,
+                ],
+            );
     }
 }

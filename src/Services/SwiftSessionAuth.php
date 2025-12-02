@@ -12,6 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Services;
+
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Session\Store as Session;
 

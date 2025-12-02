@@ -12,6 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Tests\Unit\Models;
+
 use Illuminate\Database\Eloquent\Collection;
 
 use PHPUnit\Framework\TestCase;

@@ -12,6 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Traits;
+
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Config;
 
@@ -36,7 +37,11 @@ trait SelectiveRender
      * @param  array<string,mixed> $data              Additional data to pass to the view or component.
      * @return View|Response                          Rendered Blade view or Inertia component.
      */
-    protected function render(string $bladeView, string $inertiaComponent, array $data = []): View|Response
+    protected function render(
+        string $bladeView,
+        string $inertiaComponent,
+        array $data = [],
+    ): View|Response
     {
         $flashMessages = [
             'success' => session('success'),

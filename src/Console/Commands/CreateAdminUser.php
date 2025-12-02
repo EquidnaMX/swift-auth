@@ -12,6 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Console\Commands;
+
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Hash;
 

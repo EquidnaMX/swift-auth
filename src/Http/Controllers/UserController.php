@@ -12,6 +12,7 @@
  */
 
 namespace Equidna\SwiftAuth\Http\Controllers;
+
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -159,7 +160,13 @@ class UserController extends Controller
             );
         }
 
-        SwiftAuth::login($user);
+        SwiftAuth::login(
+            user: $user,
+            ipAddress: $request->ip(),
+            userAgent: $request->userAgent(),
+            deviceName: (string) $request->header('X-Device-Name', ''),
+            remember: false,
+        );
 
         return ResponseHelper::created(
             message: 'Registration successful.',
@@ -177,7 +184,10 @@ class UserController extends Controller
      * @param  string        $id_user  Identifier of the user to show.
      * @return View|Response           Blade or Inertia response with user data.
      */
-    public function show(Request $request, string $id_user): View|Response
+    public function show(
+        Request $request,
+        string $id_user,
+    ): View|Response
     {
         $user = User::findOrFail($id_user);
         $roles = Cache::remember(
@@ -203,7 +213,10 @@ class UserController extends Controller
      * @param  string                    $id_user  Identifier of the user to update.
      * @return RedirectResponse|JsonResponse       Context-aware success response.
      */
-    public function update(UpdateUserRequest $request, string $id_user): RedirectResponse|JsonResponse
+    public function update(
+        UpdateUserRequest $request,
+        string $id_user,
+    ): RedirectResponse|JsonResponse
     {
         $user = User::findOrFail($id_user);
 
@@ -248,7 +261,10 @@ class UserController extends Controller
      * @param  string        $id_user  Identifier of the user to edit.
      * @return View|Response           Blade or Inertia response with user and role data.
      */
-    public function edit(Request $request, string $id_user): View|Response
+    public function edit(
+        Request $request,
+        string $id_user,
+    ): View|Response
     {
         $user = User::findOrFail($id_user);
         $roles = Cache::remember(
@@ -275,7 +291,10 @@ class UserController extends Controller
      * @return RedirectResponse|JsonResponse       Context-aware success response.
      * @throws ForbiddenException                  When attempting to delete your own account.
      */
-    public function destroy(Request $request, string $id_user): RedirectResponse|JsonResponse
+    public function destroy(
+        Request $request,
+        string $id_user,
+    ): RedirectResponse|JsonResponse
     {
         if ((int) SwiftAuth::id() === (int) $id_user) {
             throw new ForbiddenException('You cannot delete your own account.');

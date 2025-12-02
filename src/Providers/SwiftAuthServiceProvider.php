@@ -13,6 +13,7 @@
 
 namespace Equidna\SwiftAuth\Providers;
 
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,6 +23,10 @@ use Equidna\SwiftAuth\Console\Commands\PreviewEmailTemplates;
 use Equidna\SwiftAuth\Console\Commands\PurgeExpiredTokens;
 use Equidna\SwiftAuth\Console\Commands\UnlockUserCommand;
 use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
+use Equidna\SwiftAuth\Events\MfaChallengeStarted;
+use Equidna\SwiftAuth\Events\SessionEvicted;
+use Equidna\SwiftAuth\Events\UserLoggedIn;
+use Equidna\SwiftAuth\Events\UserLoggedOut;
 use Equidna\SwiftAuth\Http\Middleware\CanPerformAction;
 use Equidna\SwiftAuth\Http\Middleware\RequireAuthentication;
 use Equidna\SwiftAuth\Http\Middleware\SecurityHeaders;
@@ -55,7 +60,8 @@ final class SwiftAuthServiceProvider extends ServiceProvider
         $this->app->singleton('swift-auth', function ($app) {
             return new SwiftSessionAuth(
                 $app['session.store'],
-                $app->make(UserRepositoryInterface::class)
+                $app->make(UserRepositoryInterface::class),
+                $app->make(Dispatcher::class)
             );
         });
     }
@@ -75,6 +81,8 @@ final class SwiftAuthServiceProvider extends ServiceProvider
 
         // Register rate limiting
         $this->app->register(RateLimitServiceProvider::class);
+
+        $this->registerEventListeners();
 
         // Register middleware
         $router->aliasMiddleware('SwiftAuth.RequireAuthentication', RequireAuthentication::class);
@@ -181,5 +189,54 @@ final class SwiftAuthServiceProvider extends ServiceProvider
                 'supported' => ['bcrypt', 'argon', 'argon2id', 'null (default)'],
             ]);
         }
+    }
+
+    /**
+     * Registers listeners for SwiftAuth events.
+     *
+     * Applications can override these listeners by registering their own listeners
+     * for the same event classes.
+     *
+     * @return void
+     */
+    private function registerEventListeners(): void
+    {
+        $dispatcher = $this->app->make(Dispatcher::class);
+
+        $dispatcher->listen(UserLoggedIn::class, function (UserLoggedIn $event): void {
+            logger()->info('swift-auth.user.logged-in', [
+                'user_id' => $event->userId,
+                'session_id' => $event->sessionId,
+                'ip' => $event->ipAddress,
+                'driver' => $event->driverMetadata,
+            ]);
+        });
+
+        $dispatcher->listen(UserLoggedOut::class, function (UserLoggedOut $event): void {
+            logger()->info('swift-auth.user.logged-out', [
+                'user_id' => $event->userId,
+                'session_id' => $event->sessionId,
+                'ip' => $event->ipAddress,
+                'driver' => $event->driverMetadata,
+            ]);
+        });
+
+        $dispatcher->listen(SessionEvicted::class, function (SessionEvicted $event): void {
+            logger()->info('swift-auth.session.evicted', [
+                'user_id' => $event->userId,
+                'session_id' => $event->sessionId,
+                'ip' => $event->ipAddress,
+                'driver' => $event->driverMetadata,
+            ]);
+        });
+
+        $dispatcher->listen(MfaChallengeStarted::class, function (MfaChallengeStarted $event): void {
+            logger()->info('swift-auth.mfa.challenge-started', [
+                'user_id' => $event->userId,
+                'session_id' => $event->sessionId,
+                'ip' => $event->ipAddress,
+                'driver' => $event->driverMetadata,
+            ]);
+        });
     }
 }

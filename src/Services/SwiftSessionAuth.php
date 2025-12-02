@@ -13,10 +13,16 @@
 
 namespace Equidna\SwiftAuth\Services;
 
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Session\Store as Session;
+use SessionHandlerInterface;
 
 use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
+use Equidna\SwiftAuth\Events\MfaChallengeStarted;
+use Equidna\SwiftAuth\Events\SessionEvicted;
+use Equidna\SwiftAuth\Events\UserLoggedIn;
+use Equidna\SwiftAuth\Events\UserLoggedOut;
 use Equidna\SwiftAuth\Models\User;
 
 /**
@@ -34,10 +40,12 @@ class SwiftSessionAuth
      *
      * @param  Session                  $session         Laravel session store instance.
      * @param  UserRepositoryInterface  $userRepository  User data access layer.
+     * @param  Dispatcher               $events          Event dispatcher instance.
      */
     public function __construct(
         Session $session,
-        private UserRepositoryInterface $userRepository
+        private UserRepositoryInterface $userRepository,
+        private Dispatcher $events
     ) {
         $this->session = $session;
     }
@@ -51,6 +59,13 @@ class SwiftSessionAuth
     public function login(User $user): void
     {
         $this->session->put($this->sessionKey, $user->getKey());
+
+        $this->dispatchEvent(new UserLoggedIn(
+            $user->getKey(),
+            $this->getSessionId(),
+            $this->getClientIp(),
+            $this->getDriverMetadata()
+        ));
     }
 
     /**
@@ -60,7 +75,17 @@ class SwiftSessionAuth
      */
     public function logout(): void
     {
+        $userId = $this->id();
+        $sessionId = $this->getSessionId();
+
         $this->session->forget($this->sessionKey);
+
+        $this->dispatchEvent(new UserLoggedOut(
+            $userId,
+            $sessionId,
+            $this->getClientIp(),
+            $this->getDriverMetadata()
+        ));
     }
 
     /**
@@ -156,5 +181,89 @@ class SwiftSessionAuth
         }
 
         return $user->hasRoles($roles);
+    }
+
+    /**
+     * Dispatches a session eviction event when a session limit is enforced.
+     *
+     * @param  User   $user             User whose sessions are being limited.
+     * @param  string $evictedSessionId Identifier of the evicted session.
+     * @return void
+     */
+    public function enforceSessionLimit(User $user, string $evictedSessionId): void
+    {
+        $this->dispatchEvent(new SessionEvicted(
+            $user->getKey(),
+            $evictedSessionId,
+            $this->getClientIp(),
+            $this->getDriverMetadata()
+        ));
+    }
+
+    /**
+     * Dispatches an event indicating a multi-factor authentication challenge has started.
+     *
+     * @param  User $user  User undergoing MFA challenge.
+     * @return void
+     */
+    public function startMfaChallenge(User $user): void
+    {
+        $this->dispatchEvent(new MfaChallengeStarted(
+            $user->getKey(),
+            $this->getSessionId(),
+            $this->getClientIp(),
+            $this->getDriverMetadata()
+        ));
+    }
+
+    /**
+     * Dispatches events via the configured dispatcher.
+     *
+     * @param  object $event  Event instance to dispatch.
+     * @return void
+     */
+    private function dispatchEvent(object $event): void
+    {
+        $this->events->dispatch($event);
+    }
+
+    /**
+     * Returns metadata about the session storage driver and handler.
+     *
+     * @return array<string, string>
+     */
+    private function getDriverMetadata(): array
+    {
+        $handler = $this->session->getHandler();
+
+        return [
+            'handler' => $handler instanceof SessionHandlerInterface ? SessionHandlerInterface::class : (string) $handler,
+            'name' => $this->session->getName(),
+            'store' => $this->session::class,
+        ];
+    }
+
+    /**
+     * Returns the current session identifier.
+     *
+     * @return string
+     */
+    private function getSessionId(): string
+    {
+        return (string) $this->session->getId();
+    }
+
+    /**
+     * Attempts to determine the client's IP address.
+     *
+     * @return string|null
+     */
+    private function getClientIp(): ?string
+    {
+        if (function_exists('request') && request()) {
+            return request()->ip();
+        }
+
+        return $_SERVER['REMOTE_ADDR'] ?? null;
     }
 }

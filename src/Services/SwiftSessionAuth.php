@@ -17,6 +17,11 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Session\Store as Session;
 use SessionHandlerInterface;
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Session\Store as Session;
+use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Str;
 
 use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
 use Equidna\SwiftAuth\Events\MfaChallengeStarted;
@@ -34,6 +39,9 @@ class SwiftSessionAuth
 {
     protected Session $session;
     protected string $sessionKey = 'swift_auth_user_id';
+    protected string $lastActivityKey = 'swift_auth_last_activity';
+    protected string $loginTimeKey = 'swift_auth_login_time';
+    protected string $rememberCookie = 'swift_auth_remember';
 
     /**
      * Creates a new SwiftSessionAuth instance.
@@ -56,8 +64,10 @@ class SwiftSessionAuth
      * @param  User $user  User instance to authenticate.
      * @return void
      */
-    public function login(User $user): void
+    public function login(User $user, bool $remember = false): void
     {
+        $now = CarbonImmutable::now();
+
         $this->session->put($this->sessionKey, $user->getKey());
 
         $this->dispatchEvent(new UserLoggedIn(
@@ -66,6 +76,14 @@ class SwiftSessionAuth
             $this->getClientIp(),
             $this->getDriverMetadata()
         ));
+        $this->session->put($this->loginTimeKey, $now->getTimestamp());
+        $this->session->put($this->lastActivityKey, $now->getTimestamp());
+
+        if ($remember && config('swift-auth.session.remember_me.enabled', true)) {
+            $this->createRememberToken($user, $now);
+        } else {
+            $this->clearRememberCookie();
+        }
     }
 
     /**
@@ -86,6 +104,9 @@ class SwiftSessionAuth
             $this->getClientIp(),
             $this->getDriverMetadata()
         ));
+        $this->session->forget($this->lastActivityKey);
+        $this->session->forget($this->loginTimeKey);
+        $this->clearRememberCookie();
     }
 
     /**
@@ -95,7 +116,29 @@ class SwiftSessionAuth
      */
     public function check(): bool
     {
-        return $this->session->has($this->sessionKey);
+        $now = CarbonImmutable::now();
+        $idleTimeout = config('swift-auth.session.idle_timeout');
+        $absoluteTimeout = config('swift-auth.session.absolute_timeout');
+
+        if ($this->session->has($this->sessionKey)) {
+            $lastActivity = $this->session->get($this->lastActivityKey);
+            $loginTime = $this->session->get($this->loginTimeKey);
+
+            if (is_int($idleTimeout) && $lastActivity && $now->getTimestamp() - $lastActivity >= $idleTimeout) {
+                $this->logout();
+                return false;
+            }
+
+            if (is_int($absoluteTimeout) && $loginTime && $now->getTimestamp() - $loginTime >= $absoluteTimeout) {
+                $this->logout();
+                return false;
+            }
+
+            $this->session->put($this->lastActivityKey, $now->getTimestamp());
+            return true;
+        }
+
+        return $this->attemptRememberReauthentication($now);
     }
 
     /**
@@ -265,5 +308,95 @@ class SwiftSessionAuth
         }
 
         return $_SERVER['REMOTE_ADDR'] ?? null;
+     * Attempts to reauthenticate a user using a remember-me cookie.
+     */
+    protected function attemptRememberReauthentication(CarbonImmutable $now): bool
+    {
+        if (!config('swift-auth.session.remember_me.enabled', true)) {
+            return false;
+        }
+
+        $rememberValue = Cookie::get($this->rememberCookie);
+
+        if (!$rememberValue || !str_contains($rememberValue, '|')) {
+            return false;
+        }
+
+        [$userId, $token, $expires] = array_pad(explode('|', $rememberValue, 3), 3, null);
+
+        if (!$userId || !$token || !$expires) {
+            $this->clearRememberCookie();
+            return false;
+        }
+
+        if ($now->getTimestamp() >= (int) $expires) {
+            $this->purgeRememberToken((int) $userId);
+            return false;
+        }
+
+        $user = $this->userRepository->findById((int) $userId);
+
+        if (!$user || !hash_equals((string) $user->remember_token, hash('sha256', $token))) {
+            $this->purgeRememberToken((int) $userId);
+            return false;
+        }
+
+        $this->login($user, false);
+
+        if (config('swift-auth.session.remember_me.rotate', true)) {
+            $this->createRememberToken($user, $now);
+        }
+
+        return true;
+    }
+
+    /**
+     * Creates and queues a remember-me token and cookie for the user.
+     */
+    protected function createRememberToken(User $user, CarbonImmutable $now): void
+    {
+        $ttl = (int) config('swift-auth.session.remember_me.ttl', 60 * 60 * 24 * 14);
+        $token = Str::random(60);
+        $hashedToken = hash('sha256', $token);
+        $user->remember_token = $hashedToken;
+        $user->save();
+
+        $expiresAt = $now->addSeconds($ttl);
+        $minutes = max(1, (int) ceil($ttl / 60));
+
+        Cookie::queue(cookie(
+            $this->rememberCookie,
+            implode('|', [$user->getKey(), $token, $expiresAt->getTimestamp()]),
+            $minutes,
+            null,
+            null,
+            false,
+            true,
+            false,
+            'Strict',
+        ));
+    }
+
+    /**
+     * Clears remember-me state for a user and cookie.
+     */
+    protected function purgeRememberToken(int $userId): void
+    {
+        $user = $this->userRepository->findById($userId);
+
+        if ($user) {
+            $user->remember_token = null;
+            $user->save();
+        }
+
+        $this->clearRememberCookie();
+    }
+
+    /**
+     * Queues removal of the remember-me cookie.
+     */
+    protected function clearRememberCookie(): void
+    {
+        Cookie::queue(Cookie::forget($this->rememberCookie));
     }
 }

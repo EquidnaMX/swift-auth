@@ -224,6 +224,26 @@ return [
     'actions' => [
         'sw-admin' => 'Swift Auth admin', // !! DO NOT REMOVE THIS ACTION: used in core SwiftAuth functions
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remember Me Token Matching
+    |--------------------------------------------------------------------------
+    |
+    | Controls how persisted remember-me tokens are validated against incoming
+    | requests. Strict policy requires IP, user agent and device (when present)
+    | to match exactly. Lenient policy allows IP subnet tolerance and accepts a
+    | match when either user agent or device aligns.
+    |
+    */
+
+    'remember_me' => [
+        'policy' => env('SWIFT_AUTH_REMEMBER_POLICY', 'strict'), // strict|lenient
+        'allow_same_subnet' => env('SWIFT_AUTH_REMEMBER_ALLOW_SUBNET', true),
+        'subnet_mask' => env('SWIFT_AUTH_REMEMBER_SUBNET_MASK', 24),
+        'device_header' => env('SWIFT_AUTH_REMEMBER_DEVICE_HEADER', 'X-Device-Id'),
+        'require_device_header' => env('SWIFT_AUTH_REMEMBER_REQUIRE_DEVICE', false),
+    ],
     /*
     |--------------------------------------------------------------------------
     | Table & Route Prefix

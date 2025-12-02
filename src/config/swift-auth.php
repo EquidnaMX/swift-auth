@@ -155,7 +155,7 @@ return [
             'rotate' => env('SWIFT_AUTH_REMEMBER_ROTATE', true),
         ],
     ],
-  
+
     | Multi-Factor Authentication (MFA)
     |--------------------------------------------------------------------------
     |

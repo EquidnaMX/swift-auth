@@ -44,6 +44,33 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Multi-Factor Authentication (MFA)
+    |--------------------------------------------------------------------------
+    |
+    | Configure how MFA challenges are verified. Each method defines the
+    | verification endpoint and driver name that will be forwarded during
+    | validation. Session keys track pending MFA state between challenge and
+    | verification.
+    |
+    */
+
+    'mfa' => [
+        'pending_user_session_key' => 'swift_auth_pending_user_id',
+        'pending_method_session_key' => 'swift_auth_pending_mfa_method',
+
+        'otp' => [
+            'verification_url' => env('SWIFT_AUTH_OTP_VERIFICATION_URL', null),
+            'driver' => env('SWIFT_AUTH_OTP_DRIVER', 'otp'),
+        ],
+
+        'webauthn' => [
+            'verification_url' => env('SWIFT_AUTH_WEBAUTHN_VERIFICATION_URL', null),
+            'driver' => env('SWIFT_AUTH_WEBAUTHN_DRIVER', 'webauthn'),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Login Rate Limits
     |--------------------------------------------------------------------------
     |

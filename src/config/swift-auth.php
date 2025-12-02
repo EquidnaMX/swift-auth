@@ -44,6 +44,32 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Session Timeouts & Remember Me
+    |--------------------------------------------------------------------------
+    |
+    | `idle_timeout` defines how long (in seconds) a session can remain idle
+    | before it is considered expired. `absolute_timeout` limits the maximum
+    | lifetime of a session regardless of activity. Set either value to null to
+    | disable the related timeout.
+    |
+    | Remember-me cookies are controlled by the nested configuration. `ttl`
+    | specifies how long (in seconds) a remember token stays valid. When
+    | `rotate` is true, the token is regenerated after a successful
+    | reauthentication to reduce replay risk.
+    */
+
+    'session' => [
+        'idle_timeout' => env('SWIFT_AUTH_IDLE_TIMEOUT'),
+        'absolute_timeout' => env('SWIFT_AUTH_ABSOLUTE_TIMEOUT'),
+        'remember_me' => [
+            'enabled' => env('SWIFT_AUTH_REMEMBER_ENABLED', true),
+            'ttl' => env('SWIFT_AUTH_REMEMBER_TTL', 60 * 60 * 24 * 14), // 14 days
+            'rotate' => env('SWIFT_AUTH_REMEMBER_ROTATE', true),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Login Rate Limits
     |--------------------------------------------------------------------------
     |

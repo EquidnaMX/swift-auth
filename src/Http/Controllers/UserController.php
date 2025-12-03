@@ -21,9 +21,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
-
 use Inertia\Response;
-
 use Equidna\SwiftAuth\Facades\SwiftAuth;
 use Equidna\SwiftAuth\Http\Requests\RegisterUserRequest;
 use Equidna\SwiftAuth\Http\Requests\UpdateUserRequest;
@@ -51,7 +49,10 @@ class UserController extends Controller
      */
     public function index(Request $request): View|Response
     {
-        $users = User::search($request->get('search'))
+        $searchRaw = $request->get('search', null);
+        $search = is_string($searchRaw) ? $searchRaw : null;
+
+        $users = User::search($search)
             ->paginate(10);
 
         return $this->render(
@@ -59,7 +60,8 @@ class UserController extends Controller
             'user/Index',
             [
                 'users' => $users,
-                'actions' => Config::get('swift-auth.actions'),
+                // Ensure actions is always an array for the view and static analysis
+                'actions' => (array) Config::get('swift-auth.actions', []),
             ],
         );
     }
@@ -116,8 +118,9 @@ class UserController extends Controller
      * @param  RegisterUserRequest       $request  Validated registration payload.
      * @return RedirectResponse|JsonResponse       Context-aware created response.
      */
-    public function store(RegisterUserRequest $request): RedirectResponse|JsonResponse
+    public function store(RegisterUserRequest $request): RedirectResponse|JsonResponse|string
     {
+        /** @var array{name:string,email:string,password:string,role?:int|string} $payload */
         $payload = $request->validated();
 
         // If role not provided (public registration), assign a default role if configured.
@@ -132,8 +135,15 @@ class UserController extends Controller
             }
         }
 
-        $driver = config('swift-auth.hash_driver');
-        $hashed = $driver ? Hash::driver($driver)->make($payload['password']) : Hash::make($payload['password']);
+        $driverRaw = config('swift-auth.hash_driver');
+        $driver = is_string($driverRaw) ? $driverRaw : null;
+        if ($driver) {
+            /** @var \Illuminate\Contracts\Hashing\Hasher $hasher */
+            $hasher = Hash::driver($driver);
+            $hashed = $hasher->make($payload['password']);
+        } else {
+            $hashed = Hash::make($payload['password']);
+        }
 
         $user = User::create([
             'name' => $payload['name'],
@@ -141,12 +151,14 @@ class UserController extends Controller
             'password' => $hashed,
         ]);
 
-        $user->roles()->attach($payload['role']);
+        // Normalize role attachment to an array so attach() works with scalar or array.
+        $user->roles()->attach((array) ($payload['role'] ?? []));
 
         logger()->info('User created', [
             'user_id' => $user->getKey(),
             'email' => $user->email,
-            'created_by' => SwiftAuth::id(),
+            // cast to string for consistent logging and static analysis
+            'created_by' => (string) SwiftAuth::id(),
             'ip' => $request->ip(),
         ]);
 
@@ -160,11 +172,17 @@ class UserController extends Controller
             );
         }
 
+        // Normalize device name header which may be string|array|null
+        $deviceNameRaw = $request->header('X-Device-Name', '');
+        $deviceName = is_array($deviceNameRaw) ? ($deviceNameRaw[0] ?? '') : (string) $deviceNameRaw;
+
+        /** @var string $deviceName */
+
         SwiftAuth::login(
             user: $user,
             ipAddress: $request->ip(),
             userAgent: $request->userAgent(),
-            deviceName: (string) $request->header('X-Device-Name', ''),
+            deviceName: $deviceName,
             remember: false,
         );
 
@@ -187,8 +205,7 @@ class UserController extends Controller
     public function show(
         Request $request,
         string $id_user,
-    ): View|Response
-    {
+    ): View|Response {
         $user = User::findOrFail($id_user);
         $roles = Cache::remember(
             'swift-auth.roles',
@@ -216,23 +233,27 @@ class UserController extends Controller
     public function update(
         UpdateUserRequest $request,
         string $id_user,
-    ): RedirectResponse|JsonResponse
-    {
+    ): RedirectResponse|JsonResponse|string {
         $user = User::findOrFail($id_user);
 
+        /** @var array{name?:string,roles?:array<int>,role?:int} $payload */
         $payload = $request->validated();
 
         $user->update([
             'name' => $payload['name'] ?? $user->name,
         ]);
 
+        /** @var array<int> $roleIds */
         $roleIds = [];
 
         if (isset($payload['roles'])) {
-            $roleIds = $payload['roles'];
+            $roleIds = is_array($payload['roles']) ? $payload['roles'] : [];
         } elseif (isset($payload['role'])) {
             $roleIds = [$payload['role']];
         }
+
+        // Normalize role ids to integers for the sync operation.
+        $roleIds = array_map('intval', $roleIds ?: []);
 
         if (!empty($roleIds)) {
             $user->roles()->sync($roleIds);
@@ -264,8 +285,7 @@ class UserController extends Controller
     public function edit(
         Request $request,
         string $id_user,
-    ): View|Response
-    {
+    ): View|Response {
         $user = User::findOrFail($id_user);
         $roles = Cache::remember(
             'swift-auth.roles',
@@ -294,9 +314,9 @@ class UserController extends Controller
     public function destroy(
         Request $request,
         string $id_user,
-    ): RedirectResponse|JsonResponse
-    {
-        if ((int) SwiftAuth::id() === (int) $id_user) {
+    ): RedirectResponse|JsonResponse|string {
+        // Compare as strings to support both numeric and non-numeric identifiers (UUIDs).
+        if ((string) SwiftAuth::id() === (string) $id_user) {
             throw new ForbiddenException('You cannot delete your own account.');
         }
 
@@ -305,7 +325,7 @@ class UserController extends Controller
         logger()->warning('User deleted', [
             'user_id' => $user->getKey(),
             'email' => $user->email,
-            'deleted_by' => SwiftAuth::id(),
+            'deleted_by' => (string) SwiftAuth::id(),
             'ip' => $request->ip(),
         ]);
 

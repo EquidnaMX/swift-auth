@@ -20,9 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
-
 use Inertia\Response;
-
 use Equidna\SwiftAuth\Facades\SwiftAuth;
 use Equidna\SwiftAuth\Models\Role;
 use Equidna\SwiftAuth\Traits\SelectiveRender;
@@ -142,8 +140,7 @@ class RoleController extends Controller
     public function edit(
         Request $request,
         string $id_role,
-    ): View|Response
-    {
+    ): View|Response {
         $role = Role::findOrFail($id_role);
 
         return $this->render(
@@ -167,8 +164,7 @@ class RoleController extends Controller
     public function update(
         Request $request,
         string $id_role,
-    ): RedirectResponse|JsonResponse
-    {
+    ): RedirectResponse|JsonResponse {
         $role = Role::findOrFail($id_role);
 
         $validator = Validator::make(
@@ -228,8 +224,7 @@ class RoleController extends Controller
     public function destroy(
         Request $request,
         string $id_role,
-    ): RedirectResponse|JsonResponse
-    {
+    ): RedirectResponse|JsonResponse {
         $role = Role::findOrFail($id_role);
 
         logger()->warning('Role deleted', [

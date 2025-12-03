@@ -9,7 +9,7 @@ const LoginForm = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route("swift-auth.login.submit"));
+        post(route("swift-auth.login"));
     };
 
     return (
@@ -71,7 +71,7 @@ const LoginForm = () => {
                         <div className="text-center">
 
                             <Link
-                                href={route("swift-auth.password.request")}
+                                href={route("swift-auth.password.request.form")}
                                 className="text-sm text-blue-500"
                             >
                                 ¿Olvidaste tu contraseña?
@@ -83,7 +83,7 @@ const LoginForm = () => {
                 <div className="text-center p-4">
                     <span>¿No tienes cuenta? </span>
                     <Link
-                        href={route("swift-auth.register")}
+                        href={route("swift-auth.public.register")}
                         className="text-sm text-blue-500"
                     >
                         Registrate

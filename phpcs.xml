@@ -21,4 +21,17 @@
     <exclude-pattern>src/resources/**/views/*</exclude-pattern>
     <exclude-pattern>tests/*</exclude-pattern>
     <exclude-pattern>src/database/migrations/deprecated/*</exclude-pattern>
+
+    <!--
+        Optional: Enforce no fully-qualified class names (FQCN) at call sites
+        and stricter import usage via Slevomat Coding Standard. This is
+        commented out by default to avoid requiring the package. To enable,
+        require `slevomat/coding-standard` and add/uncomment the rule below.
+
+        Example (enable after installing):
+        <rule ref="SlevomatCodingStandard.Namespaces.FullyQualifiedNameUsage"/>
+
+        Note: PHP-CS-Fixer is included via `.php-cs-fixer.php` to handle
+        import ordering (`ordered_imports`) and removal of unused imports.
+    -->
 </ruleset>

@@ -46,17 +46,23 @@ class RememberToken extends Model
         'browser',
     ];
 
+    /**
+     * @var array<string, string>
+     */
     protected $casts = [
         'expires_at' => 'datetime',
         'last_used_at' => 'datetime',
     ];
 
+    /**
+     * @param array<string, mixed> $attributes
+     */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
 
         try {
-            $prefix = config('swift-auth.table_prefix', '');
+            $prefix = (string) config('swift-auth.table_prefix', '');
         } catch (\Throwable $exception) {
             $prefix = '';
         }

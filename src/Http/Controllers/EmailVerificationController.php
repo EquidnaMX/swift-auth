@@ -16,7 +16,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-
 use Equidna\SwiftAuth\Models\User;
 use Equidna\SwiftAuth\Services\NotificationService;
 use Equidna\Toolkit\Helpers\ResponseHelper;
@@ -38,8 +37,7 @@ final class EmailVerificationController
     public function send(
         Request $request,
         NotificationService $notificationService,
-    ): JsonResponse
-    {
+    ): JsonResponse {
         $rawEmail = $request->input('email');
         $email = is_string($rawEmail) ? trim($rawEmail) : '';
 
@@ -56,10 +54,12 @@ final class EmailVerificationController
 
         // Rate limit per IP to prevent abuse
         $ipLimiter = 'email-verification:ip:' . $request->ip();
-        if (RateLimiter::tooManyAttempts(
-            $ipLimiter,
-            $ipAttempts,
-        )) {
+        if (
+            RateLimiter::tooManyAttempts(
+                $ipLimiter,
+                $ipAttempts,
+            )
+        ) {
             $seconds = RateLimiter::availableIn($ipLimiter);
             logger()->warning(
                 'swift-auth.email-verification.ip-rate-limit-exceeded',
@@ -80,10 +80,12 @@ final class EmailVerificationController
         $attempts = (int) ($rateLimitConfig['attempts'] ?? 3);
         $decaySeconds = (int) ($rateLimitConfig['decay_seconds'] ?? 300);
 
-        if (RateLimiter::tooManyAttempts(
-            $rateLimitKey,
-            $attempts,
-        )) {
+        if (
+            RateLimiter::tooManyAttempts(
+                $rateLimitKey,
+                $attempts,
+            )
+        ) {
             $seconds = RateLimiter::availableIn($rateLimitKey);
             logger()->warning(
                 'swift-auth.email-verification.rate-limit-exceeded',
@@ -206,9 +208,9 @@ final class EmailVerificationController
             );
         }
 
-        $ttl = config('swift-auth.email_verification.token_ttl', 86400);
+        $ttl = (int) config('swift-auth.email_verification.token_ttl', 86400);
         $sentAt = $user->email_verification_sent_at;
-        if ($sentAt && $sentAt->addSeconds($ttl)->isPast()) {
+        if ($sentAt !== null && $sentAt->addSeconds($ttl)->isPast()) {
             logger()->warning(
                 'swift-auth.email-verification.token-expired',
                 [

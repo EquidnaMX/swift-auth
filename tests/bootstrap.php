@@ -6,11 +6,10 @@
  */
 
 if (!function_exists('config')) {
-function config(
-    ?string $key = null,
-    $default = null,
-)
-{
+    function config(
+        ?string $key = null,
+        $default = null,
+    ) {
         static $cfg = null;
         if ($cfg === null) {
             $cfg = ['swift-auth' => []];
@@ -59,3 +58,29 @@ if (!function_exists('now')) {
 
 // Load Composer autoload after defining helpers so vendor helpers don't override them.
 require __DIR__ . '/../vendor/autoload.php';
+
+// Load our lightweight TestCase so tests that reference `Tests\\TestCase`
+// can run without a full Laravel application.
+if (file_exists(__DIR__ . '/TestCase.php')) {
+    require_once __DIR__ . '/TestCase.php';
+}
+
+// Provide a minimal container with a 'config' binding so code that checks
+// Container::getInstance()->has('config') behaves correctly during unit tests.
+if (class_exists(\Illuminate\Container\Container::class)) {
+    $container = new \Illuminate\Container\Container();
+    // Simple config repository that delegates to the test helper `config()` function.
+    $container->instance('config', new class {
+        public function get(string $key, $default = null)
+        {
+            return config($key, $default);
+        }
+
+        public function set(string $key, $value): void
+        {
+            // No-op because our config() helper stores values in its own static state.
+        }
+    });
+
+    \Illuminate\Container\Container::setInstance($container);
+}

@@ -90,14 +90,16 @@ class MfaController extends Controller
             return ResponseHelper::unauthorized(message: 'No pending MFA challenge.');
         }
 
-        $user = $userRepository->findById((int) $pendingUserId);
+        $pendingUserIdInt = is_int($pendingUserId) ? $pendingUserId : (int) $pendingUserId;
+        $user = $userRepository->findById($pendingUserIdInt);
 
         if (!$user) {
             return ResponseHelper::unauthorized(message: 'MFA user not found.');
         }
 
-        /** @var array{verification_url?:string,driver?:string}|mixed $config */
-        $config = config("swift-auth.mfa.{$method}", []);
+        /** @var array{verification_url?:string,driver?:string}|mixed $configRaw */
+        $configRaw = config("swift-auth.mfa.{$method}", []);
+        $config = is_array($configRaw) ? $configRaw : [];
         $verificationUrl = is_string($config['verification_url'] ?? null)
             ? $config['verification_url']
             : '';
@@ -134,12 +136,15 @@ class MfaController extends Controller
             $this->pendingMethodSessionKey(),
         ]);
 
+        $successUrl = config('swift-auth.success_url');
+        $forwardUrl = is_string($successUrl) ? $successUrl : null;
+
         return ResponseHelper::success(
             message: 'MFA verification successful.',
             data: [
                 'user_id' => $user->getKey(),
             ],
-            forward_url: config('swift-auth.success_url'),
+            forward_url: $forwardUrl,
         );
     }
 

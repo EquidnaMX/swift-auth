@@ -2,33 +2,28 @@
 
 /**
  * Implements SwiftAuth's session-backed authentication service helpers.
- *
- * PHP 8.2+
- *
- * @package   Equidna\SwiftAuth\Services
- * @author    Gabriel Ruelas <gruelas@gruelas.com>
- * @license   https://opensource.org/licenses/MIT MIT License
- * @link      https://github.com/EquidnaMX/swift_auth
  */
 
 namespace Equidna\SwiftAuth\Services;
 
-use Illuminate\Support\Facades\Cookie;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Session\Store as Session;
-use Illuminate\Support\Str;
-
 use Carbon\CarbonImmutable;
-
 use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
+use Equidna\SwiftAuth\Events\MfaChallengeStarted;
+use Equidna\SwiftAuth\Events\SessionEvicted;
+use Equidna\SwiftAuth\Events\UserLoggedIn;
+use Equidna\SwiftAuth\Events\UserLoggedOut;
 use Equidna\SwiftAuth\Models\RememberToken;
 use Equidna\SwiftAuth\Models\User;
 use Equidna\SwiftAuth\Models\UserSession;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Events\Dispatcher;
+use Illuminate\Session\Store as Session;
+use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Str;
+use SessionHandlerInterface;
 
 /**
- * Provides session-based authentication handling for users.
- *
- * Handles login, logout, session checks, and user retrieval using Laravel's session storage.
+ * Handles login, logout, session checks, and remember-me flows using Laravel's session storage.
  */
 class SwiftSessionAuth
 {
@@ -41,15 +36,8 @@ class SwiftSessionAuth
     protected string $rememberCookieName;
     protected string $pendingMfaUserKey = 'swift_auth_pending_mfa_user_id';
     protected string $pendingMfaDriverKey = 'swift_auth_pending_mfa_driver';
-    private null|User $cachedUser = null;
+    private ?User $cachedUser = null;
 
-    /**
-     * Creates a new SwiftSessionAuth instance.
-     *
-     * @param  Session                  $session         Laravel session store instance.
-     * @param  UserRepositoryInterface  $userRepository  User data access layer.
-     * @param  Dispatcher               $events          Event dispatcher instance.
-     */
     public function __construct(
         Session $session,
         private UserRepositoryInterface $userRepository,
@@ -58,21 +46,20 @@ class SwiftSessionAuth
         $this->session = $session;
         $this->rememberCookieName = (string) $this->getConfig(
             'swift-auth.remember_me.cookie_name',
-            'swift_auth_remember',
+            'swift_auth_remember'
         );
     }
 
     /**
      * Logs in a user by storing their ID in the session.
      *
-     * @param  User $user  User instance to authenticate.
      * @return array{evicted_session_ids: array<int, string>}
      */
     public function login(
         User $user,
-        null|string $ipAddress = null,
-        null|string $userAgent = null,
-        null|string $deviceName = null,
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
+        ?string $deviceName = null,
         bool $remember = false,
     ): array {
         $this->session->regenerate(true);
@@ -124,6 +111,13 @@ class SwiftSessionAuth
             );
         }
 
+        $this->dispatchEvent(new UserLoggedIn(
+            $user->getKey(),
+            $sessionId,
+            $ipAddress,
+            $this->getDriverMetadata()
+        ));
+
         return [
             'evicted_session_ids' => $evicted,
         ];
@@ -131,13 +125,12 @@ class SwiftSessionAuth
 
     /**
      * Logs out the user by removing their ID from the session.
-     *
-     * @return void
      */
     public function logout(): void
     {
-        $sessionId = $this->session->get($this->sessionUidKey);
+        $sessionId = (string) $this->session->get($this->sessionUidKey);
         $rememberValue = Cookie::get($this->rememberCookieName);
+        $userId = $this->session->get($this->sessionKey);
 
         $this->cachedUser = null;
 
@@ -149,7 +142,7 @@ class SwiftSessionAuth
         $this->session->forget($this->pendingMfaUserKey);
         $this->session->forget($this->pendingMfaDriverKey);
 
-        if ($sessionId) {
+        if ($sessionId !== '') {
             $this->deleteUserSession($sessionId);
         }
 
@@ -161,25 +154,33 @@ class SwiftSessionAuth
 
         $this->session->invalidate();
         $this->session->regenerate(true);
+
+        $this->dispatchEvent(new UserLoggedOut(
+            $userId,
+            $sessionId,
+            $this->getClientIp(),
+            $this->getDriverMetadata()
+        ));
     }
 
     /**
      * Records a pending MFA challenge without completing login.
-     *
-     * @param  User        $user       Authenticated user awaiting MFA.
-     * @param  string      $driver     MFA driver identifier (otp/webauthn).
-     * @param  null|string $ipAddress  Request IP address.
-     * @param  null|string $userAgent  Request user agent string.
-     * @return void
      */
     public function startMfaChallenge(
         User $user,
-        string $driver,
-        null|string $ipAddress = null,
-        null|string $userAgent = null,
+        string $driver = 'otp',
+        ?string $ipAddress = null,
+        ?string $userAgent = null,
     ): void {
         $this->session->put($this->pendingMfaUserKey, $user->getKey());
         $this->session->put($this->pendingMfaDriverKey, $driver);
+
+        $this->dispatchEvent(new MfaChallengeStarted(
+            $user->getKey(),
+            $this->getSessionId(),
+            $ipAddress,
+            $this->getDriverMetadata()
+        ));
 
         logger()->info('swift-auth.mfa.challenge_started', [
             'user_id' => $user->getKey(),
@@ -190,9 +191,42 @@ class SwiftSessionAuth
     }
 
     /**
-     * Determines if a user is currently authenticated via session.
+     * Determines whether the current authenticated user may perform one or more actions.
      *
-     * @return bool  True if authenticated, false otherwise.
+     * @param  string|array<string> $actions  Single action or list of actions to check.
+     * @return bool                           True if allowed.
+     */
+    public function canPerformAction(string|array $actions): bool
+    {
+        if (!$this->check()) {
+            return false;
+        }
+
+        $user = $this->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        // Allow super-admin shortcut
+        if ($user->hasRole('sw-admin')) {
+            return true;
+        }
+
+        $required = (array) $actions;
+        $available = $user->availableActions();
+
+        foreach ($required as $r) {
+            if (in_array($r, $available, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Determines if a user is currently authenticated via session.
      */
     public function check(): bool
     {
@@ -239,22 +273,26 @@ class SwiftSessionAuth
         return true;
     }
 
-    /**
-     * Returns the authenticated user's ID from the session.
-     *
-     * @return int|null  User ID or null if not authenticated.
-     */
-    public function id(): null|int
+    public function id(): ?int
     {
-        return $this->session->get($this->sessionKey);
+        $val = $this->session->get($this->sessionKey);
+
+        if ($val === null) {
+            return null;
+        }
+
+        if (is_int($val)) {
+            return $val;
+        }
+
+        if (is_string($val) && ctype_digit($val)) {
+            return (int) $val;
+        }
+
+        return null;
     }
 
-    /**
-     * Returns the authenticated User model instance, or null if not found.
-     *
-     * @return User|null  Authenticated user or null.
-     */
-    public function user(): null|User
+    public function user(): ?User
     {
         if (!$this->check()) {
             return null;
@@ -264,10 +302,7 @@ class SwiftSessionAuth
     }
 
     /**
-     * Returns the authenticated User model instance or throws exception if not found.
-     *
-     * @return User                    Authenticated user instance.
-     * @throws ModelNotFoundException  When user ID not in session or user record not found.
+     * @throws ModelNotFoundException
      */
     public function userOrFail(): User
     {
@@ -281,12 +316,9 @@ class SwiftSessionAuth
     }
 
     /**
-     * Returns all tracked sessions for the given user.
-     *
-     * @param  int $userId  Identifier of the user to inspect.
-     * @return \Illuminate\Support\Collection<int, UserSession>
+     * @return \Illuminate\Database\Eloquent\Collection<int, UserSession>
      */
-    public function sessionsForUser(int $userId): \Illuminate\Support\Collection
+    public function sessionsForUser(int $userId): \Illuminate\Database\Eloquent\Collection
     {
         return UserSession::query()
             ->where('id_user', $userId)
@@ -295,28 +327,17 @@ class SwiftSessionAuth
     }
 
     /**
-     * Returns all tracked sessions across all users.
-     *
-     * @return \Illuminate\Support\Collection<int, UserSession>
+     * @return \Illuminate\Database\Eloquent\Collection<int, UserSession>
      */
-    public function allSessions(): \Illuminate\Support\Collection
+    public function allSessions(): \Illuminate\Database\Eloquent\Collection
     {
         return UserSession::query()
             ->orderByDesc('last_activity')
             ->get();
     }
 
-    /**
-     * Revokes a specific session owned by the given user.
-     *
-     * @param  int    $userId     Identifier of the user who owns the session.
-     * @param  string $sessionId  Session identifier to revoke.
-     * @return void
-     */
-    public function revokeSession(
-        int $userId,
-        string $sessionId,
-    ): void {
+    public function revokeSession(int $userId, string $sessionId): void
+    {
         UserSession::query()
             ->where('id_user', $userId)
             ->where('session_id', $sessionId)
@@ -328,10 +349,6 @@ class SwiftSessionAuth
     }
 
     /**
-     * Revokes all sessions for a given user, optionally clearing remember-me tokens.
-     *
-     * @param  int  $userId                 Identifier of the user whose sessions will be removed.
-     * @param  bool $includeRememberTokens  Whether to also delete remember-me tokens for the user.
      * @return array{deleted_sessions:int, cleared_remember_tokens:int}
      */
     public function revokeAllSessionsForUser(
@@ -358,12 +375,6 @@ class SwiftSessionAuth
         ];
     }
 
-    /**
-     * Deletes all remember-me tokens for the given user.
-     *
-     * @param  int $userId  Identifier of the user whose tokens will be deleted.
-     * @return int          Count of deleted tokens.
-     */
     public function revokeRememberTokensForUser(int $userId): int
     {
         return RememberToken::query()
@@ -372,10 +383,26 @@ class SwiftSessionAuth
     }
 
     /**
-     * Determines whether the current session has exceeded idle or absolute limits.
+     * Determines whether the current authenticated user has one or more roles.
      *
-     * @return bool
+     * @param  string|array<string> $roles  Role name or list of role names to check.
+     * @return bool                         True if user has at least one of the roles.
      */
+    public function hasRole(string|array $roles): bool
+    {
+        if (!$this->check()) {
+            return false;
+        }
+
+        $user = $this->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        return $user->hasRole($roles);
+    }
+
     private function isExpired(): bool
     {
         $now = CarbonImmutable::now();
@@ -395,12 +422,6 @@ class SwiftSessionAuth
         return $absoluteExpiry !== null && $now->greaterThan($absoluteExpiry);
     }
 
-    /**
-     * Validates that the current session exists in the persistence store.
-     *
-     * @param  string $sessionId  Identifier to verify.
-     * @return bool
-     */
     private function sessionRecordExists(string $sessionId): bool
     {
         try {
@@ -417,11 +438,6 @@ class SwiftSessionAuth
         }
     }
 
-    /**
-     * Updates the last-activity timestamp for the current session.
-     *
-     * @return void
-     */
     private function touchLastActivity(): void
     {
         $now = CarbonImmutable::now();
@@ -445,13 +461,7 @@ class SwiftSessionAuth
         }
     }
 
-    /**
-     * Computes the absolute expiration timestamp for a session.
-     *
-     * @param  CarbonImmutable $now  The moment the session was issued.
-     * @return CarbonImmutable|null
-     */
-    private function getAbsoluteExpiry(CarbonImmutable $now): null|CarbonImmutable
+    private function getAbsoluteExpiry(CarbonImmutable $now): ?CarbonImmutable
     {
         $absoluteTtl = $this->getConfig(
             'swift-auth.session_lifetimes.absolute_timeout_seconds',
@@ -461,11 +471,6 @@ class SwiftSessionAuth
         return $absoluteTtl ? $now->addSeconds($absoluteTtl) : null;
     }
 
-    /**
-     * Attempts to authenticate using a persistent remember-me cookie.
-     *
-     * @return bool
-     */
     private function attemptRememberLogin(): bool
     {
         if (!$this->shouldIssueRememberToken()) {
@@ -536,9 +541,9 @@ class SwiftSessionAuth
             $token->save();
         }
 
-        $request = request();
-        $ip = method_exists($request, 'ip') ? $request->ip() : null;
-        $userAgent = method_exists($request, 'userAgent') ? $request->userAgent() : null;
+        $request = function_exists('request') ? request() : null;
+        $ip = $request && method_exists($request, 'ip') ? $request->ip() : null;
+        $userAgent = $request && method_exists($request, 'userAgent') ? $request->userAgent() : null;
 
         $this->login(
             user: $user,
@@ -551,32 +556,20 @@ class SwiftSessionAuth
         return true;
     }
 
-    /**
-     * Persists a remember-me token and queues the cookie on the response.
-     *
-     * @param  User        $user        Authenticated user.
-     * @param  null|string $ipAddress   Request IP address.
-     * @param  null|string $userAgent   Request user agent string.
-     * @param  null|string $deviceName  Device name.
-     * @param  null|string $platform    Parsed platform name.
-     * @param  null|string $browser     Parsed browser name.
-     * @return void
-     */
     private function queueRememberToken(
         User $user,
-        null|string $ipAddress,
-        null|string $userAgent,
-        null|string $deviceName,
-        null|string $platform,
-        null|string $browser,
+        ?string $ipAddress,
+        ?string $userAgent,
+        ?string $deviceName,
+        ?string $platform,
+        ?string $browser,
     ): void {
         try {
             $selector = Str::random(20);
             $validator = Str::random(64);
             $hashedValidator = hash('sha256', $validator);
-            $expiresAt = CarbonImmutable::now()->addSeconds(
-                (int) $this->getConfig('swift-auth.remember_me.ttl_seconds', 1209600),
-            );
+            $ttlSeconds = (int) $this->getConfig('swift-auth.remember_me.ttl_seconds', 1209600);
+            $expiresAt = CarbonImmutable::now()->addSeconds($ttlSeconds);
 
             RememberToken::query()->create(
                 [
@@ -593,9 +586,7 @@ class SwiftSessionAuth
             );
 
             $cookieValue = $selector . ':' . $validator;
-            $minutes = (int) ceil(
-                (int) $this->getConfig('swift-auth.remember_me.ttl_seconds', 1209600) / 60,
-            );
+            $minutes = (int) ceil($ttlSeconds / 60);
 
             $cookie = Cookie::make(
                 $this->rememberCookieName,
@@ -618,12 +609,6 @@ class SwiftSessionAuth
         }
     }
 
-    /**
-     * Deletes a remember-me token associated with the given cookie value.
-     *
-     * @param  string $cookieValue  Raw cookie value containing selector and validator.
-     * @return void
-     */
     private function deleteRememberToken(string $cookieValue): void
     {
         [$selector, $validator] = $this->splitRememberCookie($cookieValue);
@@ -648,32 +633,16 @@ class SwiftSessionAuth
         $this->forgetRememberCookie();
     }
 
-    /**
-     * Removes the remember-me cookie from the response queue.
-     *
-     * @return void
-     */
     private function forgetRememberCookie(): void
     {
         Cookie::queue(Cookie::forget($this->rememberCookieName));
     }
 
-    /**
-     * Checks if remember-me functionality is enabled.
-     *
-     * @return bool
-     */
     private function shouldIssueRememberToken(): bool
     {
         return (bool) $this->getConfig('swift-auth.remember_me.enabled', true);
     }
 
-    /**
-     * Determines whether the given remember token has expired.
-     *
-     * @param  RememberToken $token  Token to check.
-     * @return bool
-     */
     private function rememberTokenExpired(RememberToken $token): bool
     {
         return $token->expires_at !== null
@@ -681,9 +650,6 @@ class SwiftSessionAuth
     }
 
     /**
-     * Extracts selector and validator segments from a cookie value.
-     *
-     * @param  string $cookieValue  Raw cookie value.
      * @return array{0:null|string,1:null|string}
      */
     private function splitRememberCookie(string $cookieValue): array
@@ -697,12 +663,7 @@ class SwiftSessionAuth
         return [$parts[0], $parts[1]];
     }
 
-    /**
-     * Derives a device name from the current request if available.
-     *
-     * @return string|null
-     */
-    private function resolveDeviceNameFromRequest(): null|string
+    private function resolveDeviceNameFromRequest(): ?string
     {
         try {
             $request = request();
@@ -716,12 +677,9 @@ class SwiftSessionAuth
     }
 
     /**
-     * Extracts coarse device metadata from a user agent string.
-     *
-     * @param  null|string $userAgent  Raw user agent string.
      * @return array{platform:null|string,browser:null|string}
      */
-    private function extractAgentMetadata(null|string $userAgent): array
+    private function extractAgentMetadata(?string $userAgent): array
     {
         if (!$userAgent) {
             return [
@@ -744,7 +702,6 @@ class SwiftSessionAuth
         foreach ($knownPlatforms as $name => $pattern) {
             if (preg_match($pattern, $userAgent)) {
                 $platform = $name;
-
                 break;
             }
         }
@@ -760,7 +717,6 @@ class SwiftSessionAuth
         foreach ($knownBrowsers as $name => $pattern) {
             if (preg_match($pattern, $userAgent)) {
                 $browser = $name;
-
                 break;
             }
         }
@@ -771,29 +727,20 @@ class SwiftSessionAuth
         ];
     }
 
-    /**
-     * Records a session row for the authenticated user.
-     *
-     * @param  User             $user          The authenticated user.
-     * @param  string           $sessionId     Unique session identifier.
-     * @param  null|string      $ipAddress     Request IP address.
-     * @param  null|string      $userAgent     Request user agent string.
-     * @param  null|string      $deviceName    Device name hint.
-     * @param  CarbonImmutable  $lastActivity  Timestamp of last activity.
-     * @return void
-     */
     private function recordUserSession(
         User $user,
         string $sessionId,
-        null|string $ipAddress,
-        null|string $userAgent,
-        null|string $deviceName,
-        null|string $platform,
-        null|string $browser,
+        ?string $ipAddress,
+        ?string $userAgent,
+        ?string $deviceName,
+        ?string $platform,
+        ?string $browser,
         CarbonImmutable $lastActivity,
     ): void {
         try {
-            UserSession::updateOrCreate(
+            // Use the query builder form so static analyzers understand the
+            // Eloquent builder methods are being used.
+            UserSession::query()->updateOrCreate(
                 [
                     'session_id' => $sessionId,
                 ],
@@ -816,13 +763,9 @@ class SwiftSessionAuth
     }
 
     /**
-     * Enforces a per-user session limit by evicting old or new sessions.
-     *
-     * @param  User   $user              Authenticated user.
-     * @param  string $currentSessionId  Newly issued session identifier.
      * @return array<int, string>
      */
-    private function enforceSessionLimit(
+    public function enforceSessionLimit(
         User $user,
         string $currentSessionId,
     ): array {
@@ -870,6 +813,15 @@ class SwiftSessionAuth
                 ->whereIn('session_id', $sessionIds)
                 ->delete();
 
+            foreach ($sessionIds as $evictedSessionId) {
+                $this->dispatchEvent(new SessionEvicted(
+                    $user->getKey(),
+                    $evictedSessionId,
+                    $this->getClientIp(),
+                    $this->getDriverMetadata()
+                ));
+            }
+
             if (in_array($currentSessionId, $sessionIds, true)) {
                 $this->logout();
             }
@@ -891,12 +843,6 @@ class SwiftSessionAuth
         }
     }
 
-    /**
-     * Deletes a persisted session record when logging out.
-     *
-     * @param  string $sessionId  Identifier to remove.
-     * @return void
-     */
     private function deleteUserSession(string $sessionId): void
     {
         try {
@@ -911,13 +857,7 @@ class SwiftSessionAuth
         }
     }
 
-    /**
-     * Parses a stored timestamp string into a Carbon instance.
-     *
-     * @param  string $timestamp  Serialized timestamp from the session store.
-     * @return CarbonImmutable|null
-     */
-    private function parseTimestamp(string $timestamp): null|CarbonImmutable
+    private function parseTimestamp(string $timestamp): ?CarbonImmutable
     {
         if ($timestamp === '') {
             return null;
@@ -930,17 +870,8 @@ class SwiftSessionAuth
         }
     }
 
-    /**
-     * Retrieves a configuration value with a default fallback when configuration helpers are unavailable.
-     *
-     * @param  string $key      Configuration path.
-     * @param  mixed  $default  Default fallback.
-     * @return mixed
-     */
-    private function getConfig(
-        string $key,
-        mixed $default,
-    ): mixed {
+    private function getConfig(string $key, mixed $default): mixed
+    {
         try {
             return config($key, $default);
         } catch (\Throwable) {
@@ -949,90 +880,7 @@ class SwiftSessionAuth
     }
 
     /**
-     * Checks if the authenticated user is allowed to perform the given action(s).
-     *
-     * @param  string|array<string,mixed> $actions  Action or list of actions to validate.
-     * @return bool                                  True if user has permission for at least one action.
-     */
-    public function canPerformAction(string|array $actions): bool
-    {
-        $user = $this->user();
-
-        if (!$user) {
-            return false;
-        }
-
-        $available = $user->availableActions();
-
-        if (in_array('sw-admin', $available)) {
-            return true;
-        }
-
-        return is_array($actions)
-            ? count(array_intersect($available, $actions)) > 0
-            : in_array($actions, $available);
-    }
-
-    /**
-     * Checks if the authenticated user has any of the given roles.
-     *
-     * @param  string|array<string,mixed> $roles  Role name(s) to check.
-     * @return bool                                True if user has at least one role.
-     */
-    public function hasRole(string|array $roles): bool
-    {
-        $user = $this->user();
-
-        if (!$user) {
-            return false;
-        }
-
-        // sw-admin action implies all role checks pass
-        if ($this->canPerformAction('sw-admin')) {
-            return true;
-        }
-
-        return $user->hasRoles($roles);
-    }
-
-    /**
-     * Dispatches a session eviction event when a session limit is enforced.
-     *
-     * @param  User   $user             User whose sessions are being limited.
-     * @param  string $evictedSessionId Identifier of the evicted session.
-     * @return void
-     */
-    public function enforceSessionLimit(User $user, string $evictedSessionId): void
-    {
-        $this->dispatchEvent(new SessionEvicted(
-            $user->getKey(),
-            $evictedSessionId,
-            $this->getClientIp(),
-            $this->getDriverMetadata()
-        ));
-    }
-
-    /**
-     * Dispatches an event indicating a multi-factor authentication challenge has started.
-     *
-     * @param  User $user  User undergoing MFA challenge.
-     * @return void
-     */
-    public function startMfaChallenge(User $user): void
-    {
-        $this->dispatchEvent(new MfaChallengeStarted(
-            $user->getKey(),
-            $this->getSessionId(),
-            $this->getClientIp(),
-            $this->getDriverMetadata()
-        ));
-    }
-
-    /**
      * Dispatches events via the configured dispatcher.
-     *
-     * @param  object $event  Event instance to dispatch.
-     * @return void
      */
     private function dispatchEvent(object $event): void
     {
@@ -1040,8 +888,6 @@ class SwiftSessionAuth
     }
 
     /**
-     * Returns metadata about the session storage driver and handler.
-     *
      * @return array<string, string>
      */
     private function getDriverMetadata(): array
@@ -1055,21 +901,11 @@ class SwiftSessionAuth
         ];
     }
 
-    /**
-     * Returns the current session identifier.
-     *
-     * @return string
-     */
     private function getSessionId(): string
     {
         return (string) $this->session->getId();
     }
 
-    /**
-     * Attempts to determine the client's IP address.
-     *
-     * @return string|null
-     */
     private function getClientIp(): ?string
     {
         if (function_exists('request') && request()) {
@@ -1077,95 +913,5 @@ class SwiftSessionAuth
         }
 
         return $_SERVER['REMOTE_ADDR'] ?? null;
-     * Attempts to reauthenticate a user using a remember-me cookie.
-     */
-    protected function attemptRememberReauthentication(CarbonImmutable $now): bool
-    {
-        if (!config('swift-auth.session.remember_me.enabled', true)) {
-            return false;
-        }
-
-        $rememberValue = Cookie::get($this->rememberCookie);
-
-        if (!$rememberValue || !str_contains($rememberValue, '|')) {
-            return false;
-        }
-
-        [$userId, $token, $expires] = array_pad(explode('|', $rememberValue, 3), 3, null);
-
-        if (!$userId || !$token || !$expires) {
-            $this->clearRememberCookie();
-            return false;
-        }
-
-        if ($now->getTimestamp() >= (int) $expires) {
-            $this->purgeRememberToken((int) $userId);
-            return false;
-        }
-
-        $user = $this->userRepository->findById((int) $userId);
-
-        if (!$user || !hash_equals((string) $user->remember_token, hash('sha256', $token))) {
-            $this->purgeRememberToken((int) $userId);
-            return false;
-        }
-
-        $this->login($user, false);
-
-        if (config('swift-auth.session.remember_me.rotate', true)) {
-            $this->createRememberToken($user, $now);
-        }
-
-        return true;
-    }
-
-    /**
-     * Creates and queues a remember-me token and cookie for the user.
-     */
-    protected function createRememberToken(User $user, CarbonImmutable $now): void
-    {
-        $ttl = (int) config('swift-auth.session.remember_me.ttl', 60 * 60 * 24 * 14);
-        $token = Str::random(60);
-        $hashedToken = hash('sha256', $token);
-        $user->remember_token = $hashedToken;
-        $user->save();
-
-        $expiresAt = $now->addSeconds($ttl);
-        $minutes = max(1, (int) ceil($ttl / 60));
-
-        Cookie::queue(cookie(
-            $this->rememberCookie,
-            implode('|', [$user->getKey(), $token, $expiresAt->getTimestamp()]),
-            $minutes,
-            null,
-            null,
-            false,
-            true,
-            false,
-            'Strict',
-        ));
-    }
-
-    /**
-     * Clears remember-me state for a user and cookie.
-     */
-    protected function purgeRememberToken(int $userId): void
-    {
-        $user = $this->userRepository->findById($userId);
-
-        if ($user) {
-            $user->remember_token = null;
-            $user->save();
-        }
-
-        $this->clearRememberCookie();
-    }
-
-    /**
-     * Queues removal of the remember-me cookie.
-     */
-    protected function clearRememberCookie(): void
-    {
-        Cookie::queue(Cookie::forget($this->rememberCookie));
     }
 }

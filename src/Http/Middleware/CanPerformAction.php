@@ -12,10 +12,8 @@ namespace Equidna\SwiftAuth\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-
 use Equidna\SwiftAuth\Facades\SwiftAuth;
 use Equidna\Toolkit\Helpers\ResponseHelper;
-
 use Closure;
 
 /**

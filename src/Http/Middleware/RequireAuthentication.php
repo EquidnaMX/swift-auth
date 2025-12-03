@@ -13,10 +13,8 @@ namespace Equidna\SwiftAuth\Http\Middleware;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-
 use Equidna\SwiftAuth\Facades\SwiftAuth;
 use Equidna\Toolkit\Helpers\ResponseHelper;
-
 use Closure;
 
 /**
@@ -38,8 +36,7 @@ class RequireAuthentication
     public function handle(
         Request $request,
         Closure $next,
-    ): Response
-    {
+    ): Response {
         if (!SwiftAuth::check()) {
             return ResponseHelper::unauthorized(
                 message: 'You must be logged in.',

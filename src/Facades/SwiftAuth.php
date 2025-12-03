@@ -14,7 +14,6 @@
 namespace Equidna\SwiftAuth\Facades;
 
 use Illuminate\Support\Facades\Facade;
-
 use Equidna\SwiftAuth\Models\User;
 
 /**
@@ -31,16 +30,18 @@ use Equidna\SwiftAuth\Models\User;
  *
  * @see \Equidna\SwiftAuth\Services\SwiftSessionAuth
  *
- * @method static array login(User $user, null|string $ipAddress = null, null|string $userAgent = null, null|string $deviceName = null, bool $remember = false)
+ * @method static array{evicted_session_ids: array<int, string>} login(User $user, null|string $ipAddress = null, null|string $userAgent = null, null|string $deviceName = null, bool $remember = false)
  * @method static void logout()
  * @method static bool check()
  * @method static int|null id()
  * @method static User|null user()
  * @method static bool canPerformAction(string|array<string,mixed> $actions)
+ * @method static bool hasRole(string|array<string> $roles)
  * @method static User userOrFail()
  * @method static \Illuminate\Support\Collection<int, \Equidna\SwiftAuth\Models\UserSession> sessionsForUser(int $userId)
  * @method static void revokeSession(int $userId, string $sessionId)
- * @method static void startMfaChallenge(User $user, string $driver, null|string $ipAddress = null, null|string $userAgent = null)
+ * @method static array<int, string> enforceSessionLimit(\Equidna\SwiftAuth\Models\User $user, string $currentSessionId)
+ * @method static void startMfaChallenge(\Equidna\SwiftAuth\Models\User $user, string $driver = 'otp', null|string $ipAddress = null, null|string $userAgent = null)
  */
 class SwiftAuth extends Facade
 {

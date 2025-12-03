@@ -16,7 +16,6 @@ namespace Equidna\SwiftAuth\Http\Middleware;
 use Illuminate\Container\Container;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-
 use Closure;
 
 /**
@@ -37,8 +36,7 @@ final class SecurityHeaders
     public function handle(
         Request $request,
         Closure $next,
-    ): Response
-    {
+    ): Response {
         /** @var Response $response */
         $response = $next($request);
 

@@ -15,7 +15,6 @@ namespace Equidna\SwiftAuth\Services;
 use Equidna\BirdFlock\BirdFlock;
 use Equidna\BirdFlock\DTO\FlightPlan;
 use Equidna\SwiftAuth\DTO\NotificationResult;
-
 use RuntimeException;
 
 /**
@@ -33,8 +32,7 @@ final class NotificationService
     public function sendPasswordReset(
         string $email,
         string $token,
-    ): NotificationResult
-    {
+    ): NotificationResult {
         try {
             $routeNamePrefix = config('swift-auth.route_prefix', 'swift-auth');
 
@@ -83,8 +81,7 @@ final class NotificationService
     public function sendEmailVerification(
         string $email,
         string $token,
-    ): NotificationResult
-    {
+    ): NotificationResult {
         try {
             $routeNamePrefix = config('swift-auth.route_prefix', 'swift-auth');
 
@@ -133,8 +130,7 @@ final class NotificationService
     public function sendAccountLockout(
         string $email,
         int $duration,
-    ): NotificationResult
-    {
+    ): NotificationResult {
         try {
             $minutes = (int) ceil($duration / 60);
 
@@ -174,8 +170,7 @@ final class NotificationService
     private function getPasswordResetHtml(
         string $resetUrl,
         string $email,
-    ): string
-    {
+    ): string {
         return view(
             'swift-auth::emails.password_reset',
             [
@@ -211,8 +206,7 @@ final class NotificationService
     private function getEmailVerificationHtml(
         string $verifyUrl,
         string $email,
-    ): string
-    {
+    ): string {
         return view(
             'swift-auth::emails.verification',
             [
@@ -248,8 +242,7 @@ final class NotificationService
     private function getAccountLockoutHtml(
         string $email,
         int $minutes,
-    ): string
-    {
+    ): string {
         return view(
             'swift-auth::emails.account_lockout',
             [

@@ -13,9 +13,9 @@
 
 namespace Equidna\SwiftAuth\Providers;
 
+use Illuminate\Events\Dispatcher;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
-
 use Equidna\SwiftAuth\Console\Commands\CreateAdminUser;
 use Equidna\SwiftAuth\Console\Commands\InstallSwiftAuth;
 use Equidna\SwiftAuth\Console\Commands\ListSessions;
@@ -60,10 +60,17 @@ final class SwiftAuthServiceProvider extends ServiceProvider
 
         // Bind SwiftAuth service
         $this->app->singleton('swift-auth', function ($app) {
+            /** @var \Illuminate\Session\Store $sessionStore */
+            $sessionStore = $app['session.store'];
+            /** @var UserRepositoryInterface $userRepository */
+            $userRepository = $app->make(UserRepositoryInterface::class);
+            /** @var Dispatcher $dispatcher */
+            $dispatcher = $app->make(Dispatcher::class);
+
             return new SwiftSessionAuth(
-                $app['session.store'],
-                $app->make(UserRepositoryInterface::class),
-                $app->make(Dispatcher::class)
+                $sessionStore,
+                $userRepository,
+                $dispatcher
             );
         });
     }
@@ -156,7 +163,8 @@ final class SwiftAuthServiceProvider extends ServiceProvider
                 function (\Illuminate\Console\Scheduling\Schedule $schedule): void {
                     $schedule->command(PurgeExpiredTokens::class)->hourly();
 
-                    if (config('swift-auth.session_cleanup.enabled', true)) {
+                    $cleanupEnabled = (bool) config('swift-auth.session_cleanup.enabled', true);
+                    if ($cleanupEnabled) {
                         $frequency = (string) config('swift-auth.session_cleanup.schedule', 'daily');
 
                         $event = $schedule->command(PurgeStaleSessions::class);

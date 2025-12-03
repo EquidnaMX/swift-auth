@@ -18,7 +18,7 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        $prefix = config('swift-auth.table_prefix', 'swift-auth_');
+        $prefix = (string) config('swift-auth.table_prefix', 'swift-auth_');
 
         Schema::create($prefix . 'Users', function (Blueprint $table) {
             $table->id('id_user');
@@ -44,7 +44,7 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        $prefix = config('swift-auth.table_prefix', 'swift-auth_');
+        $prefix = (string) config('swift-auth.table_prefix', 'swift-auth_');
         Schema::dropIfExists($prefix . 'Users');
     }
 };

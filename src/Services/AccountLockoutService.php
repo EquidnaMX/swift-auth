@@ -77,8 +77,7 @@ final class AccountLockoutService
     public function recordFailedAttempt(
         User $user,
         string $ip,
-    ): bool
-    {
+    ): bool {
         if (!config('swift-auth.account_lockout.enabled', true)) {
             return false;
         }

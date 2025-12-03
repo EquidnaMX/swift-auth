@@ -18,20 +18,19 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
-
 use Inertia\Response;
-
 use Equidna\SwiftAuth\Models\PasswordResetToken;
 use Equidna\SwiftAuth\Models\User;
 use Equidna\SwiftAuth\Services\NotificationService;
 use Equidna\SwiftAuth\Services\PasswordPolicy;
+use Equidna\SwiftAuth\Traits\ChecksRateLimits;
 use Equidna\SwiftAuth\Traits\SelectiveRender;
 use Equidna\Toolkit\Exceptions\BadRequestException;
 use Equidna\Toolkit\Exceptions\NotFoundException;
+use Equidna\Toolkit\Exceptions\UnauthorizedException;
 use Equidna\Toolkit\Helpers\ResponseHelper;
 
 /**
@@ -41,6 +40,7 @@ use Equidna\Toolkit\Helpers\ResponseHelper;
  */
 class PasswordController extends Controller
 {
+    use ChecksRateLimits;
     use SelectiveRender;
 
     /**
@@ -71,8 +71,7 @@ class PasswordController extends Controller
     public function sendResetLink(
         Request $request,
         NotificationService $notificationService,
-    ): RedirectResponse|JsonResponse
-    {
+    ): RedirectResponse|JsonResponse {
         $data = $request->validate(['email' => 'required|email']);
 
         $email = strtolower($data['email']);
@@ -89,27 +88,37 @@ class PasswordController extends Controller
         $ipKey = 'password-reset:ip:' . $request->ip();
 
         // If too many attempts for this email, return a 429 with retry information
-        if (RateLimiter::tooManyAttempts($limiterKey, $attempts)) {
-            $availableIn = RateLimiter::availableIn($limiterKey);
-
+        try {
+            $this->checkRateLimit(
+                $limiterKey,
+                $attempts,
+                'Too many password reset attempts.'
+            );
+        } catch (UnauthorizedException $e) {
+            $availableIn = $this->rateLimitAvailableIn($limiterKey);
             return response()->json([
-                'message' => 'Too many password reset attempts. Try again in ' . $availableIn . ' seconds.'
+                'message' => $e->getMessage() . ' seconds.'
             ], 429);
         }
 
         // IP-level protection: high threshold to reduce noise but stop large scans
         $ipThreshold = max(50, $attempts * 10);
-        if (RateLimiter::tooManyAttempts($ipKey, $ipThreshold)) {
-            $availableIn = RateLimiter::availableIn($ipKey);
-
+        try {
+            $this->checkRateLimit(
+                $ipKey,
+                $ipThreshold,
+                'Too many requests from this network.'
+            );
+        } catch (UnauthorizedException $e) {
+            $availableIn = $this->rateLimitAvailableIn($ipKey);
             return response()->json([
-                'message' => 'Too many requests from this network. Try again in ' . $availableIn . ' seconds.'
+                'message' => $e->getMessage() . ' seconds.'
             ], 429);
         }
 
         // Count attempt early to prevent enumeration races
-        RateLimiter::hit($limiterKey, $decay);
-        RateLimiter::hit($ipKey, $decay);
+        $this->hitRateLimit($limiterKey, $decay);
+        $this->hitRateLimit($ipKey, $decay);
 
         // Generate raw token and hash for storage
         $rawToken = Str::random(64);
@@ -185,7 +194,7 @@ class PasswordController extends Controller
      */
     public function resetPassword(Request $request): RedirectResponse|JsonResponse
     {
-        $prefix = config('swift-auth.table_prefix', '');
+        $prefix = (string) config('swift-auth.table_prefix', '');
         $passwordRules = PasswordPolicy::rules();
 
         $data = $request->validate([
@@ -199,8 +208,8 @@ class PasswordController extends Controller
 
         // Protect verification endpoint from brute-force attempts.
         $verifyLimiter = 'password-reset:verify:' . hash('sha256', strtolower($data['email']));
-        $verifyAttempts = config('swift-auth.password_reset_verify_attempts', 10);
-        $verifyDecay = config('swift-auth.password_reset_verify_decay_seconds', 3600);
+        $verifyAttempts = (int) config('swift-auth.password_reset_verify_attempts', 10);
+        $verifyDecay = (int) config('swift-auth.password_reset_verify_decay_seconds', 3600);
 
         if (RateLimiter::tooManyAttempts($verifyLimiter, $verifyAttempts)) {
             $availableIn = RateLimiter::availableIn($verifyLimiter);
@@ -209,21 +218,24 @@ class PasswordController extends Controller
             ], 429);
         }
 
-        /** @var array{email:string} $data */
+        /** @var array{email:string,token:string,password:string,password_confirmation:string} $data */
         $reset = PasswordResetToken::where('email', $data['email'])->first();
 
-        // Use constant-time comparison to prevent timing attacks
-        if (!$reset || !hash_equals($reset->token, $data['token'])) {
+        // Use constant-time comparison to prevent timing attacks.
+        // The stored token is a sha256 hash of the raw token, so hash the
+        // supplied token before comparison to avoid mismatches.
+        $expectedToken = hash('sha256', $data['token']);
+        if (!$reset || !hash_equals($reset->token, $expectedToken)) {
             // Increment the verify limiter to slow down brute-force.
             RateLimiter::hit($verifyLimiter, $verifyDecay);
             throw new BadRequestException('The reset token is invalid or has expired.');
         }
 
         // Enforce TTL
-        $ttl = config('swift-auth.password_reset_ttl', 900);
+        $ttl = (int) config('swift-auth.password_reset_ttl', 900);
         /** @var \Illuminate\Support\Carbon|null $createdAt */
         $createdAt = $reset->created_at;
-        if (!$createdAt || $createdAt->diffInSeconds(now()) > $ttl) {
+        if (!$createdAt || $createdAt->diffInSeconds() > $ttl) {
             // remove expired token and reject
             $reset->delete();
             throw new BadRequestException('The reset token is invalid or has expired.');
@@ -249,9 +261,9 @@ class PasswordController extends Controller
             'password' => $hashed
         ]);
 
-        logger()->info('Password reset completed', [
+        logger()->info('swift-auth.password-reset.completed', [
             'user_id' => $user->getKey(),
-            'email' => $user->email,
+            'email_hash' => hash('sha256', strtolower($user->email)),
             'ip' => $request->ip(),
         ]);
 
@@ -266,5 +278,4 @@ class PasswordController extends Controller
             forward_url: route('swift-auth.login.form'),
         );
     }
-
 }

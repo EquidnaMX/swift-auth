@@ -13,13 +13,16 @@
 use Illuminate\Support\Facades\Route;
 use Equidna\SwiftAuth\Http\Controllers\EmailVerificationController;
 
-$prefix = config('swift-auth.route_prefix', 'swift-auth');
-$namePrefix = config('swift-auth.route_prefix', 'swift-auth');
+$prefix = (string) config('swift-auth.route_prefix', 'swift-auth');
+$namePrefix = (string) config('swift-auth.route_prefix', 'swift-auth');
 
-Route::prefix($prefix)->name($namePrefix . '.')->group(function () {
-    Route::post('/email/send', [EmailVerificationController::class, 'send'])
-        ->name('email.send');
+Route::middleware(['web', 'SwiftAuth.SecurityHeaders'])
+    ->prefix($prefix)
+    ->name($namePrefix . '.')
+    ->group(function () {
+        Route::post('/email/send', [EmailVerificationController::class, 'send'])
+            ->name('email.send');
 
-    Route::get('/email/verify/{token}', [EmailVerificationController::class, 'verify'])
-        ->name('email.verify');
-});
+        Route::get('/email/verify/{token}', [EmailVerificationController::class, 'verify'])
+            ->name('email.verify');
+    });

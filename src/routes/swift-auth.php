@@ -14,10 +14,9 @@ use Equidna\SwiftAuth\Http\Controllers\PasswordController;
 use Equidna\SwiftAuth\Http\Middleware\CanPerformAction;
 use Equidna\SwiftAuth\Http\Middleware\RequireAuthentication;
 use Equidna\SwiftAuth\Http\Controllers\MfaController;
-use Equidna\SwiftAuth\Http\Controllers\AuthController;
-use Illuminate\Support\Facades\Route;
+use Equidna\SwiftAuth\Http\Controllers\UserController;
 
-$routePrefix = config('swift-auth.route_prefix', 'swift-auth');
+$routePrefix = (string) config('swift-auth.route_prefix', 'swift-auth');
 
 Route::middleware(['web', 'SwiftAuth.SecurityHeaders'])
     ->prefix($routePrefix)
@@ -40,12 +39,12 @@ Route::middleware(['web', 'SwiftAuth.SecurityHeaders'])
 
             // Public registration routes (optional)
             if (config('swift-auth.allow_registration', true)) {
-                Route::get('users/register', [\Equidna\SwiftAuth\Http\Controllers\UserController::class, 'register'])
-                    ->name('users.register');
+                Route::get('users/register', [UserController::class, 'register'])
+                    ->name('public.register');
 
-                Route::post('users', [\Equidna\SwiftAuth\Http\Controllers\UserController::class, 'store'])
+                Route::post('users', [UserController::class, 'store'])
                     ->middleware('throttle:swift-auth-registration')
-                    ->name('users.store');
+                    ->name('public.register.store');
             }
 
             Route::prefix('password')->as('password.')

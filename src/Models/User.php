@@ -27,6 +27,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Equidna\SwiftAuth\Models\Role> $roles
  *
  * @method static Builder<\Equidna\SwiftAuth\Models\User> where(string $column, mixed $value = null)
+ * @method static Builder<\Equidna\SwiftAuth\Models\User> whereNotNull(string $column)
  * @method static Builder<\Equidna\SwiftAuth\Models\User> search(null|string $term)
  * @method static static create(array<string,mixed> $attributes = [])
  * @method static static find(string|int $id)
@@ -40,24 +41,37 @@ class User extends Authenticatable
 
     /**
      * Cached available actions to avoid repeated parsing.
+     *
+     * @var array<int, string>|null
      */
     private ?array $cachedActions = null;
 
     /**
      * Initialize the model.
+     *
+     * @param array<string, mixed> $attributes
      */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        try {
-            $prefix = config('swift-auth.table_prefix', '');
-        } catch (\Throwable $e) {
-            $prefix = '';
-        }
-
-        $this->table = $prefix . 'Users';
+        $this->table = $this->tablePrefix() . 'Users';
     }
 
+    /**
+     * Returns configured table prefix.
+     */
+    protected function tablePrefix(): string
+    {
+        try {
+            return (string) config('swift-auth.table_prefix', '');
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+
+    /**
+     * @var array<int, string>
+     */
     protected $with = ['roles'];
     protected $fillable = [
         'name',
@@ -69,6 +83,10 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    /**
+     * @var array<string, string>
+     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'locked_until' => 'datetime',
@@ -85,7 +103,7 @@ class User extends Authenticatable
      */
     public function roles(): BelongsToMany
     {
-        $prefix = config('swift-auth.table_prefix', '');
+        $prefix = (string) config('swift-auth.table_prefix', '');
         return $this->belongsToMany(
             Role::class,
             $prefix . 'UsersRoles',
@@ -109,6 +127,18 @@ class User extends Authenticatable
             ->map(fn($name) => strtolower($name))
             ->intersect($rolesToCheck)
             ->isNotEmpty();
+    }
+
+    /**
+     * Alias for `hasRoles` to support singular `hasRole` calls from views and
+     * middleware. Kept for backward-compatibility and convenience.
+     *
+     * @param  string|array<string> $roles  Role or list of roles to check.
+     * @return bool                          True if the user has at least one role.
+     */
+    public function hasRole(string|array $roles): bool
+    {
+        return $this->hasRoles($roles);
     }
 
     /**
@@ -139,7 +169,9 @@ class User extends Authenticatable
         }
 
         // Cache the result
-        $this->cachedActions = array_values(array_unique($actions));
+        /** @var array<int, string> $uniqueActions */
+        $uniqueActions = array_values(array_unique($actions));
+        $this->cachedActions = $uniqueActions;
 
         return $this->cachedActions;
     }
@@ -154,8 +186,7 @@ class User extends Authenticatable
     public function scopeSearch(
         Builder $query,
         null|string $search,
-    ): Builder
-    {
+    ): Builder {
         if (empty($search)) {
             return $query;
         }

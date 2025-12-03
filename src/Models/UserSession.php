@@ -44,20 +44,32 @@ class UserSession extends Model
         'last_activity',
     ];
 
+    /**
+     * @var array<string, string>
+     */
     protected $casts = [
         'last_activity' => 'datetime',
     ];
 
+    /**
+     * @param array<string, mixed> $attributes
+     */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
 
-        try {
-            $prefix = config('swift-auth.table_prefix', '');
-        } catch (\Throwable $exception) {
-            $prefix = '';
-        }
+        $this->table = $this->tablePrefix() . 'Sessions';
+    }
 
-        $this->table = $prefix . 'Sessions';
+    /**
+     * Returns configured table prefix.
+     */
+    protected function tablePrefix(): string
+    {
+        try {
+            return (string) config('swift-auth.table_prefix', '');
+        } catch (\Throwable) {
+            return '';
+        }
     }
 }

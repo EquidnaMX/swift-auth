@@ -15,7 +15,6 @@ namespace Equidna\SwiftAuth\Console\Commands;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Console\Command;
-
 use Equidna\SwiftAuth\Models\UserSession;
 
 /**

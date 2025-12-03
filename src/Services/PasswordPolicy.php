@@ -23,7 +23,7 @@ final class PasswordPolicy
     /**
      * Returns password validation rules based on configuration.
      *
-     * @return array<int, \Illuminate\Validation\Rules\Password|\Illuminate\Validation\Rules\In>
+     * @return array<int, \Illuminate\Validation\Rules\Password|\Illuminate\Validation\Rules\NotIn>
      */
     public static function rules(): array
     {

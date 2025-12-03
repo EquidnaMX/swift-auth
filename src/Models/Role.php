@@ -16,7 +16,6 @@ namespace Equidna\SwiftAuth\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-
 use Equidna\SwiftAuth\Models\User;
 
 /**
@@ -29,7 +28,7 @@ use Equidna\SwiftAuth\Models\User;
  * @method static static create(array<string,mixed> $attributes = [])
  * @method static static findOrFail(string|int $id)
  * @method static static firstOrCreate(array<string,mixed> $attributes, array<string,mixed> $values = [])
- * @method static \Illuminate\Database\Eloquent\Builder orderBy(string $column, string $direction = 'asc')
+ * @method static \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\Role> orderBy(string $column, string $direction = 'asc')
  */
 class Role extends Model
 {
@@ -38,16 +37,25 @@ class Role extends Model
 
     /**
      * Initialize the model.
+     *
+     * @param array<string, mixed> $attributes
      */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
+        $this->table = $this->tablePrefix() . 'Roles';
+    }
+
+    /**
+     * Returns configured table prefix.
+     */
+    protected function tablePrefix(): string
+    {
         try {
-            $prefix = config('swift-auth.table_prefix', '');
-        } catch (\Throwable $e) {
-            $prefix = '';
+            return (string) config('swift-auth.table_prefix', '');
+        } catch (\Throwable) {
+            return '';
         }
-        $this->table = $prefix . 'Roles';
     }
 
     protected $fillable = [
@@ -56,6 +64,9 @@ class Role extends Model
         'actions',
     ];
 
+    /**
+     * @var array<string, string>
+     */
     protected $casts = [
         'actions' => 'array',
     ];
@@ -70,13 +81,7 @@ class Role extends Model
      */
     public function users(): BelongsToMany
     {
-        $prefix = config('swift-auth.table_prefix', '');
-        try {
-            $prefix = config('swift-auth.table_prefix', '');
-        } catch (\Throwable $e) {
-            $prefix = '';
-        }
-
+        $prefix = (string) config('swift-auth.table_prefix', '');
         return $this->belongsToMany(
             User::class,
             $prefix . 'UsersRoles',
@@ -95,8 +100,7 @@ class Role extends Model
     public function scopeSearch(
         Builder $query,
         null|string $search,
-    ): Builder
-    {
+    ): Builder {
         if (empty($search)) {
             return $query;
         }

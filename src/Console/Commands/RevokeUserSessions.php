@@ -14,7 +14,6 @@
 namespace Equidna\SwiftAuth\Console\Commands;
 
 use Illuminate\Console\Command;
-
 use Equidna\SwiftAuth\Services\SwiftSessionAuth;
 
 /**

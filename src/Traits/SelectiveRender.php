@@ -15,7 +15,6 @@ namespace Equidna\SwiftAuth\Traits;
 
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Config;
-
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -41,8 +40,7 @@ trait SelectiveRender
         string $bladeView,
         string $inertiaComponent,
         array $data = [],
-    ): View|Response
-    {
+    ): View|Response {
         $flashMessages = [
             'success' => session('success'),
             'error' => session('error'),

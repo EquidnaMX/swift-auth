@@ -13,14 +13,13 @@
 
 namespace Equidna\SwiftAuth\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /**
  * Represents a password reset token row keyed by email.
  *
  * @method static static updateOrCreate(array<string,mixed> $attributes, array<string,mixed> $values = [])
- * @method static Builder|static where(string $column, mixed $operator = null, mixed $value = null)
+ * @method static \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\PasswordResetToken>|static where(string $column, mixed $operator = null, mixed $value = null)
  */
 class PasswordResetToken extends Model
 {
@@ -31,17 +30,13 @@ class PasswordResetToken extends Model
 
     /**
      * Initialize the model.
+     *
+     * @param array<string, mixed> $attributes
      */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        try {
-            $prefix = config('swift-auth.table_prefix', '');
-        } catch (\Throwable $e) {
-            $prefix = '';
-        }
-
-        $this->table = $prefix . 'PasswordResetTokens';
+        $this->table = $this->tablePrefix() . 'PasswordResetTokens';
         // Ensure a created_at attribute exists for new instances even when
         // Eloquent timestamps are disabled. Use a DB-friendly datetime
         // string so tests can assert presence without depending on the
@@ -52,9 +47,26 @@ class PasswordResetToken extends Model
     }
 
     public $timestamps = false;
+
+    /**
+     * Returns configured table prefix.
+     */
+    protected function tablePrefix(): string
+    {
+        try {
+            return (string) config('swift-auth.table_prefix', '');
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+
+    /**
+     * @var array<string, string>
+     */
     protected $casts = [
         'created_at' => 'datetime',
     ];
+
     protected $fillable = [
         'email',
         'token',

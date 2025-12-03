@@ -63,7 +63,7 @@ final class PreviewEmailTemplates extends Command
         }
 
         if (!in_array($template, $available, true)) {
-            $this->error('Template not found: ' . ($template === '' ? '[empty]' : $template));
+            $this->error('Template not found: ' . $template);
             $this->info('Run without args to list available templates.');
 
             return 1;

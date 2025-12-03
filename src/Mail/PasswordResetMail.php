@@ -30,8 +30,7 @@ class PasswordResetMail extends Mailable implements ShouldQueue
     public function __construct(
         string $email,
         string $token,
-    )
-    {
+    ) {
         $this->token = $token;
         $this->email = $email;
     }

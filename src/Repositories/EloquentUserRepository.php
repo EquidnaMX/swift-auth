@@ -14,7 +14,6 @@
 namespace Equidna\SwiftAuth\Repositories;
 
 use Carbon\CarbonInterval;
-
 use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
 use Equidna\SwiftAuth\Models\User;
 
@@ -90,8 +89,7 @@ final class EloquentUserRepository implements UserRepositoryInterface
     public function lockAccount(
         User $user,
         int $seconds,
-    ): void
-    {
+    ): void {
         $user->locked_until = now()->add(CarbonInterval::seconds($seconds));
         $user->save();
     }

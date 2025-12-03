@@ -15,7 +15,7 @@ namespace Equidna\SwiftAuth\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
-
+use Equidna\SwiftAuth\Models\UserSession;
 use Equidna\SwiftAuth\Services\SwiftSessionAuth;
 
 /**
@@ -87,14 +87,17 @@ class ListSessions extends Command
     {
         return $sessions
             ->map(
-                fn ($session) => [
+                /** @param UserSession $session */
+                fn($session) => [
                     $session->session_id,
-                    $session->id_user,
+                    (string) $session->id_user,
                     $session->device_name,
                     $session->ip_address,
                     $session->platform,
                     $session->browser,
-                    optional($session->last_activity)->toDateTimeString(),
+                    $session->last_activity instanceof \DateTimeInterface
+                        ? $session->last_activity->format('Y-m-d H:i:s')
+                        : null,
                 ]
             )
             ->all();

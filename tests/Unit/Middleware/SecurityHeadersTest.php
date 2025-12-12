@@ -8,9 +8,7 @@ namespace Equidna\SwiftAuth\Tests\Unit\Middleware;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-
-use PHPUnit\Framework\TestCase;
-
+use Equidna\SwiftAuth\Tests\TestCase;
 use Equidna\SwiftAuth\Http\Middleware\SecurityHeaders;
 
 final class SecurityHeadersTest extends TestCase

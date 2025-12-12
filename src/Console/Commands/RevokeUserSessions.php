@@ -14,7 +14,7 @@
 namespace Equidna\SwiftAuth\Console\Commands;
 
 use Illuminate\Console\Command;
-use Equidna\SwiftAuth\Services\SwiftSessionAuth;
+use Equidna\SwiftAuth\Classes\Auth\SwiftSessionAuth;
 
 /**
  * Enables administrators to revoke sessions from the CLI.

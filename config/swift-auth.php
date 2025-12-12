@@ -20,7 +20,7 @@ return [
     | Enable public registration
     |--------------------------------------------------------------------------
     */
-    'allow_registration' => env('SWIFT_AUTH_ALLOW_REGISTRATION', true),
+    'allow_registration' => env('SWIFT_AUTH_ALLOW_REGISTRATION', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -36,11 +36,11 @@ return [
     */
     'login_rate_limits' => [
         'email' => [
-            'attempts' => 5,
+            'attempts' => 3,
             'decay_seconds' => 300,
         ],
         'ip' => [
-            'attempts' => 20,
+            'attempts' => 10,
             'decay_seconds' => 300,
         ],
     ],
@@ -51,8 +51,8 @@ return [
     |--------------------------------------------------------------------------
     */
     'session_lifetimes' => [
-        'idle_timeout_seconds' => env('SWIFT_AUTH_SESSION_IDLE_TIMEOUT', 1800), // 30 minutes
-        'absolute_timeout_seconds' => env('SWIFT_AUTH_SESSION_ABSOLUTE_TIMEOUT', 86400), // 24 hours
+        'idle_timeout_seconds' => env('SWIFT_AUTH_SESSION_IDLE_TIMEOUT', 900), // 15 minutes
+        'absolute_timeout_seconds' => env('SWIFT_AUTH_SESSION_ABSOLUTE_TIMEOUT', 28800), // 8 hours
     ],
 
     /*
@@ -90,7 +90,7 @@ return [
         'ttl_seconds' => env('SWIFT_AUTH_REMEMBER_TTL', 1209600), // 14 days
         'rotate_on_use' => env('SWIFT_AUTH_REMEMBER_ROTATE', true),
         'secure' => env('SWIFT_AUTH_REMEMBER_SECURE', true),
-        'same_site' => env('SWIFT_AUTH_REMEMBER_SAMESITE', 'lax'),
+        'same_site' => env('SWIFT_AUTH_REMEMBER_SAMESITE', 'strict'),
         'domain' => env('SWIFT_AUTH_REMEMBER_DOMAIN', null),
         'path' => env('SWIFT_AUTH_REMEMBER_PATH', '/'),
         'policy' => env('SWIFT_AUTH_REMEMBER_POLICY', 'strict'), // strict|lenient
@@ -131,11 +131,11 @@ return [
     'password_reset_ttl' => env('SWIFT_AUTH_PASSWORD_RESET_TTL', 900),
 
     'password_reset_rate_limit' => [
-        'attempts' => 5,
-        'decay_seconds' => 60,
+        'attempts' => 3,
+        'decay_seconds' => 300,
     ],
 
-    'password_reset_verify_attempts' => 10,
+    'password_reset_verify_attempts' => 5,
     'password_reset_verify_decay_seconds' => 3600,
 
     /*
@@ -143,15 +143,15 @@ return [
     | Password Requirements
     |--------------------------------------------------------------------------
     */
-    'password_min_length' => 8,
+    'password_min_length' => 12,
     'hash_driver' => null,
 
     'password_requirements' => [
-        'require_letters' => false,
-        'require_mixed_case' => false,
-        'require_numbers' => false,
-        'require_symbols' => false,
-        'disallow_common_passwords' => false,
+        'require_letters' => true,
+        'require_mixed_case' => true,
+        'require_numbers' => true,
+        'require_symbols' => true,
+        'disallow_common_passwords' => true,
         'common_passwords' => [
             'password',
             'password1',

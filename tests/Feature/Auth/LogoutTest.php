@@ -15,7 +15,7 @@ namespace Equidna\SwiftAuth\Tests\Feature\Auth;
 use Equidna\SwiftAuth\Tests\TestHelpers;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
-use Tests\TestCase;
+use Equidna\SwiftAuth\Tests\TestCase;
 
 /**
  * Feature tests for logout flow.

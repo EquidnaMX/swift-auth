@@ -24,10 +24,10 @@ use Illuminate\Support\Str;
 use Inertia\Response;
 use Equidna\SwiftAuth\Models\PasswordResetToken;
 use Equidna\SwiftAuth\Models\User;
-use Equidna\SwiftAuth\Services\NotificationService;
-use Equidna\SwiftAuth\Services\PasswordPolicy;
-use Equidna\SwiftAuth\Traits\ChecksRateLimits;
-use Equidna\SwiftAuth\Traits\SelectiveRender;
+use Equidna\SwiftAuth\Classes\Notifications\NotificationService;
+use Equidna\SwiftAuth\Classes\Auth\Services\PasswordPolicy;
+use Equidna\SwiftAuth\Classes\Auth\Traits\ChecksRateLimits;
+use Equidna\SwiftAuth\Support\Traits\SelectiveRender;
 use Equidna\Toolkit\Exceptions\BadRequestException;
 use Equidna\Toolkit\Exceptions\NotFoundException;
 use Equidna\Toolkit\Exceptions\UnauthorizedException;
@@ -124,22 +124,35 @@ class PasswordController extends Controller
         $rawToken = Str::random(64);
         $hashedToken = hash('sha256', $rawToken);
 
-        PasswordResetToken::updateOrCreate(
-            ['email' => $email],
-            ['token' => $hashedToken, 'created_at' => now()]
-        );
+        // Only create token if user exists, but don't reveal this in response
+        $userExists = User::where('email', $email)->exists();
 
-        try {
-            $messageId = $notificationService->sendPasswordReset($email, $rawToken);
+        if ($userExists) {
+            PasswordResetToken::updateOrCreate(
+                ['email' => $email],
+                ['token' => $hashedToken, 'created_at' => now()]
+            );
 
-            logger()->info('swift-auth.password-reset.email-sent', [
+            try {
+                $messageId = $notificationService->sendPasswordReset($email, $rawToken);
+
+                logger()->info('swift-auth.password-reset.email-sent', [
+                    'email_hash' => hash('sha256', $email),
+                    'message_id' => $messageId,
+                    'ip' => $request->ip(),
+                ]);
+            } catch (\Throwable $e) {
+                logger()->error('swift-auth.password-reset.send-failed', [
+                    'email_hash' => hash('sha256', $email),
+                    'error' => $e->getMessage()
+                ]);
+                // Don't reveal send failures to prevent enumeration
+            }
+        } else {
+            logger()->info('swift-auth.password-reset.unknown-email', [
                 'email_hash' => hash('sha256', $email),
-                'message_id' => $messageId,
                 'ip' => $request->ip(),
             ]);
-        } catch (\Throwable $e) {
-            logger()->error('swift-auth.password-reset.send-failed', ['error' => $e->getMessage()]);
-            throw new BadRequestException('Unable to process password reset at this time.');
         }
 
         return ResponseHelper::success(
@@ -190,15 +203,13 @@ class PasswordController extends Controller
      * @param  Request                   $request  HTTP request containing token, email, and password.
      * @return RedirectResponse|JsonResponse       Context-aware success response.
      * @throws BadRequestException                 When token validation fails.
-     * @throws NotFoundException                   When the email does not exist.
      */
     public function resetPassword(Request $request): RedirectResponse|JsonResponse
     {
-        $prefix = (string) config('swift-auth.table_prefix', '');
         $passwordRules = PasswordPolicy::rules();
 
         $data = $request->validate([
-            'email' => 'required|email|exists:' . $prefix . 'Users,email',
+            'email' => 'required|email',
             'token' => 'required|string',
             'password' => array_merge(
                 ['required', 'string', 'confirmed'],
@@ -213,13 +224,13 @@ class PasswordController extends Controller
 
         if (RateLimiter::tooManyAttempts($verifyLimiter, $verifyAttempts)) {
             $availableIn = RateLimiter::availableIn($verifyLimiter);
-            return response()->json([
-                'message' => 'Too many verification attempts. Try again in ' . $availableIn . ' seconds.'
-            ], 429);
+            throw new BadRequestException(
+                'Too many verification attempts. Please try again later.'
+            );
         }
 
         /** @var array{email:string,token:string,password:string,password_confirmation:string} $data */
-        $reset = PasswordResetToken::where('email', $data['email'])->first();
+        $reset = PasswordResetToken::where('email', strtolower($data['email']))->first();
 
         // Use constant-time comparison to prevent timing attacks.
         // The stored token is a sha256 hash of the raw token, so hash the
@@ -228,7 +239,7 @@ class PasswordController extends Controller
         if (!$reset || !hash_equals($reset->token, $expectedToken)) {
             // Increment the verify limiter to slow down brute-force.
             RateLimiter::hit($verifyLimiter, $verifyDecay);
-            throw new BadRequestException('The reset token is invalid or has expired.');
+            throw new BadRequestException('Invalid or expired reset token.');
         }
 
         // Enforce TTL
@@ -238,13 +249,15 @@ class PasswordController extends Controller
         if (!$createdAt || $createdAt->diffInSeconds() > $ttl) {
             // remove expired token and reject
             $reset->delete();
-            throw new BadRequestException('The reset token is invalid or has expired.');
+            throw new BadRequestException('Invalid or expired reset token.');
         }
 
-        $user = User::where('email', $data['email'])->first();
+        $user = User::where('email', strtolower($data['email']))->first();
 
         if (!$user) {
-            throw new NotFoundException('No user was found for the provided email.');
+            // Token exists but user doesn't - cleanup and reject with uniform message
+            $reset->delete();
+            throw new BadRequestException('Invalid or expired reset token.');
         }
 
         $driver = config('swift-auth.hash_driver');

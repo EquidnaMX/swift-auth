@@ -13,18 +13,18 @@
 
 namespace Equidna\SwiftAuth\Tests\Unit\Models;
 
-use Illuminate\Database\Eloquent\Collection;
-
-use PHPUnit\Framework\TestCase;
-
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Equidna\SwiftAuth\Tests\TestCase;
 use Equidna\SwiftAuth\Models\Role;
 use Equidna\SwiftAuth\Models\User;
 
 /**
- * Tests User model business logic in isolation.
+ * Tests User model business logic with database.
  */
 class UserTest extends TestCase
 {
+    use RefreshDatabase;
+
     /**
      * Tests hasRoles returns true when user has the specified role.
      */
@@ -115,64 +115,54 @@ class UserTest extends TestCase
     }
 
     /**
-     * Creates a User instance with mocked roles.
+     * Creates a User instance with roles in the database.
      *
      * @param  array<int, string> $roleNames  Role names to assign.
-     * @return User                            Mocked user instance.
+     * @return User                           User instance with roles.
      */
     private function createUserWithRoles(array $roleNames): User
     {
-        $roles = new Collection();
+        $user = User::create([
+            'name' => 'Test User',
+            'email' => 'test_' . uniqid() . '@example.com',
+            'password' => bcrypt('password'),
+            'failed_login_attempts' => 0,
+        ]);
 
         foreach ($roleNames as $name) {
-            $role = $this->createMock(Role::class);
-            $role->name = $name;
-            $role->actions = [];
-            $roles->push($role);
+            $role = Role::create([
+                'name' => $name,
+                'actions' => [],
+            ]);
+            $user->roles()->attach($role);
         }
 
-        $user = $this->getMockBuilder(User::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods([])
-            ->getMock();
-
-        // Use reflection to set the roles relationship
-        $reflection = new \ReflectionClass($user);
-        $property = $reflection->getProperty('relations');
-        $property->setAccessible(true);
-        $property->setValue($user, ['roles' => $roles]);
-
-        return $user;
+        return $user->fresh(['roles']);
     }
 
     /**
      * Creates a User instance with roles that have specific actions.
      *
      * @param  array<int, array<int, string>> $roleActions  Array of action arrays.
-     * @return User                                         Mocked user instance.
+     * @return User                                        User instance with roles.
      */
     private function createUserWithActions(array $roleActions): User
     {
-        $roles = new Collection();
+        $user = User::create([
+            'name' => 'Test User',
+            'email' => 'test_' . uniqid() . '@example.com',
+            'password' => bcrypt('password'),
+            'failed_login_attempts' => 0,
+        ]);
 
         foreach ($roleActions as $actions) {
-            $role = $this->createMock(Role::class);
-            $role->name = 'role_' . uniqid();
-            $role->actions = $actions;
-            $roles->push($role);
+            $role = Role::create([
+                'name' => 'role_' . uniqid(),
+                'actions' => $actions,
+            ]);
+            $user->roles()->attach($role);
         }
 
-        $user = $this->getMockBuilder(User::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods([])
-            ->getMock();
-
-        // Use reflection to set the roles relationship
-        $reflection = new \ReflectionClass($user);
-        $property = $reflection->getProperty('relations');
-        $property->setAccessible(true);
-        $property->setValue($user, ['roles' => $roles]);
-
-        return $user;
+        return $user->fresh(['roles']);
     }
 }

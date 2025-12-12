@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Session\Store as Session;
 use SessionHandlerInterface;
 
-use PHPUnit\Framework\TestCase;
+use Equidna\SwiftAuth\Tests\TestCase;
 
 use Equidna\SwiftAuth\Classes\Auth\SwiftSessionAuth;
 use Equidna\SwiftAuth\Models\User;
@@ -26,17 +26,19 @@ use Equidna\SwiftAuth\Classes\Auth\Services\RememberMeService;
 use Equidna\SwiftAuth\Classes\Auth\Services\SessionManager;
 use Equidna\SwiftAuth\Classes\Auth\Services\MfaService;
 
+use PHPUnit\Framework\MockObject\MockObject;
+
 /**
  * Tests SwiftSessionAuth service in isolation with mocked dependencies.
  */
 class SwiftSessionAuthTest extends TestCase
 {
-    private Session $session;
-    private \Equidna\SwiftAuth\Classes\Users\Contracts\UserRepositoryInterface $userRepository;
-    private Dispatcher $events;
-    private RememberMeService $rememberMeService;
-    private SessionManager $sessionManager;
-    private MfaService $mfaService;
+    private Session&MockObject $session;
+    private \Equidna\SwiftAuth\Classes\Users\Contracts\UserRepositoryInterface&MockObject $userRepository;
+    private Dispatcher&MockObject $events;
+    private RememberMeService&MockObject $rememberMeService;
+    private SessionManager&MockObject $sessionManager;
+    private MfaService&MockObject $mfaService;
     private SwiftSessionAuth $auth;
 
 
@@ -82,7 +84,7 @@ class SwiftSessionAuthTest extends TestCase
             ->willReturn('sess-123');
 
         $this->mockDriverMetadata('sess-123');
-        
+
         $this->sessionManager
             ->expects($this->once())
             ->method('record')
@@ -118,7 +120,10 @@ class SwiftSessionAuthTest extends TestCase
 
         $this->session
             ->method('get')
-            ->willReturn(null);
+            ->willReturnMap([
+                ['swift_auth_session_id', null, 'sess-456'],
+                ['swift_auth_user_id', null, 123],
+            ]);
 
         $this->session
             ->method('invalidate')
@@ -131,7 +136,7 @@ class SwiftSessionAuthTest extends TestCase
         $this->mockDriverMetadata('sess-456');
 
         $this->mfaService->expects($this->once())->method('clearPendingChallenge');
-        
+
         // SwiftSessionAuth calls session->getId() to check if empty, session mock returns 'sess-456'
         // So it should call deleteById
         $this->sessionManager->expects($this->once())->method('deleteById')->with('sess-456');
@@ -152,12 +157,12 @@ class SwiftSessionAuthTest extends TestCase
                 ['swift_auth_user_id', null, 123],
                 ['swift_auth_session_id', null, 'sess-valid'],
             ]);
-            
+
         $this->sessionManager
             ->method('isValid')
             ->with('sess-valid')
             ->willReturn(true);
-            
+
         $user = $this->createMock(User::class);
         $this->userRepository->method('findById')->with(123)->willReturn($user);
 
@@ -222,6 +227,7 @@ class SwiftSessionAuthTest extends TestCase
     {
         $user = $this->createMock(User::class);
         $user->method('availableActions')->willReturn(['sw-admin']);
+        $user->method('hasRole')->with('sw-admin')->willReturn(true);
 
         // Mock check() success flow
         $this->session
@@ -230,16 +236,16 @@ class SwiftSessionAuthTest extends TestCase
                 ['swift_auth_user_id', null, 1],
                 ['swift_auth_session_id', null, 'sess-admin'],
             ]);
-        
+
         $this->sessionManager->method('isValid')->willReturn(true);
         $this->userRepository->method('findById')->with(1)->willReturn($user);
 
         // CanPerformAction checks user(), which calls check()
         // We only test logic assuming user is retrieved
-        
+
         $auth = new SwiftSessionAuth(
-            $this->session, 
-            $this->userRepository, 
+            $this->session,
+            $this->userRepository,
             $this->events,
             $this->rememberMeService,
             $this->sessionManager,
@@ -249,13 +255,13 @@ class SwiftSessionAuthTest extends TestCase
         // We need to re-mock dependencies if we create a new instance, or use $this->auth
         // But the test creates a NEW instance. We should fix that to use $this->auth and set mocks up.
         // Actually, let's just use the properties we already have.
-        
+
         // Re-setup mocks for this specific test case on $this->auth dependencies
         $this->userRepository = $this->createMock(\Equidna\SwiftAuth\Classes\Users\Contracts\UserRepositoryInterface::class);
         $this->userRepository->method('findById')->with(1)->willReturn($user);
-        
+
         // Re-instantiate $this->auth with new repo mock
-         $this->auth = new SwiftSessionAuth(
+        $this->auth = new SwiftSessionAuth(
             $this->session,
             $this->userRepository,
             $this->events,
@@ -276,7 +282,7 @@ class SwiftSessionAuthTest extends TestCase
         $user->method('getKey')->willReturn(55);
 
         $this->mockDriverMetadata('sess-900');
-        
+
         $this->sessionManager
             ->expects($this->once())
             ->method('enforceLimits')
@@ -314,7 +320,11 @@ class SwiftSessionAuthTest extends TestCase
      */
     private function mockDriverMetadata(string $sessionId): void
     {
-        $_SERVER['REMOTE_ADDR'] = '203.0.113.10';
+        if (property_exists($this, 'app') && $this->app) {
+            $this->app['request']->server->set('REMOTE_ADDR', '203.0.113.10');
+        } else {
+            $_SERVER['REMOTE_ADDR'] = '203.0.113.10';
+        }
 
         $handler = $this->createMock(SessionHandlerInterface::class);
 

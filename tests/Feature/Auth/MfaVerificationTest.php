@@ -13,7 +13,7 @@ namespace Equidna\SwiftAuth\Tests\Feature\Auth;
 use Equidna\SwiftAuth\Tests\TestHelpers;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
-use Tests\TestCase;
+use Equidna\SwiftAuth\Tests\TestCase;
 
 /**
  * Validates MFA verification endpoints for OTP and WebAuthn drivers.

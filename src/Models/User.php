@@ -16,6 +16,9 @@ namespace Equidna\SwiftAuth\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laragear\WebAuthn\Contracts\WebAuthnAuthenticatable;
+use Laragear\WebAuthn\WebAuthnAuthentication;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * Represents an authenticated SwiftAuth user record.
@@ -34,8 +37,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @method static static findOrFail(string|int $id)
  * @method static static firstOrCreate(array<string,mixed> $attributes, array<string,mixed> $values = [])
  */
-class User extends Authenticatable
+class User extends Authenticatable implements WebAuthnAuthenticatable
 {
+    use WebAuthnAuthentication;
+    use HasApiTokens;
+
     protected $table;
     protected $primaryKey = 'id_user';
 

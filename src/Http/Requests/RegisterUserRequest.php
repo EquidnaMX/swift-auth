@@ -13,7 +13,7 @@
 namespace Equidna\SwiftAuth\Http\Requests;
 
 use Equidna\Toolkit\Http\Requests\EquidnaFormRequest;
-use Equidna\SwiftAuth\Services\PasswordPolicy;
+use Equidna\SwiftAuth\Classes\Auth\Services\PasswordPolicy;
 
 /**
  * Validates registration payload with email uniqueness and password strength.

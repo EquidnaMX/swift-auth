@@ -71,7 +71,8 @@ final class SwiftAuthServiceProvider extends ServiceProvider
             /** @var Dispatcher $dispatcher */
             $dispatcher = $app->make(Dispatcher::class);
 
-            $rememberMeService = new RememberMeService($userRepository);
+            $metadataValidator = new \Equidna\SwiftAuth\Classes\Auth\Services\TokenMetadataValidator();
+            $rememberMeService = new RememberMeService($userRepository, $metadataValidator);
             $sessionManager = new SessionManager();
             $mfaService = new MfaService($sessionStore, $dispatcher);
 
@@ -140,6 +141,11 @@ final class SwiftAuthServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../../database/migrations' => database_path('migrations'),
         ], 'swift-auth:migrations');
+
+        // Publish Sanctum migrations (if required by package users)
+        $this->publishes([
+            __DIR__ . '/../../vendor/laravel/sanctum/database/migrations' => database_path('migrations'),
+        ], 'swift-auth:sanctum-migrations');
 
         // Publish React + TypeScript views
         $this->publishes([

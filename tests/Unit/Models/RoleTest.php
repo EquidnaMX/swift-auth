@@ -12,11 +12,9 @@
 
 namespace Equidna\SwiftAuth\Tests\Unit\Models;
 
-use PHPUnit\Framework\TestCase;
-
+use Equidna\SwiftAuth\Tests\TestCase;
 use Equidna\SwiftAuth\Models\Role;
 use Equidna\SwiftAuth\Models\User;
-
 use ReflectionClass;
 
 /**
@@ -65,7 +63,11 @@ final class RoleTest extends TestCase
 
         $mockBuilder->expects($this->once())
             ->method('where')
-            ->with('name', 'like', '%admin%')
+            ->with(
+                $this->equalTo('name'),
+                $this->matchesRegularExpression('/^(like|LIKE)$/'),
+                $this->equalTo('%admin%')
+            )
             ->willReturnSelf();
 
         $role->scopeSearch($mockBuilder, 'admin');

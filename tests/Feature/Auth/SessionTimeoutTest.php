@@ -8,7 +8,7 @@ use Equidna\SwiftAuth\Tests\TestHelpers;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Str;
-use Tests\TestCase;
+use Equidna\SwiftAuth\Tests\TestCase;
 
 class SessionTimeoutTest extends TestCase
 {
@@ -87,7 +87,7 @@ class SessionTimeoutTest extends TestCase
         $this->assertTrue(SwiftAuth::check());
 
         $rotatedCookie = collect(Cookie::getQueuedCookies())
-            ->first(fn ($cookie) => $cookie->getName() === 'swift_auth_remember');
+            ->first(fn($cookie) => $cookie->getName() === 'swift_auth_remember');
 
         $this->assertNotNull($rotatedCookie);
         $this->assertNotSame($cookieValue, $rotatedCookie->getValue());
@@ -124,7 +124,7 @@ class SessionTimeoutTest extends TestCase
         $this->assertTrue(SwiftAuth::check());
 
         $queuedCookie = collect(Cookie::getQueuedCookies())
-            ->first(fn ($cookie) => $cookie->getName() === 'swift_auth_remember');
+            ->first(fn($cookie) => $cookie->getName() === 'swift_auth_remember');
 
         if ($queuedCookie) {
             $this->assertSame($cookieValue, $queuedCookie->getValue());
@@ -159,7 +159,7 @@ class SessionTimeoutTest extends TestCase
         $this->assertNull($user->fresh()->remember_token);
 
         $clearedCookie = collect(Cookie::getQueuedCookies())
-            ->first(fn ($cookie) => $cookie->getName() === 'swift_auth_remember');
+            ->first(fn($cookie) => $cookie->getName() === 'swift_auth_remember');
 
         $this->assertNotNull($clearedCookie);
         $this->assertEmpty($clearedCookie->getValue());

@@ -22,12 +22,12 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Response;
-use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
+use Equidna\SwiftAuth\Classes\Users\Contracts\UserRepositoryInterface;
 use Equidna\SwiftAuth\Facades\SwiftAuth;
 use Equidna\SwiftAuth\Http\Requests\LoginRequest;
-use Equidna\SwiftAuth\Services\AccountLockoutService;
-use Equidna\SwiftAuth\Traits\ChecksRateLimits;
-use Equidna\SwiftAuth\Traits\SelectiveRender;
+use Equidna\SwiftAuth\Classes\Auth\Services\AccountLockoutService;
+use Equidna\SwiftAuth\Classes\Auth\Traits\ChecksRateLimits;
+use Equidna\SwiftAuth\Support\Traits\SelectiveRender;
 use Equidna\Toolkit\Exceptions\UnauthorizedException;
 use Equidna\Toolkit\Helpers\ResponseHelper;
 

@@ -16,7 +16,7 @@ use Equidna\BirdFlock\Facades\BirdFlock;
 use Equidna\SwiftAuth\Tests\TestHelpers;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
-use Tests\TestCase;
+use Equidna\SwiftAuth\Tests\TestCase;
 
 /**
  * Feature tests for rate limiting.

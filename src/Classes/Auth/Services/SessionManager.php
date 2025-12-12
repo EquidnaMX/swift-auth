@@ -87,11 +87,11 @@ class SessionManager
 
             // If we still have too many, we must evict something
             $excessCount = $sessions->count() - $maxSessions;
-            
+
             // Re-calculate excess considering we want to keep current session
             // Logic: we want 5 total. we have 6. need to evict 1.
             // if current is in the list, we keep it. so we evict from the others.
-            
+
             if ($policy === 'newest') {
                 $evicted = $candidates->take($excessCount);
             } else {
@@ -106,7 +106,6 @@ class SessionManager
             }
 
             return $evictedIds;
-
         } catch (\Throwable $exception) {
             logger()->error('swift-auth.session.limit_enforcement_failed', [
                 'user_id' => $user->getKey(),
@@ -134,14 +133,14 @@ class SessionManager
 
     protected function checkDb(string $sessionId): bool
     {
-         try {
+        try {
             return UserSession::query()
-                ->where('session_id', $sessionId)
-                ->exists();
+               ->where('session_id', $sessionId)
+               ->exists();
         } catch (\Throwable $exception) {
-             logger()->warning('swift-auth.session.validation_failed', [
-                'session_id' => $sessionId,
-                'error' => $exception->getMessage(),
+            logger()->warning('swift-auth.session.validation_failed', [
+               'session_id' => $sessionId,
+               'error' => $exception->getMessage(),
             ]);
             return false;
         }
@@ -159,7 +158,7 @@ class SessionManager
              logger()->warning('swift-auth.session.touch_failed', [
                 'session_id' => $sessionId,
                 'error' => $exception->getMessage(),
-            ]);
+             ]);
         }
     }
 
@@ -188,7 +187,7 @@ class SessionManager
             ->where('id_user', $userId)
             ->delete();
     }
-    
+
     public function deleteById(string $sessionId): void
     {
          Cache::forget("swift_auth:session_valid:{$sessionId}");

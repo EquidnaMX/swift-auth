@@ -18,7 +18,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Equidna\SwiftAuth\Facades\SwiftAuth;
 use Equidna\Toolkit\Helpers\ResponseHelper;
-use Equidna\SwiftAuth\Services\SwiftSessionAuth;
+use Equidna\SwiftAuth\Classes\Auth\SwiftSessionAuth;
 
 /**
  * Exposes endpoints to list and revoke active sessions for the authenticated user.

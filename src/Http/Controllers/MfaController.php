@@ -12,7 +12,7 @@
 
 namespace Equidna\SwiftAuth\Http\Controllers;
 
-use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
+use Equidna\SwiftAuth\Classes\Users\Contracts\UserRepositoryInterface;
 use Equidna\SwiftAuth\Facades\SwiftAuth;
 use Equidna\Toolkit\Helpers\ResponseHelper;
 use Illuminate\Http\JsonResponse;

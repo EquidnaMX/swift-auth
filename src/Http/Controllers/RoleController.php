@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Validator;
 use Inertia\Response;
 use Equidna\SwiftAuth\Facades\SwiftAuth;
 use Equidna\SwiftAuth\Models\Role;
-use Equidna\SwiftAuth\Traits\SelectiveRender;
+use Equidna\SwiftAuth\Support\Traits\SelectiveRender;
 use Equidna\Toolkit\Exceptions\BadRequestException;
 use Equidna\Toolkit\Helpers\ResponseHelper;
 

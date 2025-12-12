@@ -27,7 +27,7 @@ use Equidna\SwiftAuth\Http\Requests\RegisterUserRequest;
 use Equidna\SwiftAuth\Http\Requests\UpdateUserRequest;
 use Equidna\SwiftAuth\Models\Role;
 use Equidna\SwiftAuth\Models\User;
-use Equidna\SwiftAuth\Traits\SelectiveRender;
+use Equidna\SwiftAuth\Support\Traits\SelectiveRender;
 use Equidna\Toolkit\Exceptions\BadRequestException;
 use Equidna\Toolkit\Exceptions\ForbiddenException;
 use Equidna\Toolkit\Helpers\ResponseHelper;

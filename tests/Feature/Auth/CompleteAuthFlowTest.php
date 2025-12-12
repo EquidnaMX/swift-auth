@@ -16,7 +16,7 @@ namespace Equidna\SwiftAuth\Tests\Feature\Auth;
 use Equidna\SwiftAuth\Models\User;
 use Equidna\SwiftAuth\Models\Role;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use Equidna\SwiftAuth\Tests\TestCase;
 
 /**
  * Tests complete authentication flows from end to end.
@@ -231,7 +231,7 @@ class CompleteAuthFlowTest extends TestCase
     /**
      * Helper to assert user is authenticated.
      */
-    protected function assertAuthenticated(): void
+    protected function assertSwiftAuthenticated(): void
     {
         $this->assertNotNull(session('swift_auth_user_id'));
     }
@@ -239,7 +239,7 @@ class CompleteAuthFlowTest extends TestCase
     /**
      * Helper to assert user is not authenticated (guest).
      */
-    protected function assertGuest(): void
+    protected function assertSwiftGuest(): void
     {
         $this->assertNull(session('swift_auth_user_id'));
     }

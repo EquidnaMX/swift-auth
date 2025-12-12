@@ -35,6 +35,25 @@ Route::middleware(['web', 'SwiftAuth.SecurityHeaders'])
                     }
                 );
 
+            // WebAuthn / Passkeys (Primary Auth & Registration)
+            Route::prefix('webauthn')->as('webauthn.')
+                ->group(function () {
+                    // Registration (Requires Auth)
+                    Route::middleware(RequireAuthentication::class)
+                        ->group(function () {
+                            Route::post('register/options', [Equidna\SwiftAuth\Http\Controllers\WebAuthnController::class, 'registerOptions'])
+                                ->name('register.options');
+                            Route::post('register', [Equidna\SwiftAuth\Http\Controllers\WebAuthnController::class, 'register'])
+                                ->name('register');
+                        });
+
+                    // Login (Public)
+                    Route::post('login/options', [Equidna\SwiftAuth\Http\Controllers\WebAuthnController::class, 'loginOptions'])
+                        ->name('login.options');
+                    Route::post('login', [Equidna\SwiftAuth\Http\Controllers\WebAuthnController::class, 'login'])
+                        ->name('login');
+                });
+
             Route::match(['get', 'post'], 'logout', [AuthController::class, 'logout'])->name('logout');
 
             // Public registration routes (optional)

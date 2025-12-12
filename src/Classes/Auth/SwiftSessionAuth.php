@@ -7,6 +7,7 @@
 namespace Equidna\SwiftAuth\Classes\Auth;
 
 use Carbon\CarbonImmutable;
+use Equidna\SwiftAuth\Classes\Auth\Events\SessionEvicted;
 use Equidna\SwiftAuth\Classes\Auth\Events\UserLoggedIn;
 use Equidna\SwiftAuth\Classes\Auth\Events\UserLoggedOut;
 use Equidna\SwiftAuth\Classes\Auth\Services\MfaService;
@@ -31,7 +32,10 @@ class SwiftSessionAuth
     protected string $createdAtKey = 'swift_auth_created_at';
     protected string $lastActivityKey = 'swift_auth_last_activity';
     protected string $absoluteExpiryKey = 'swift_auth_absolute_expires_at';
-    
+    protected string $pendingMfaUserKey = 'swift_auth_pending_mfa_user_id';
+    protected string $pendingMfaDriverKey = 'swift_auth_pending_mfa_driver';
+    protected string $rememberCookieName = 'swift_auth_remember';
+
     private ?User $cachedUser = null;
 
     public function __construct(
@@ -93,7 +97,7 @@ class SwiftSessionAuth
         );
 
         if ($remember) {
-             $this->rememberMeService->queueToken(
+            $this->rememberMeService->queueToken(
                 user: $user,
                 ipAddress: $ipAddress,
                 userAgent: $userAgent,
@@ -163,6 +167,8 @@ class SwiftSessionAuth
         ?string $ipAddress = null,
         ?string $userAgent = null,
     ): void {
+        $ipAddress ??= $this->getClientIp();
+
         $this->mfaService->startChallenge(
             user: $user,
             driver: $driver,
@@ -254,7 +260,7 @@ class SwiftSessionAuth
         }
 
         $this->cachedUser = $user;
-        
+
         // Touch activity
         $now = CarbonImmutable::now();
         $this->session->put($this->lastActivityKey, $now->toIso8601String());
@@ -497,41 +503,6 @@ class SwiftSessionAuth
         ];
     }
 
-    private function recordUserSession(
-        User $user,
-        string $sessionId,
-        ?string $ipAddress,
-        ?string $userAgent,
-        ?string $deviceName,
-        ?string $platform,
-        ?string $browser,
-        CarbonImmutable $lastActivity,
-    ): void {
-        try {
-            // Use the query builder form so static analyzers understand the
-            // Eloquent builder methods are being used.
-            UserSession::query()->updateOrCreate(
-                [
-                    'session_id' => $sessionId,
-                ],
-                [
-                    'id_user' => $user->getKey(),
-                    'ip_address' => $ipAddress,
-                    'user_agent' => $userAgent,
-                    'device_name' => $deviceName,
-                    'platform' => $platform,
-                    'browser' => $browser,
-                    'last_activity' => $lastActivity,
-                ],
-            );
-        } catch (\Throwable $exception) {
-            logger()->warning('swift-auth.session.record_failed', [
-                'session_id' => $sessionId,
-                'error' => $exception->getMessage(),
-            ]);
-        }
-    }
-
     /**
      * @return array<int, string>
      */
@@ -539,92 +510,10 @@ class SwiftSessionAuth
         User $user,
         string $currentSessionId,
     ): array {
-        $maxSessions = $this->getConfig(
-            'swift-auth.session_limits.max_sessions',
-            null,
+        return $this->sessionManager->enforceLimits(
+            user: $user,
+            currentSessionId: $currentSessionId,
         );
-
-        if ($maxSessions === null) {
-            return [];
-        }
-
-        $maxSessions = (int) $maxSessions;
-
-        if ($maxSessions <= 0) {
-            return [];
-        }
-
-        $policy = (string) $this->getConfig(
-            'swift-auth.session_limits.eviction',
-            'oldest',
-        );
-
-        try {
-            $sessions = UserSession::query()
-                ->where('id_user', $user->getKey())
-                ->orderByDesc('last_activity')
-                ->get();
-
-            if ($sessions->count() <= $maxSessions) {
-                return [];
-            }
-
-            $overflow = $sessions->count() - $maxSessions;
-
-            $sessionsToDelete = $policy === 'newest'
-                ? $sessions->take($overflow)
-                : $sessions->slice($maxSessions, $overflow);
-
-            $sessionIds = $sessionsToDelete
-                ->pluck('session_id')
-                ->all();
-
-            UserSession::query()
-                ->whereIn('session_id', $sessionIds)
-                ->delete();
-
-            foreach ($sessionIds as $evictedSessionId) {
-                $this->dispatchEvent(new SessionEvicted(
-                    $user->getKey(),
-                    $evictedSessionId,
-                    $this->getClientIp(),
-                    $this->getDriverMetadata()
-                ));
-            }
-
-            if (in_array($currentSessionId, $sessionIds, true)) {
-                $this->logout();
-            }
-
-            logger()->info('swift-auth.session.evicted', [
-                'user_id' => $user->getKey(),
-                'evicted_sessions' => $sessionIds,
-                'policy' => $policy,
-            ]);
-
-            return $sessionIds;
-        } catch (\Throwable $exception) {
-            logger()->warning('swift-auth.session.limit_enforce_failed', [
-                'user_id' => $user->getKey(),
-                'error' => $exception->getMessage(),
-            ]);
-
-            return [];
-        }
-    }
-
-    private function deleteUserSession(string $sessionId): void
-    {
-        try {
-            UserSession::query()
-                ->where('session_id', $sessionId)
-                ->delete();
-        } catch (\Throwable $exception) {
-            logger()->warning('swift-auth.session.delete_failed', [
-                'session_id' => $sessionId,
-                'error' => $exception->getMessage(),
-            ]);
-        }
     }
 
     private function parseTimestamp(string $timestamp): ?CarbonImmutable

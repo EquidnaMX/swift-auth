@@ -19,6 +19,7 @@ class RememberMeService
 
     public function __construct(
         protected UserRepositoryInterface $userRepository,
+        protected TokenMetadataValidator $metadataValidator,
     ) {
         $this->cookieName = (string) config('swift-auth.remember_me.cookie_name', 'swift_auth_remember');
     }
@@ -76,10 +77,32 @@ class RememberMeService
             return null;
         }
 
+        $request = function_exists('request') ? request() : null;
+        if ($request) {
+            $validMetadata = $this->metadataValidator->validateWithLogging([
+                'ip' => $token->ip_address,
+                'user_agent' => $token->user_agent,
+                'device_name' => $token->device_name,
+                'user_id' => $token->id_user,
+            ], $request);
+
+            if (!$validMetadata) {
+                // Suspicious activity - maybe revoke token?
+                // The policy might dictate deletion.
+                // For now, let's treat it as invalid login but maybe keep token or delete it?
+                // The test implies `attemptRememberLogin` returns false.
+                // Usually security mismatch -> revoke token to be safe.
+                $token->delete();
+                $this->forgetCookie();
+                return null;
+            }
+        }
+
+
         $shouldRotate = (bool) config('swift-auth.remember_me.rotate_on_use', true);
 
         if ($shouldRotate) {
-             $token->delete();
+            $token->delete();
         } else {
             $token->last_used_at = CarbonImmutable::now();
             $token->save();
@@ -165,7 +188,7 @@ class RememberMeService
 
     public function revokeForUser(int $userId): int
     {
-         return RememberToken::query()
+        return RememberToken::query()
             ->where('id_user', $userId)
             ->delete();
     }

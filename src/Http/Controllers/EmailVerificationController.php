@@ -17,7 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Equidna\SwiftAuth\Models\User;
-use Equidna\SwiftAuth\Services\NotificationService;
+use Equidna\SwiftAuth\Classes\Notifications\NotificationService;
 use Equidna\Toolkit\Helpers\ResponseHelper;
 
 /**

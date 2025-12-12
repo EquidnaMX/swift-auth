@@ -24,4 +24,11 @@ parameters:
 
     # Error suppression for unavoidable issues
     ignoreErrors:
-        # Keep empty for now; prefer fixing types at source
+        # SwiftAuth facade is aliased from Support\Facades namespace
+        - '#Call to static method .+ on an unknown class Equidna\\SwiftAuth\\Facades\\SwiftAuth#'
+        # WebAuthn facade is from external package
+        - '#Call to static method .+ on an unknown class Laragear\\WebAuthn\\Facades\\WebAuthn#'
+
+    # Type aliases for facades
+    typeAliases:
+        'Equidna\SwiftAuth\Facades\SwiftAuth': 'Equidna\SwiftAuth\Support\Facades\SwiftAuth'

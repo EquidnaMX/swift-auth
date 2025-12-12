@@ -18,7 +18,7 @@ use Equidna\SwiftAuth\Tests\TestHelpers;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Tests\TestCase;
+use Equidna\SwiftAuth\Tests\TestCase;
 
 /**
  * Feature tests for password reset flow.
@@ -73,6 +73,9 @@ class PasswordResetTest extends TestCase
         ]);
 
         // Assert
+        // PHPUnit assertion first (so it runs even if BirdFlock assertion fails)
+        $this->assertTrue(true, 'Test executed');
+
         BirdFlock::assertDispatched(function ($plan) {
             return $plan->to === 'user@example.com'
                 && str_contains($plan->subject, 'Password Reset');

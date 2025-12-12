@@ -16,7 +16,7 @@ namespace Equidna\SwiftAuth\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Equidna\SwiftAuth\Models\UserSession;
-use Equidna\SwiftAuth\Services\SwiftSessionAuth;
+use Equidna\SwiftAuth\Classes\Auth\SwiftSessionAuth;
 
 /**
  * Displays active sessions for governance and auditing.

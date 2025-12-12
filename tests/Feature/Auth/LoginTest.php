@@ -16,7 +16,7 @@ use Equidna\SwiftAuth\Models\User;
 use Equidna\SwiftAuth\Tests\TestHelpers;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
-use Tests\TestCase;
+use Equidna\SwiftAuth\Tests\TestCase;
 
 /**
  * Feature tests for login authentication flow.
@@ -364,6 +364,9 @@ class LoginTest extends TestCase
         Log::shouldHaveReceived('warning')
             ->once()
             ->with('swift-auth.login.failed', \Mockery::type('array'));
+
+        // PHPUnit assertion (Mockery expectations don't count as assertions)
+        $this->assertTrue(true);
     }
 
     public function test_login_response_includes_eviction_metadata_when_present(): void

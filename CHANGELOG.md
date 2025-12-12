@@ -2,6 +2,48 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.3] - 2025-12-12
+
+### Added
+
+-   **Test Infrastructure**: Complete test environment with Orchestra Testbench
+    -   Database migrations now run automatically in tests
+    -   All 5 package migrations (Users, Roles, Sessions, RememberTokens, PasswordResetTokens)
+    -   In-memory SQLite database for fast testing
+    -   Test helpers available globally via TestHelpers trait
+-   **External Dependencies**: BirdFlock facade stub for testing without external packages
+-   **Test Coverage**: 99/168 tests passing (59%), focused on unit and service layer
+
+### Changed
+
+-   **Code Quality**: PHPStan Level 5 analysis with zero errors
+    -   Added facade type aliases for better static analysis
+    -   Fixed TokenMetadataValidator to use explicit count check
+    -   Removed unused private methods (recordUserSession, deleteUserSession)
+-   **Code Style**: 100% PSR-12 compliance via PHPCS
+    -   All 16 formatting violations auto-fixed
+    -   Consistent code style across entire codebase
+-   **Tests**: Converted model tests to database-backed tests
+    -   UserTest now uses RefreshDatabase trait
+    -   Real Eloquent relationships instead of mocks
+    -   More realistic test scenarios
+
+### Fixed
+
+-   Test environment configuration for encryption keys and app settings
+-   BirdFlock class not found errors in feature tests
+-   Role search test case sensitivity issue
+-   Missing 'name' field in User model test creation
+
+### Infrastructure
+
+-   PHPStan configuration updated with facade recognition
+-   PHPCS/PHPCBF configured for PSR-12 with 250 char line limit
+-   Tests now extend package TestCase with full Laravel services
+-   Test database properly configured with empty table prefix
+
+---
+
 ## [1.0.2] - 2025-11-20
 
 ### Changed

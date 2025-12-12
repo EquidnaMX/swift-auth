@@ -7,7 +7,7 @@
 namespace Equidna\SwiftAuth\Tests\Unit;
 
 use Equidna\SwiftAuth\DTO\RememberToken;
-use Equidna\SwiftAuth\Services\RememberMeService;
+use Equidna\SwiftAuth\Classes\Auth\Services\RememberMeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Tests\TestCase;

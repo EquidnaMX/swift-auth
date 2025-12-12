@@ -16,7 +16,7 @@ use Equidna\SwiftAuth\Classes\Users\Contracts\UserRepositoryInterface;
 use Equidna\SwiftAuth\Models\User;
 use Equidna\SwiftAuth\Models\UserSession;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Events\Dispatcher;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Session\Store as Session;
 use Illuminate\Support\Facades\Cookie;
 use SessionHandlerInterface;

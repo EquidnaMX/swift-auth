@@ -13,7 +13,7 @@ if (!function_exists('config')) {
         static $cfg = null;
         if ($cfg === null) {
             $cfg = ['swift-auth' => []];
-            $path = __DIR__ . '/../src/config/swift-auth.php';
+            $path = __DIR__ . '/../config/swift-auth.php';
             if (file_exists($path)) {
                 $cfg['swift-auth'] = require $path;
             }

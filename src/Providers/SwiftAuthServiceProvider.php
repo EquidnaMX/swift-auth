@@ -24,17 +24,20 @@ use Equidna\SwiftAuth\Console\Commands\PurgeExpiredTokens;
 use Equidna\SwiftAuth\Console\Commands\PurgeStaleSessions;
 use Equidna\SwiftAuth\Console\Commands\RevokeUserSessions;
 use Equidna\SwiftAuth\Console\Commands\UnlockUserCommand;
-use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
-use Equidna\SwiftAuth\Events\MfaChallengeStarted;
-use Equidna\SwiftAuth\Events\SessionEvicted;
-use Equidna\SwiftAuth\Events\UserLoggedIn;
-use Equidna\SwiftAuth\Events\UserLoggedOut;
+use Equidna\SwiftAuth\Classes\Users\Contracts\UserRepositoryInterface;
+use Equidna\SwiftAuth\Classes\Auth\Events\MfaChallengeStarted;
+use Equidna\SwiftAuth\Classes\Auth\Events\SessionEvicted;
+use Equidna\SwiftAuth\Classes\Auth\Events\UserLoggedIn;
+use Equidna\SwiftAuth\Classes\Auth\Events\UserLoggedOut;
 use Equidna\SwiftAuth\Http\Middleware\CanPerformAction;
 use Equidna\SwiftAuth\Http\Middleware\RequireAuthentication;
 use Equidna\SwiftAuth\Http\Middleware\SecurityHeaders;
 use Equidna\SwiftAuth\Providers\RateLimitServiceProvider;
-use Equidna\SwiftAuth\Repositories\EloquentUserRepository;
-use Equidna\SwiftAuth\Services\SwiftSessionAuth;
+use Equidna\SwiftAuth\Classes\Users\Repositories\EloquentUserRepository;
+use Equidna\SwiftAuth\Classes\Auth\SwiftSessionAuth;
+use Equidna\SwiftAuth\Classes\Auth\Services\RememberMeService;
+use Equidna\SwiftAuth\Classes\Auth\Services\SessionManager;
+use Equidna\SwiftAuth\Classes\Auth\Services\MfaService;
 
 /**
  * Registers and bootstraps SwiftAuth components.
@@ -53,11 +56,12 @@ final class SwiftAuthServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__ . '/../config/swift-auth.php', 'swift-auth');
+        $this->mergeConfigFrom(__DIR__ . '/../../config/swift-auth.php', 'swift-auth');
 
         // Bind user repository interface
         $this->app->singleton(UserRepositoryInterface::class, EloquentUserRepository::class);
 
+        // Bind SwiftAuth service
         // Bind SwiftAuth service
         $this->app->singleton('swift-auth', function ($app) {
             /** @var \Illuminate\Session\Store $sessionStore */
@@ -67,10 +71,17 @@ final class SwiftAuthServiceProvider extends ServiceProvider
             /** @var Dispatcher $dispatcher */
             $dispatcher = $app->make(Dispatcher::class);
 
+            $rememberMeService = new RememberMeService($userRepository);
+            $sessionManager = new SessionManager();
+            $mfaService = new MfaService($sessionStore, $dispatcher);
+
             return new SwiftSessionAuth(
                 $sessionStore,
                 $userRepository,
-                $dispatcher
+                $dispatcher,
+                $rememberMeService,
+                $sessionManager,
+                $mfaService
             );
         });
     }
@@ -99,15 +110,15 @@ final class SwiftAuthServiceProvider extends ServiceProvider
         $router->aliasMiddleware('SwiftAuth.SecurityHeaders', SecurityHeaders::class);
 
         // Load package resources
-        $this->loadRoutesFrom(__DIR__ . '/../routes/swift-auth.php');
-        $this->loadRoutesFrom(__DIR__ . '/../routes/swift-auth-email-verification.php');
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'swift-auth');
-        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'swift-auth');
+        $this->loadRoutesFrom(__DIR__ . '/../../routes/swift-auth.php');
+        $this->loadRoutesFrom(__DIR__ . '/../../routes/swift-auth-email-verification.php');
+        $this->loadMigrationsFrom(__DIR__ . '/../../database/migrations');
+        $this->loadViewsFrom(__DIR__ . '/../../resources/views', 'swift-auth');
+        $this->loadTranslationsFrom(__DIR__ . '/../../resources/lang', 'swift-auth');
 
         // Publish config
         $this->publishes([
-            __DIR__ . '/../config/swift-auth.php' => config_path('swift-auth.php'),
+            __DIR__ . '/../../config/swift-auth.php' => config_path('swift-auth.php'),
         ], 'swift-auth:config');
 
         // Publish application models
@@ -117,32 +128,32 @@ final class SwiftAuthServiceProvider extends ServiceProvider
 
         // Publish Blade views (into a vendor subfolder to avoid overwriting app views)
         $this->publishes([
-            __DIR__ . '/../resources/views' => resource_path('views/vendor/swift-auth'),
+            __DIR__ . '/../../resources/views' => resource_path('views/vendor/swift-auth'),
         ], 'swift-auth:views');
 
         // Publish translations
         $this->publishes([
-            __DIR__ . '/../resources/lang' => resource_path('lang/vendor/swift-auth'),
+            __DIR__ . '/../../resources/lang' => resource_path('lang/vendor/swift-auth'),
         ], 'swift-auth:lang');
 
         // Publish migrations
         $this->publishes([
-            __DIR__ . '/../database/migrations' => database_path('migrations'),
+            __DIR__ . '/../../database/migrations' => database_path('migrations'),
         ], 'swift-auth:migrations');
 
         // Publish React + TypeScript views
         $this->publishes([
-            __DIR__ . '/../resources/ts' => resource_path('js'),
+            __DIR__ . '/../../resources/ts' => resource_path('js'),
         ], 'swift-auth:ts-react');
 
         // Publish React + JavaScript views
         $this->publishes([
-            __DIR__ . '/../resources/js' => resource_path('js'),
+            __DIR__ . '/../../resources/js' => resource_path('js'),
         ], 'swift-auth:js-react');
 
         // Publish icons
         $this->publishes([
-            __DIR__ . '/../resources/icons' => public_path('icons'),
+            __DIR__ . '/../../resources/icons' => public_path('icons'),
         ], 'swift-auth:icons');
 
         // Register Artisan commands

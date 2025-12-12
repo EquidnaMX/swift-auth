@@ -11,7 +11,7 @@
  * @link      https://github.com/EquidnaMX/swift_auth Package repository
  */
 
-namespace Equidna\SwiftAuth\Traits;
+namespace Equidna\SwiftAuth\Classes\Auth\Traits;
 
 use Illuminate\Support\Facades\RateLimiter;
 use Equidna\Toolkit\Exceptions\UnauthorizedException;

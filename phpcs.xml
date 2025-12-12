@@ -17,10 +17,10 @@
     <!-- Exclusions -->
     <exclude-pattern>vendor/*</exclude-pattern>
     <exclude-pattern>build/*</exclude-pattern>
-    <exclude-pattern>src/resources/views/*</exclude-pattern>
-    <exclude-pattern>src/resources/**/views/*</exclude-pattern>
+    <exclude-pattern>resources/views/*</exclude-pattern>
+    <exclude-pattern>resources/**/views/*</exclude-pattern>
     <exclude-pattern>tests/*</exclude-pattern>
-    <exclude-pattern>src/database/migrations/deprecated/*</exclude-pattern>
+    <exclude-pattern>database/migrations/deprecated/*</exclude-pattern>
 
     <!--
         Optional: Enforce no fully-qualified class names (FQCN) at call sites

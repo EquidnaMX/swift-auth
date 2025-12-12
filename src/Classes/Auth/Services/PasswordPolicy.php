@@ -5,12 +5,12 @@
  *
  * PHP 8.2+
  *
- * @package   Equidna\SwiftAuth\Services
+ * @package   Equidna\SwiftAuth\Classes\Auth\Services
  * @author    Gabriel Ruelas <gruelas@gruelas.com>
  * @license   https://opensource.org/licenses/MIT MIT License
  */
 
-namespace Equidna\SwiftAuth\Services;
+namespace Equidna\SwiftAuth\Classes\Auth\Services;
 
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;

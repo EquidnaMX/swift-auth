@@ -1,15 +1,15 @@
 <?php
 
-namespace Equidna\SwiftAuth\Events;
+namespace Equidna\SwiftAuth\Classes\Auth\Events;
 
 /**
- * Event fired when a user successfully logs in.
+ * Event fired when a session is evicted to enforce limits.
  */
-final class UserLoggedIn
+final class SessionEvicted
 {
     /**
-     * @param  int|string|null     $userId         Identifier of the authenticated user.
-     * @param  string              $sessionId      Session identifier tied to the login.
+     * @param  int|string|null     $userId         Identifier of the affected user.
+     * @param  string              $sessionId      Identifier of the evicted session.
      * @param  string|null         $ipAddress      IP address of the client.
      * @param  array<string,mixed> $driverMetadata Metadata describing the session driver/handler.
      */

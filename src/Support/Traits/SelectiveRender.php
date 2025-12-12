@@ -11,7 +11,7 @@
  * @link      https://github.com/EquidnaMX/swift_auth Package repository
  */
 
-namespace Equidna\SwiftAuth\Traits;
+namespace Equidna\SwiftAuth\Support\Traits;
 
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Config;

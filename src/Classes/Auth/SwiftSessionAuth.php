@@ -4,22 +4,21 @@
  * Implements SwiftAuth's session-backed authentication service helpers.
  */
 
-namespace Equidna\SwiftAuth\Services;
+namespace Equidna\SwiftAuth\Classes\Auth;
 
 use Carbon\CarbonImmutable;
-use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
-use Equidna\SwiftAuth\Events\MfaChallengeStarted;
-use Equidna\SwiftAuth\Events\SessionEvicted;
-use Equidna\SwiftAuth\Events\UserLoggedIn;
-use Equidna\SwiftAuth\Events\UserLoggedOut;
-use Equidna\SwiftAuth\Models\RememberToken;
+use Equidna\SwiftAuth\Classes\Auth\Events\UserLoggedIn;
+use Equidna\SwiftAuth\Classes\Auth\Events\UserLoggedOut;
+use Equidna\SwiftAuth\Classes\Auth\Services\MfaService;
+use Equidna\SwiftAuth\Classes\Auth\Services\RememberMeService;
+use Equidna\SwiftAuth\Classes\Auth\Services\SessionManager;
+use Equidna\SwiftAuth\Classes\Users\Contracts\UserRepositoryInterface;
 use Equidna\SwiftAuth\Models\User;
 use Equidna\SwiftAuth\Models\UserSession;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Session\Store as Session;
 use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Str;
 use SessionHandlerInterface;
 
 /**
@@ -27,27 +26,22 @@ use SessionHandlerInterface;
  */
 class SwiftSessionAuth
 {
-    protected Session $session;
     protected string $sessionKey = 'swift_auth_user_id';
     protected string $sessionUidKey = 'swift_auth_session_id';
     protected string $createdAtKey = 'swift_auth_created_at';
     protected string $lastActivityKey = 'swift_auth_last_activity';
     protected string $absoluteExpiryKey = 'swift_auth_absolute_expires_at';
-    protected string $rememberCookieName;
-    protected string $pendingMfaUserKey = 'swift_auth_pending_mfa_user_id';
-    protected string $pendingMfaDriverKey = 'swift_auth_pending_mfa_driver';
+    
     private ?User $cachedUser = null;
 
     public function __construct(
-        Session $session,
-        private UserRepositoryInterface $userRepository,
-        private Dispatcher $events
+        protected Session $session,
+        protected UserRepositoryInterface $userRepository,
+        protected Dispatcher $events,
+        protected RememberMeService $rememberMeService,
+        protected SessionManager $sessionManager,
+        protected MfaService $mfaService,
     ) {
-        $this->session = $session;
-        $this->rememberCookieName = (string) $this->getConfig(
-            'swift-auth.remember_me.cookie_name',
-            'swift_auth_remember'
-        );
     }
 
     /**
@@ -76,15 +70,13 @@ class SwiftSessionAuth
         $this->session->put($this->sessionKey, $user->getKey());
         $this->session->put($this->sessionUidKey, $sessionId);
         $this->session->put($this->createdAtKey, $now->toIso8601String());
-        $this->session->put($this->lastActivityKey, $now->toIso8601String());
-
         if ($absoluteExpiry !== null) {
             $this->session->put($this->absoluteExpiryKey, $absoluteExpiry->toIso8601String());
         }
 
         $metadata = $this->extractAgentMetadata($userAgent);
 
-        $this->recordUserSession(
+        $this->sessionManager->record(
             user: $user,
             sessionId: $sessionId,
             ipAddress: $ipAddress,
@@ -95,13 +87,13 @@ class SwiftSessionAuth
             lastActivity: $now,
         );
 
-        $evicted = $this->enforceSessionLimit(
+        $evicted = $this->sessionManager->enforceLimits(
             user: $user,
             currentSessionId: $sessionId,
         );
 
-        if ($remember && $this->shouldIssueRememberToken()) {
-            $this->queueRememberToken(
+        if ($remember) {
+             $this->rememberMeService->queueToken(
                 user: $user,
                 ipAddress: $ipAddress,
                 userAgent: $userAgent,
@@ -139,18 +131,17 @@ class SwiftSessionAuth
         $this->session->forget($this->createdAtKey);
         $this->session->forget($this->lastActivityKey);
         $this->session->forget($this->absoluteExpiryKey);
-        $this->session->forget($this->pendingMfaUserKey);
-        $this->session->forget($this->pendingMfaDriverKey);
+        $this->mfaService->clearPendingChallenge();
 
         if ($sessionId !== '') {
-            $this->deleteUserSession($sessionId);
+            $this->sessionManager->deleteById($sessionId);
         }
 
         if (is_string($rememberValue)) {
-            $this->deleteRememberToken($rememberValue);
+            $this->rememberMeService->deleteToken($rememberValue);
         }
 
-        $this->forgetRememberCookie();
+        $this->rememberMeService->forgetCookie();
 
         $this->session->invalidate();
         $this->session->regenerate(true);
@@ -172,22 +163,14 @@ class SwiftSessionAuth
         ?string $ipAddress = null,
         ?string $userAgent = null,
     ): void {
-        $this->session->put($this->pendingMfaUserKey, $user->getKey());
-        $this->session->put($this->pendingMfaDriverKey, $driver);
-
-        $this->dispatchEvent(new MfaChallengeStarted(
-            $user->getKey(),
-            $this->getSessionId(),
-            $ipAddress,
-            $this->getDriverMetadata()
-        ));
-
-        logger()->info('swift-auth.mfa.challenge_started', [
-            'user_id' => $user->getKey(),
-            'driver' => $driver,
-            'ip' => $ipAddress,
-            'user_agent' => $userAgent,
-        ]);
+        $this->mfaService->startChallenge(
+            user: $user,
+            driver: $driver,
+            ipAddress: $ipAddress,
+            userAgent: $userAgent,
+            sessionId: $this->getSessionId(),
+            driverMetadata: $this->getDriverMetadata()
+        );
     }
 
     /**
@@ -228,6 +211,9 @@ class SwiftSessionAuth
     /**
      * Determines if a user is currently authenticated via session.
      */
+    /**
+     * Determines if a user is currently authenticated via session.
+     */
     public function check(): bool
     {
         $this->cachedUser = null;
@@ -241,7 +227,7 @@ class SwiftSessionAuth
         $userId = $this->id();
         $sessionId = (string) $this->session->get($this->sessionUidKey);
 
-        if ($sessionId === '' || !$this->sessionRecordExists($sessionId)) {
+        if ($sessionId === '' || !$this->sessionManager->isValid($sessionId)) {
             $this->logout();
 
             return false;
@@ -268,7 +254,11 @@ class SwiftSessionAuth
         }
 
         $this->cachedUser = $user;
-        $this->touchLastActivity();
+        
+        // Touch activity
+        $now = CarbonImmutable::now();
+        $this->session->put($this->lastActivityKey, $now->toIso8601String());
+        $this->sessionManager->touch($sessionId);
 
         return true;
     }
@@ -320,10 +310,7 @@ class SwiftSessionAuth
      */
     public function sessionsForUser(int $userId): \Illuminate\Database\Eloquent\Collection
     {
-        return UserSession::query()
-            ->where('id_user', $userId)
-            ->orderByDesc('last_activity')
-            ->get();
+        return $this->sessionManager->sessionsForUser($userId);
     }
 
     /**
@@ -338,10 +325,7 @@ class SwiftSessionAuth
 
     public function revokeSession(int $userId, string $sessionId): void
     {
-        UserSession::query()
-            ->where('id_user', $userId)
-            ->where('session_id', $sessionId)
-            ->delete();
+        $this->sessionManager->revoke($userId, $sessionId);
 
         if ($this->session->getId() === $sessionId) {
             $this->logout();
@@ -355,9 +339,7 @@ class SwiftSessionAuth
         int $userId,
         bool $includeRememberTokens = false,
     ): array {
-        $deleted = UserSession::query()
-            ->where('id_user', $userId)
-            ->delete();
+        $deleted = $this->sessionManager->revokeAllForUser($userId);
 
         $activeSessionUserId = (int) $this->session->get($this->sessionKey);
 
@@ -366,7 +348,7 @@ class SwiftSessionAuth
         }
 
         $clearedRememberTokens = $includeRememberTokens
-            ? $this->revokeRememberTokensForUser($userId)
+            ? $this->rememberMeService->revokeForUser($userId)
             : 0;
 
         return [
@@ -377,9 +359,17 @@ class SwiftSessionAuth
 
     public function revokeRememberTokensForUser(int $userId): int
     {
-        return RememberToken::query()
-            ->where('id_user', $userId)
-            ->delete();
+        return $this->rememberMeService->revokeForUser($userId);
+    }
+
+    private function getAbsoluteExpiry(CarbonImmutable $now): ?CarbonImmutable
+    {
+        $absoluteTtl = $this->getConfig(
+            'swift-auth.session_lifetimes.absolute_timeout_seconds',
+            null
+        );
+
+        return $absoluteTtl ? $now->addSeconds($absoluteTtl) : null;
     }
 
     /**
@@ -396,11 +386,7 @@ class SwiftSessionAuth
 
         $user = $this->user();
 
-        if (!$user) {
-            return false;
-        }
-
-        return $user->hasRole($roles);
+        return $user && $user->hasRole($roles);
     }
 
     private function isExpired(): bool
@@ -422,124 +408,15 @@ class SwiftSessionAuth
         return $absoluteExpiry !== null && $now->greaterThan($absoluteExpiry);
     }
 
-    private function sessionRecordExists(string $sessionId): bool
-    {
-        try {
-            return UserSession::query()
-                ->where('session_id', $sessionId)
-                ->exists();
-        } catch (\Throwable $exception) {
-            logger()->warning('swift-auth.session.validation_failed', [
-                'session_id' => $sessionId,
-                'error' => $exception->getMessage(),
-            ]);
-
-            return false;
-        }
-    }
-
-    private function touchLastActivity(): void
-    {
-        $now = CarbonImmutable::now();
-        $sessionId = (string) $this->session->get($this->sessionUidKey);
-
-        $this->session->put($this->lastActivityKey, $now->toIso8601String());
-
-        try {
-            if ($sessionId) {
-                UserSession::query()
-                    ->where('session_id', $sessionId)
-                    ->update([
-                        'last_activity' => $now,
-                    ]);
-            }
-        } catch (\Throwable $exception) {
-            logger()->warning('swift-auth.session.touch_failed', [
-                'session_id' => $sessionId,
-                'error' => $exception->getMessage(),
-            ]);
-        }
-    }
-
-    private function getAbsoluteExpiry(CarbonImmutable $now): ?CarbonImmutable
-    {
-        $absoluteTtl = $this->getConfig(
-            'swift-auth.session_lifetimes.absolute_timeout_seconds',
-            null
-        );
-
-        return $absoluteTtl ? $now->addSeconds($absoluteTtl) : null;
-    }
-
     private function attemptRememberLogin(): bool
     {
-        if (!$this->shouldIssueRememberToken()) {
-            return false;
-        }
-
-        $cookie = Cookie::get($this->rememberCookieName);
-
-        if (!is_string($cookie) || $cookie === '') {
-            return false;
-        }
-
-        [$selector, $validator] = $this->splitRememberCookie($cookie);
-
-        if ($selector === null || $validator === null) {
-            $this->forgetRememberCookie();
-
-            return false;
-        }
-
-        try {
-            $token = RememberToken::query()
-                ->where('selector', $selector)
-                ->first();
-        } catch (\Throwable $exception) {
-            logger()->warning('swift-auth.remember.load_failed', [
-                'selector' => $selector,
-                'error' => $exception->getMessage(),
-            ]);
-
-            return false;
-        }
-
-        if (!$token || $this->rememberTokenExpired($token)) {
-            $token?->delete();
-            $this->forgetRememberCookie();
-
-            return false;
-        }
-
-        $expected = hash('sha256', $validator);
-
-        if (!hash_equals($token->hashed_token, $expected)) {
-            $token->delete();
-            $this->forgetRememberCookie();
-
-            return false;
-        }
-
-        $user = $this->userRepository->findById((int) $token->id_user);
+        $user = $this->rememberMeService->attemptLogin();
 
         if (!$user) {
-            $token->delete();
-            $this->forgetRememberCookie();
-
             return false;
         }
 
-        $shouldRotate = (bool) $this->getConfig(
-            'swift-auth.remember_me.rotate_on_use',
-            true,
-        );
-
-        if ($shouldRotate) {
-            $token->delete();
-        } else {
-            $token->last_used_at = CarbonImmutable::now();
-            $token->save();
-        }
+        $shouldRotate = (bool) $this->getConfig('swift-auth.remember_me.rotate_on_use', true);
 
         $request = function_exists('request') ? request() : null;
         $ip = $request && method_exists($request, 'ip') ? $request->ip() : null;
@@ -554,113 +431,6 @@ class SwiftSessionAuth
         );
 
         return true;
-    }
-
-    private function queueRememberToken(
-        User $user,
-        ?string $ipAddress,
-        ?string $userAgent,
-        ?string $deviceName,
-        ?string $platform,
-        ?string $browser,
-    ): void {
-        try {
-            $selector = Str::random(20);
-            $validator = Str::random(64);
-            $hashedValidator = hash('sha256', $validator);
-            $ttlSeconds = (int) $this->getConfig('swift-auth.remember_me.ttl_seconds', 1209600);
-            $expiresAt = CarbonImmutable::now()->addSeconds($ttlSeconds);
-
-            RememberToken::query()->create(
-                [
-                    'id_user' => $user->getKey(),
-                    'selector' => $selector,
-                    'hashed_token' => $hashedValidator,
-                    'expires_at' => $expiresAt,
-                    'ip_address' => $ipAddress,
-                    'user_agent' => $userAgent,
-                    'device_name' => $deviceName,
-                    'platform' => $platform,
-                    'browser' => $browser,
-                ],
-            );
-
-            $cookieValue = $selector . ':' . $validator;
-            $minutes = (int) ceil($ttlSeconds / 60);
-
-            $cookie = Cookie::make(
-                $this->rememberCookieName,
-                $cookieValue,
-                minutes: $minutes,
-                path: (string) $this->getConfig('swift-auth.remember_me.path', '/'),
-                domain: $this->getConfig('swift-auth.remember_me.domain', null),
-                secure: (bool) $this->getConfig('swift-auth.remember_me.secure', true),
-                httpOnly: true,
-                raw: false,
-                sameSite: (string) $this->getConfig('swift-auth.remember_me.same_site', 'lax'),
-            );
-
-            Cookie::queue($cookie);
-        } catch (\Throwable $exception) {
-            logger()->warning('swift-auth.remember.issue_failed', [
-                'user_id' => $user->getKey(),
-                'error' => $exception->getMessage(),
-            ]);
-        }
-    }
-
-    private function deleteRememberToken(string $cookieValue): void
-    {
-        [$selector, $validator] = $this->splitRememberCookie($cookieValue);
-
-        if ($selector === null || $validator === null) {
-            $this->forgetRememberCookie();
-
-            return;
-        }
-
-        try {
-            RememberToken::query()
-                ->where('selector', $selector)
-                ->delete();
-        } catch (\Throwable $exception) {
-            logger()->warning('swift-auth.remember.delete_failed', [
-                'selector' => $selector,
-                'error' => $exception->getMessage(),
-            ]);
-        }
-
-        $this->forgetRememberCookie();
-    }
-
-    private function forgetRememberCookie(): void
-    {
-        Cookie::queue(Cookie::forget($this->rememberCookieName));
-    }
-
-    private function shouldIssueRememberToken(): bool
-    {
-        return (bool) $this->getConfig('swift-auth.remember_me.enabled', true);
-    }
-
-    private function rememberTokenExpired(RememberToken $token): bool
-    {
-        return $token->expires_at !== null
-            && CarbonImmutable::now()->greaterThan(CarbonImmutable::parse($token->expires_at));
-    }
-
-    /**
-     * @return array{0:null|string,1:null|string}
-     */
-    private function splitRememberCookie(string $cookieValue): array
-    {
-        $parts = explode(':', $cookieValue, 2);
-
-        if (count($parts) !== 2 || $parts[0] === '' || $parts[1] === '') {
-            return [null, null];
-        }
-
-        return [$parts[0], $parts[1]];
     }
 
     private function resolveDeviceNameFromRequest(): ?string

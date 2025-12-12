@@ -11,7 +11,7 @@
  * @link      https://github.com/EquidnaMX/swift_auth Package repository
  */
 
-namespace Equidna\SwiftAuth\Facades;
+namespace Equidna\SwiftAuth\Support\Facades;
 
 use Illuminate\Support\Facades\Facade;
 use Equidna\SwiftAuth\Models\User;
@@ -28,7 +28,7 @@ use Equidna\SwiftAuth\Models\User;
  * SwiftAuth::user();
  * ```
  *
- * @see \Equidna\SwiftAuth\Services\SwiftSessionAuth
+ * @see \Equidna\SwiftAuth\Classes\Auth\SwiftSessionAuth
  *
  * @method static array{evicted_session_ids: array<int, string>} login(User $user, null|string $ipAddress = null, null|string $userAgent = null, null|string $deviceName = null, bool $remember = false)
  * @method static void logout()

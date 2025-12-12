@@ -5,12 +5,12 @@
  *
  * PHP 8.2+
  *
- * @package   Equidna\SwiftAuth\DTO
+ * @package   Equidna\SwiftAuth\Classes\Notifications\DTO
  * @author    Gabriel Ruelas <gruelas@gruelas.com>
  * @license   https://opensource.org/licenses/MIT MIT License
  */
 
-namespace Equidna\SwiftAuth\DTO;
+namespace Equidna\SwiftAuth\Classes\Notifications\DTO;
 
 /**
  * Represents the result of a Bird Flock notification dispatch.

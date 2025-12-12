@@ -1,15 +1,15 @@
 <?php
 
-namespace Equidna\SwiftAuth\Events;
+namespace Equidna\SwiftAuth\Classes\Auth\Events;
 
 /**
- * Event fired when a multi-factor authentication challenge is started.
+ * Event fired when a user logs out.
  */
-final class MfaChallengeStarted
+final class UserLoggedOut
 {
     /**
-     * @param  int|string|null     $userId         Identifier of the user undergoing MFA.
-     * @param  string              $sessionId      Session identifier tied to the challenge.
+     * @param  int|string|null     $userId         Identifier of the user who logged out.
+     * @param  string              $sessionId      Session identifier that was cleared.
      * @param  string|null         $ipAddress      IP address of the client.
      * @param  array<string,mixed> $driverMetadata Metadata describing the session driver/handler.
      */

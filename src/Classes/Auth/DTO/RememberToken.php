@@ -10,7 +10,7 @@
  * @license   https://opensource.org/licenses/MIT MIT License
  */
 
-namespace Equidna\SwiftAuth\DTO;
+namespace Equidna\SwiftAuth\Classes\Auth\DTO;
 
 /**
  * Immutable token details used for remember-me validation.

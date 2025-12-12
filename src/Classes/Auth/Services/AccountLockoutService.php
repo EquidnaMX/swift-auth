@@ -11,9 +11,10 @@
  * @link      https://github.com/EquidnaMX/swift_auth
  */
 
-namespace Equidna\SwiftAuth\Services;
+namespace Equidna\SwiftAuth\Classes\Auth\Services;
 
-use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
+use Equidna\SwiftAuth\Classes\Users\Contracts\UserRepositoryInterface;
+use Equidna\SwiftAuth\Classes\Notifications\NotificationService;
 use Equidna\SwiftAuth\Models\User;
 
 /**

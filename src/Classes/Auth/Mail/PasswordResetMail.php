@@ -11,7 +11,7 @@
  * @link      https://github.com/EquidnaMX/swift_auth Package repository
  */
 
-namespace Equidna\SwiftAuth\Mail;
+namespace Equidna\SwiftAuth\Classes\Auth\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

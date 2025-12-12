@@ -10,11 +10,11 @@
  * @license   https://opensource.org/licenses/MIT MIT License
  */
 
-namespace Equidna\SwiftAuth\Services;
+namespace Equidna\SwiftAuth\Classes\Notifications;
 
 use Equidna\BirdFlock\BirdFlock;
 use Equidna\BirdFlock\DTO\FlightPlan;
-use Equidna\SwiftAuth\DTO\NotificationResult;
+use Equidna\SwiftAuth\Classes\Notifications\DTO\NotificationResult;
 use RuntimeException;
 
 /**

@@ -20,7 +20,7 @@ use Equidna\SwiftAuth\Classes\Users\Contracts\UserRepositoryInterface;
 use Equidna\SwiftAuth\Models\User;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Session\Store as Session;
-use PHPUnit\Framework\TestCase;
+use Equidna\SwiftAuth\Tests\TestCase;
 use SessionHandlerInterface;
 
 /**
@@ -105,8 +105,7 @@ class SwiftSessionAuthPropertiesTest extends TestCase
         $this->mockDriverMetadata();
 
         // Mock Cookie facade
-        $app = new \Illuminate\Container\Container();
-        $app->singleton('cookie', function () {
+        $this->app->singleton('cookie', function () {
             return new class {
                 public function get($key)
                 {
@@ -114,7 +113,6 @@ class SwiftSessionAuthPropertiesTest extends TestCase
                 }
             };
         });
-        \Illuminate\Support\Facades\Facade::setFacadeApplication($app);
 
         // The implementation references Cookie::get($this->rememberCookieName)
         // which should use 'swift_auth_remember' by default

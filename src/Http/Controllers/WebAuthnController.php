@@ -30,9 +30,6 @@ class WebAuthnController extends Controller
 {
     /**
      * Generates attestation options for registering a new specific Passkey.
-     *
-     * @param  Request $request
-     * @return JsonResponse
      */
     public function registerOptions(Request $request): JsonResponse
     {
@@ -54,9 +51,6 @@ class WebAuthnController extends Controller
 
     /**
      * Verifies the attestation response and stores the credential.
-     *
-     * @param  AttestedRequest $request
-     * @return JsonResponse
      */
     public function register(AttestedRequest $request): JsonResponse
     {
@@ -73,9 +67,6 @@ class WebAuthnController extends Controller
 
     /**
      * Generates assertion options for logging in.
-     *
-     * @param  Request $request
-     * @return JsonResponse
      */
     public function loginOptions(Request $request): JsonResponse
     {
@@ -97,9 +88,6 @@ class WebAuthnController extends Controller
 
     /**
      * Verifies the assertion response and logs the user in.
-     *
-     * @param  AssertedRequest $request
-     * @return JsonResponse
      */
     public function login(AssertedRequest $request): JsonResponse
     {

@@ -10,9 +10,11 @@
  * @license   https://opensource.org/licenses/MIT MIT License
  */
 
-use PHPUnit\Framework\TestCase;
-use Equidna\SwiftAuth\Services\AccountLockoutService;
-use Equidna\SwiftAuth\Contracts\UserRepositoryInterface;
+use Equidna\SwiftAuth\Tests\TestCase;
+use Equidna\SwiftAuth\Classes\Auth\Services\AccountLockoutService;
+use Equidna\SwiftAuth\Classes\Users\Contracts\UserRepositoryInterface;
+use Equidna\SwiftAuth\Classes\Notifications\NotificationService;
+use Equidna\SwiftAuth\Classes\Notifications\DTO\NotificationResult;
 use Equidna\SwiftAuth\Models\User;
 
 /**
@@ -20,23 +22,6 @@ use Equidna\SwiftAuth\Models\User;
  */
 class AccountLockoutServiceTest extends TestCase
 {
-    /**
-     * Returns a test double for NotificationService to avoid mocking final class.
-     *
-     * @return object  Test double with stubbed notification methods.
-     */
-    private function createNotificationDouble(): object
-    {
-        return new class {
-            public function sendAccountLockout(
-                string $email,
-                int $duration,
-            ): ?string
-            {
-                return 'test-message-id';
-            }
-        };
-    }
 
     /**
      * Test that recordFailedAttempt increments failed logins.
@@ -44,7 +29,7 @@ class AccountLockoutServiceTest extends TestCase
     public function test_increments_failed_logins(): void
     {
         $repo = $this->createMock(UserRepositoryInterface::class);
-        $notif = $this->createNotificationDouble();
+        $notif = $this->createMock(NotificationService::class);
 
         $user = new User([]);
         $user->failed_login_attempts = 0;
@@ -63,7 +48,7 @@ class AccountLockoutServiceTest extends TestCase
     public function test_resets_failed_logins(): void
     {
         $repo = $this->createMock(UserRepositoryInterface::class);
-        $notif = $this->createNotificationDouble();
+        $notif = $this->createMock(NotificationService::class);
 
         $user = new User([]);
         $user->failed_login_attempts = 2;
@@ -82,9 +67,10 @@ class AccountLockoutServiceTest extends TestCase
     public function test_locks_account_for_duration(): void
     {
         $repo = $this->createMock(UserRepositoryInterface::class);
-        $notif = $this->createNotificationDouble();
+        $notif = $this->createMock(NotificationService::class);
+        $notif->method('sendAccountLockout')->willReturn(NotificationResult::success('test-id'));
 
-        $user = new User([]);
+        $user = new User(['email' => 'test@example.com']);
         $user->failed_login_attempts = 5; // At threshold
 
         $repo->expects($this->once())

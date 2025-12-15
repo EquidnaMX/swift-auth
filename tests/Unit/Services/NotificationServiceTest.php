@@ -13,20 +13,17 @@
 
 namespace Equidna\SwiftAuth\Tests\Unit\Services;
 
-use PHPUnit\Framework\TestCase;
+use Equidna\SwiftAuth\Tests\TestCase;
 
 use Equidna\BirdFlock\BirdFlock;
 use Equidna\BirdFlock\DTO\FlightPlan;
-use Equidna\SwiftAuth\Services\NotificationService;
+use Equidna\SwiftAuth\Classes\Notifications\NotificationService;
 
 /**
  * Tests NotificationService business logic in isolation.
  */
 class NotificationServiceTest extends TestCase
 {
-    /**
-     * Test sendPasswordReset dispatches FlightPlan with correct parameters.
-     */
     public function test_send_password_reset_dispatches_flight_plan(): void
     {
         // Arrange
@@ -56,9 +53,6 @@ class NotificationServiceTest extends TestCase
         $this->expectNotToPerformAssertions();
     }
 
-    /**
-     * Test sendPasswordReset generates HTML with reset URL.
-     */
     public function test_send_password_reset_includes_reset_url_in_html(): void
     {
         // This would require reflection to test private methods,
@@ -67,9 +61,6 @@ class NotificationServiceTest extends TestCase
         $this->expectNotToPerformAssertions();
     }
 
-    /**
-     * Test sendEmailVerification generates correct idempotency key.
-     */
     public function test_send_email_verification_uses_correct_idempotency_key(): void
     {
         // Expected format: swift-auth:email-verification:{email}:{token}
@@ -77,9 +68,6 @@ class NotificationServiceTest extends TestCase
         $this->expectNotToPerformAssertions();
     }
 
-    /**
-     * Test sendAccountLockout converts seconds to minutes correctly.
-     */
     public function test_send_account_lockout_converts_duration_to_minutes(): void
     {
         // Test ceil() rounding: 899s -> 15min, 900s -> 15min, 901s -> 16min
@@ -88,25 +76,16 @@ class NotificationServiceTest extends TestCase
         $this->assertSame(16, (int) ceil(901 / 60));
     }
 
-    /**
-     * Test sendAccountLockout handles zero duration.
-     */
     public function test_send_account_lockout_handles_zero_duration(): void
     {
         $this->assertSame(0, (int) ceil(0 / 60));
     }
 
-    /**
-     * Test sendAccountLockout handles one second duration.
-     */
     public function test_send_account_lockout_rounds_one_second_up(): void
     {
         $this->assertSame(1, (int) ceil(1 / 60));
     }
 
-    /**
-     * Test sendAccountLockout includes timestamp in idempotency key.
-     */
     public function test_send_account_lockout_idempotency_key_includes_timestamp(): void
     {
         // Expected format: swift-auth:account-lockout:{email}:{timestamp}
@@ -114,9 +93,6 @@ class NotificationServiceTest extends TestCase
         $this->expectNotToPerformAssertions();
     }
 
-    /**
-     * Test HTML email contains expected security elements.
-     */
     public function test_password_reset_html_contains_security_notice(): void
     {
         // HTML should mention:
@@ -126,9 +102,6 @@ class NotificationServiceTest extends TestCase
         $this->expectNotToPerformAssertions();
     }
 
-    /**
-     * Test plain text email is formatted correctly.
-     */
     public function test_password_reset_text_is_well_formatted(): void
     {
         // Should contain:
@@ -139,43 +112,28 @@ class NotificationServiceTest extends TestCase
         $this->expectNotToPerformAssertions();
     }
 
-    /**
-     * Test email verification HTML contains CTA button.
-     */
     public function test_email_verification_html_contains_cta_button(): void
     {
         // Should have styled button with "Verify Email" text
         $this->expectNotToPerformAssertions();
     }
 
-    /**
-     * Test email verification includes 24-hour expiration.
-     */
     public function test_email_verification_mentions_24_hour_expiration(): void
     {
         $this->expectNotToPerformAssertions();
     }
 
-    /**
-     * Test account lockout HTML uses alert styling.
-     */
     public function test_account_lockout_html_uses_alert_colors(): void
     {
         // Should use red colors (#dc2626) for danger alert
         $this->expectNotToPerformAssertions();
     }
 
-    /**
-     * Test account lockout includes contact support message.
-     */
     public function test_account_lockout_suggests_contacting_support(): void
     {
         $this->expectNotToPerformAssertions();
     }
 
-    /**
-     * Test special characters in email are URL-encoded.
-     */
     public function test_email_parameter_is_url_encoded(): void
     {
         // Emails with + or @ should be encoded
@@ -186,9 +144,6 @@ class NotificationServiceTest extends TestCase
         $this->assertStringContainsString('%2B', $encoded); // + encoded
     }
 
-    /**
-     * Test idempotency key prevents duplicate sends.
-     */
     public function test_idempotency_keys_are_deterministic(): void
     {
         // Same email + token = same idempotency key
@@ -202,9 +157,6 @@ class NotificationServiceTest extends TestCase
         $this->assertSame($key1, $key2);
     }
 
-    /**
-     * Test different tokens produce different idempotency keys.
-     */
     public function test_different_tokens_produce_different_idempotency_keys(): void
     {
         $email = 'user@example.com';
@@ -217,9 +169,6 @@ class NotificationServiceTest extends TestCase
         $this->assertNotSame($key1, $key2);
     }
 
-    /**
-     * Test route prefix is configurable.
-     */
     public function test_uses_configurable_route_prefix(): void
     {
         // Default: 'swift-auth'

@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Equidna\SwiftAuth\Models\User;
 use Equidna\SwiftAuth\Classes\Notifications\NotificationService;
-use Equidna\Toolkit\Helpers\ResponseHelper;
+
 
 /**
  * Manages email verification process.
@@ -42,9 +42,7 @@ final class EmailVerificationController
         $email = is_string($rawEmail) ? trim($rawEmail) : '';
 
         if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return ResponseHelper::badRequest(
-                message: 'Invalid email address.'
-            );
+            return response()->json(['message' => 'Invalid email address.'], 400);
         }
 
         /** @var array{attempts?:int,decay_seconds?:int}|mixed $ipRateLimit */
@@ -69,9 +67,7 @@ final class EmailVerificationController
                 ],
             );
 
-            return ResponseHelper::tooManyRequests(
-                message: "Too many verification requests. Please try again in {$seconds} seconds."
-            );
+            return response()->json(['message' => "Too many verification requests. Please try again in {$seconds} seconds."], 429);
         }
 
         $rateLimitKey = 'email-verification:' . sha1($email);
@@ -95,9 +91,7 @@ final class EmailVerificationController
                 ],
             );
 
-            return ResponseHelper::tooManyRequests(
-                message: "Too many verification emails sent. Please try again in {$seconds} seconds."
-            );
+            return response()->json(['message' => "Too many verification emails sent. Please try again in {$seconds} seconds."], 429);
         }
 
         $user = User::where(
@@ -110,15 +104,11 @@ final class EmailVerificationController
                 $rateLimitKey,
                 $decaySeconds,
             );
-            return ResponseHelper::notFound(
-                message: 'User not found.'
-            );
+            return response()->json(['message' => 'User not found.'], 404);
         }
 
         if ($user->email_verified_at) {
-            return ResponseHelper::badRequest(
-                message: 'Email already verified.'
-            );
+            return response()->json(['message' => 'Email already verified.'], 400);
         }
 
         $token = Str::random(64);
@@ -132,9 +122,7 @@ final class EmailVerificationController
         );
 
         if (!$result->success) {
-            return ResponseHelper::error(
-                message: 'Failed to send verification email. Please try again later.'
-            );
+            return response()->json(['message' => 'Failed to send verification email. Please try again later.'], 500);
         }
 
         RateLimiter::hit(
@@ -156,10 +144,10 @@ final class EmailVerificationController
             ],
         );
 
-        return ResponseHelper::success(
-            message: 'Verification email sent successfully.',
-            data: null,
-        );
+        return response()->json([
+            'message' => 'Verification email sent successfully.',
+            'data' => null,
+        ], 200);
     }
 
     /**
@@ -178,9 +166,7 @@ final class EmailVerificationController
         $email = is_string($rawQueryEmail) ? trim($rawQueryEmail) : '';
 
         if ($token === '' || $email === '') {
-            return ResponseHelper::badRequest(
-                message: 'Invalid verification link.'
-            );
+            return response()->json(['message' => 'Invalid verification link.'], 400);
         }
 
         $hashedToken = hash('sha256', $token);
@@ -203,9 +189,7 @@ final class EmailVerificationController
                 ],
             );
 
-            return ResponseHelper::badRequest(
-                message: 'Invalid or expired verification token.'
-            );
+            return response()->json(['message' => 'Invalid or expired verification token.'], 400);
         }
 
         $ttl = (int) config('swift-auth.email_verification.token_ttl', 86400);
@@ -220,9 +204,7 @@ final class EmailVerificationController
                 ],
             );
 
-            return ResponseHelper::badRequest(
-                message: 'Verification token has expired.'
-            );
+            return response()->json(['message' => 'Verification token has expired.'], 400);
         }
 
         $user->email_verified_at = now();
@@ -239,8 +221,6 @@ final class EmailVerificationController
             ],
         );
 
-        return ResponseHelper::success(
-            message: 'Email verified successfully.',
-        );
+        return response()->json(['message' => 'Email verified successfully.'], 200);
     }
 }

@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2025-12-15
+
+### Changed
+-   **Breaking:** Enforced strict Domain-Driven Design structure in `src/Classes/`. (Classes moved to `Auth/`, `Notifications/`, `Users/` domains).
+-   **Breaking:** Strict Coding Standards adoption (PSR-12 + Custom Rules).
+    -   Enforced return types on all methods.
+    -   Constructor property promotion widely adopted.
+    -   Removed redundant PHPDoc where native types exist.
+-   **Breaking:** File-level DocBlocks are now mandatory and standardized.
+-   **Documentation:** Massive cleanup of PHPDoc to reduce noise and rely on Type Hints.
+
+### Added
+-   **Docs:** Complete architectural documentation (`/doc` folder) covering API, Deployment, Monitoring, and Business Logic.
+-   **Events:** Added missing file-level DocBlocks to Auth Events (`UserLoggedIn`, `UserLoggedOut`, etc.).
+
+### Fixed
+-   False positive lint errors in Controllers regarding Facade usage.
+-   Redundant documentation in DTOs and Services.
+
 ## [1.0.3] - 2025-12-12
 
 ### Added

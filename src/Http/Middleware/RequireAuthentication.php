@@ -28,9 +28,6 @@ class RequireAuthentication
      * Verifies if the user is authenticated using SwiftAuth. If not authenticated, redirects to
      * the login form. If authenticated user cannot be found, also redirects to login.
      *
-     * @param  Request  $request  Incoming HTTP request.
-     * @param  Closure  $next     Next middleware to handle the request.
-     * @return Response           Response after handling the request.
      * @throws ModelNotFoundException  When authenticated user ID exists but user record not found.
      */
     public function handle(

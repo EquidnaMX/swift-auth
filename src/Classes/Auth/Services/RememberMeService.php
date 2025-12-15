@@ -1,5 +1,15 @@
 <?php
 
+/**
+ * Manages "Remember Me" token lifecycle and cookie handling.
+ *
+ * PHP 8.2+
+ *
+ * @package   Equidna\SwiftAuth\Classes\Auth\Services
+ * @author    Gabriel Ruelas <gruelas@gruelas.com>
+ * @license   https://opensource.org/licenses/MIT MIT License
+ */
+
 namespace Equidna\SwiftAuth\Classes\Auth\Services;
 
 use Carbon\CarbonImmutable;

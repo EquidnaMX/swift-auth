@@ -63,9 +63,6 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
         $this->table = $this->tablePrefix() . 'Users';
     }
 
-    /**
-     * Returns configured table prefix.
-     */
     protected function tablePrefix(): string
     {
         try {
@@ -135,13 +132,6 @@ class User extends Authenticatable implements WebAuthnAuthenticatable
             ->isNotEmpty();
     }
 
-    /**
-     * Alias for `hasRoles` to support singular `hasRole` calls from views and
-     * middleware. Kept for backward-compatibility and convenience.
-     *
-     * @param  string|array<string> $roles  Role or list of roles to check.
-     * @return bool                          True if the user has at least one role.
-     */
     public function hasRole(string|array $roles): bool
     {
         return $this->hasRoles($roles);

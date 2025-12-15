@@ -20,23 +20,11 @@ use Equidna\SwiftAuth\Classes\Auth\Services\PasswordPolicy;
  */
 final class RegisterUserRequest extends EquidnaFormRequest
 {
-    /**
-     * Determines if the user is authorized to make this request.
-     *
-     * Registration is public, so always return true when registration is enabled.
-     *
-     * @return bool  True if registration is allowed.
-     */
     public function authorize(): bool
     {
         return config('swift-auth.allow_registration', true);
     }
 
-    /**
-     * Returns validation rules for registration.
-     *
-     * @return array<string, mixed>  Laravel validation rules.
-     */
     public function rules(): array
     {
         $prefix = config('swift-auth.table_prefix', '');
@@ -69,11 +57,6 @@ final class RegisterUserRequest extends EquidnaFormRequest
         ];
     }
 
-    /**
-     * Returns custom error messages for validation failures.
-     *
-     * @return array<string, string>  Custom validation messages.
-     */
     public function messages(): array
     {
         return [

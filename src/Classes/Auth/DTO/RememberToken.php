@@ -17,19 +17,11 @@ namespace Equidna\SwiftAuth\Classes\Auth\DTO;
  */
 class RememberToken
 {
-    /**
-     * @param  string       $token       Raw token value (already persisted).
-     * @param  string|null  $ipAddress   IP address recorded when the token was created.
-     * @param  string|null  $userAgent   User agent recorded when the token was created.
-     * @param  string|null  $deviceName  Optional device identifier/header recorded with the token.
-     * @param  int|null     $userId      Optional associated user ID for logging.
-     */
     public function __construct(
         public readonly string $token,
         public readonly ?string $ipAddress = null,
         public readonly ?string $userAgent = null,
         public readonly ?string $deviceName = null,
         public readonly ?int $userId = null,
-    ) {
-    }
+    ) {}
 }

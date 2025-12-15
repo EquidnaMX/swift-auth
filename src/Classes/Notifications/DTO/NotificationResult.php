@@ -20,13 +20,6 @@ namespace Equidna\SwiftAuth\Classes\Notifications\DTO;
  */
 final readonly class NotificationResult
 {
-    /**
-     * Creates a notification result instance.
-     *
-     * @param bool        $success    Whether the dispatch succeeded.
-     * @param string|null $messageId  Bird Flock message ID on success.
-     * @param string|null $error      Error message on failure.
-     */
     public function __construct(
         public bool $success,
         public ?string $messageId = null,
@@ -35,12 +28,6 @@ final readonly class NotificationResult
         //
     }
 
-    /**
-     * Creates a successful result with a message ID.
-     *
-     * @param  string              $messageId  Bird Flock message identifier.
-     * @return NotificationResult              Success result instance.
-     */
     public static function success(string $messageId): self
     {
         return new self(
@@ -49,12 +36,6 @@ final readonly class NotificationResult
         );
     }
 
-    /**
-     * Creates a failed result with an error message.
-     *
-     * @param  string              $error  Human-readable error description.
-     * @return NotificationResult          Failure result instance.
-     */
     public static function failure(string $error): self
     {
         return new self(

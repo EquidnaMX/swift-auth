@@ -20,7 +20,7 @@ use RuntimeException;
 /**
  * Handles email notifications using Bird Flock messaging bus.
  */
-final class NotificationService
+class NotificationService
 {
     /**
      * Sends password reset email.
@@ -160,13 +160,6 @@ final class NotificationService
         }
     }
 
-    /**
-     * Returns password reset HTML email body.
-     *
-     * @param  string $resetUrl  Password reset URL.
-     * @param  string $email     Recipient email.
-     * @return string            HTML email content.
-     */
     private function getPasswordResetHtml(
         string $resetUrl,
         string $email,
@@ -180,12 +173,6 @@ final class NotificationService
         )->render();
     }
 
-    /**
-     * Returns password reset plain text email body.
-     *
-     * @param  string $resetUrl  Password reset URL.
-     * @return string            Plain text email content.
-     */
     private function getPasswordResetText(string $resetUrl): string
     {
         return view(
@@ -196,13 +183,6 @@ final class NotificationService
         )->render();
     }
 
-    /**
-     * Returns email verification HTML email body.
-     *
-     * @param  string $verifyUrl  Email verification URL.
-     * @param  string $email      Recipient email.
-     * @return string             HTML email content.
-     */
     private function getEmailVerificationHtml(
         string $verifyUrl,
         string $email,
@@ -216,12 +196,6 @@ final class NotificationService
         )->render();
     }
 
-    /**
-     * Returns email verification plain text email body.
-     *
-     * @param  string $verifyUrl  Email verification URL.
-     * @return string             Plain text email content.
-     */
     private function getEmailVerificationText(string $verifyUrl): string
     {
         return view(
@@ -232,13 +206,6 @@ final class NotificationService
         )->render();
     }
 
-    /**
-     * Returns account lockout HTML email body.
-     *
-     * @param  string $email    Recipient email.
-     * @param  int    $minutes  Lockout duration in minutes.
-     * @return string           HTML email content.
-     */
     private function getAccountLockoutHtml(
         string $email,
         int $minutes,
@@ -252,12 +219,6 @@ final class NotificationService
         )->render();
     }
 
-    /**
-     * Returns account lockout plain text email body.
-     *
-     * @param  int    $minutes  Lockout duration in minutes.
-     * @return string           Plain text email content.
-     */
     private function getAccountLockoutText(int $minutes): string
     {
         return view(

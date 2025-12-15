@@ -29,7 +29,6 @@ trait ChecksRateLimits
      * @param  string $key       Rate limiter key.
      * @param  int    $attempts  Maximum allowed attempts.
      * @param  string $message   Error message to throw when limit exceeded.
-     * @return void
      * @throws UnauthorizedException  When rate limit is exceeded.
      */
     protected function checkRateLimit(
@@ -45,35 +44,16 @@ trait ChecksRateLimits
         }
     }
 
-    /**
-     * Records a rate limit hit for the given key.
-     *
-     * @param  string $key          Rate limiter key.
-     * @param  int    $decaySeconds Decay duration in seconds.
-     * @return void
-     */
     protected function hitRateLimit(string $key, int $decaySeconds): void
     {
         RateLimiter::hit($key, $decaySeconds);
     }
 
-    /**
-     * Clears the rate limiter for the given key.
-     *
-     * @param  string $key  Rate limiter key.
-     * @return void
-     */
     protected function clearRateLimit(string $key): void
     {
         RateLimiter::clear($key);
     }
 
-    /**
-     * Returns the remaining time in seconds before the rate limit resets.
-     *
-     * @param  string $key  Rate limiter key.
-     * @return int          Seconds until the rate limit resets.
-     */
     protected function rateLimitAvailableIn(string $key): int
     {
         return RateLimiter::availableIn($key);

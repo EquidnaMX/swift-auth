@@ -1,12 +1,37 @@
 <?xml version="1.0"?>
-<ruleset name="SwiftAuth Custom Rules">
-    <description>Project PHPCS rules: PSR12 with view files excluded.</description>
+<ruleset name="SwiftAuth Coding Standard">
+    <description>PHPCS: PSR-12 aligned with repository Coding Standards. Views and vendor excluded.</description>
 
-    <!-- Use PSR12 standard -->
+    <!-- Base standard -->
     <rule ref="PSR12"/>
 
-    <!-- Exclude vendor and Blade view resources from code style checks -->
+    <!-- Line length (align to repo guide: 250) -->
+    <rule ref="Generic.Files.LineLength">
+        <properties>
+            <property name="lineLimit" value="250"/>
+            <property name="absoluteLineLimit" value="0"/>
+            <property name="ignoreComments" value="false"/>
+        </properties>
+    </rule>
+
+    <!-- Exclusions -->
     <exclude-pattern>vendor/*</exclude-pattern>
-    <exclude-pattern>src/resources/views/*</exclude-pattern>
-    <exclude-pattern>src/resources/**/views/*</exclude-pattern>
+    <exclude-pattern>build/*</exclude-pattern>
+    <exclude-pattern>resources/views/*</exclude-pattern>
+    <exclude-pattern>resources/**/views/*</exclude-pattern>
+    <exclude-pattern>tests/*</exclude-pattern>
+    <exclude-pattern>database/migrations/deprecated/*</exclude-pattern>
+
+    <!--
+        Optional: Enforce no fully-qualified class names (FQCN) at call sites
+        and stricter import usage via Slevomat Coding Standard. This is
+        commented out by default to avoid requiring the package. To enable,
+        require `slevomat/coding-standard` and add/uncomment the rule below.
+
+        Example (enable after installing):
+        <rule ref="SlevomatCodingStandard.Namespaces.FullyQualifiedNameUsage"/>
+
+        Note: PHP-CS-Fixer is included via `.php-cs-fixer.php` to handle
+        import ordering (`ordered_imports`) and removal of unused imports.
+    -->
 </ruleset>

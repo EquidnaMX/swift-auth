@@ -12,9 +12,9 @@ namespace Equidna\SwiftAuth\Http\Middleware;
 
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Equidna\Toolkit\Helpers\ResponseHelper;
 use Symfony\Component\HttpFoundation\Response;
 use Equidna\SwiftAuth\Facades\SwiftAuth;
+use Equidna\Toolkit\Helpers\ResponseHelper;
 use Closure;
 
 /**
@@ -23,18 +23,17 @@ use Closure;
 class RequireAuthentication
 {
     /**
-     * Handle an incoming request.
+     * Handles an incoming request.
      *
-     * Verifies if the user is authenticated using SwiftAuth.
-     * If the user is not authenticated, redirects to the login form with an error message.
-     * If the authenticated user cannot be found, redirects to the login form with a different error message.
+     * Verifies if the user is authenticated using SwiftAuth. If not authenticated, redirects to
+     * the login form. If authenticated user cannot be found, also redirects to login.
      *
-     * @param  Request $request  Incoming HTTP request.
-     * @param  Closure $next     Next middleware to handle the request.
-     * @return Response          Response after handling the request.
+     * @throws ModelNotFoundException  When authenticated user ID exists but user record not found.
      */
-    public function handle(Request $request, Closure $next): Response
-    {
+    public function handle(
+        Request $request,
+        Closure $next,
+    ): Response {
         if (!SwiftAuth::check()) {
             return ResponseHelper::unauthorized(
                 message: 'You must be logged in.',
@@ -45,7 +44,7 @@ class RequireAuthentication
         try {
             $user = SwiftAuth::userOrFail();
 
-            $request->attributes->add(['sw-user' => $user]);
+            $request->attributes->add(['swift_auth_user' => $user]);
         } catch (ModelNotFoundException $e) {
             return ResponseHelper::unauthorized(
                 message: 'Authenticated user not found on record.',

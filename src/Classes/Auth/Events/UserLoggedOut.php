@@ -1,0 +1,26 @@
+<?php
+
+/**
+ * Event fired when a user logs out.
+ *
+ * PHP 8.2+
+ *
+ * @package   Equidna\SwiftAuth\Classes\Auth\Events
+ * @author    Gabriel Ruelas <gruelas@gruelas.com>
+ * @license   https://opensource.org/licenses/MIT MIT License
+ */
+
+namespace Equidna\SwiftAuth\Classes\Auth\Events;
+
+/**
+ * Dispatched after user logout.
+ */
+final class UserLoggedOut
+{
+    public function __construct(
+        public readonly int|string|null $userId,
+        public readonly string $sessionId,
+        public readonly ?string $ipAddress,
+        public readonly array $driverMetadata
+    ) {}
+}

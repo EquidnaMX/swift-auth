@@ -13,24 +13,22 @@
 
 namespace Equidna\SwiftAuth\Models;
 
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Equidna\SwiftAuth\Models\User;
 
 /**
- * Class Role
- *
  * @property int $id_role
  * @property string $name
  * @property string|null $description
- * @property string $actions Comma-separated actions
+ * @property array<int, string> $actions List of action identifiers
  *
  * @method static \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\Role> search(null|string $term)
  * @method static static create(array<string,mixed> $attributes = [])
  * @method static static findOrFail(string|int $id)
  * @method static static firstOrCreate(array<string,mixed> $attributes, array<string,mixed> $values = [])
- * @method static \Illuminate\Database\Eloquent\Builder orderBy(string $column, string $direction = 'asc')
+ * @method static \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\Role> orderBy(string $column, string $direction = 'asc')
  */
 class Role extends Model
 {
@@ -39,12 +37,25 @@ class Role extends Model
 
     /**
      * Initialize the model.
+     *
+     * @param array<string, mixed> $attributes
      */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $prefix = config('swift-auth.table_prefix', '');
-        $this->table = $prefix . 'Roles';
+        $this->table = $this->tablePrefix() . 'Roles';
+    }
+
+    /**
+     * Returns configured table prefix.
+     */
+    protected function tablePrefix(): string
+    {
+        try {
+            return (string) config('swift-auth.table_prefix', '');
+        } catch (\Throwable) {
+            return '';
+        }
     }
 
     protected $fillable = [
@@ -54,18 +65,23 @@ class Role extends Model
     ];
 
     /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'actions' => 'array',
+    ];
+
+    /**
      * The users that belong to this role.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<
      *     \Equidna\SwiftAuth\Models\User,
-     *     $this,
-     *     \Illuminate\Database\Eloquent\Relations\Pivot,
-     *     'pivot'
+     *     $this
      * >
      */
     public function users(): BelongsToMany
     {
-        $prefix = config('swift-auth.table_prefix', '');
+        $prefix = (string) config('swift-auth.table_prefix', '');
         return $this->belongsToMany(
             User::class,
             $prefix . 'UsersRoles',
@@ -75,14 +91,16 @@ class Role extends Model
     }
 
     /**
-     * Scope a query to filter roles by name.
+     * Scopes a query to filter roles by name.
      *
-     * @param \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\Role> $query
-     * @param string|null $search
-     * @return \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\Role>
+     * @param  \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\Role> $query   Query builder instance.
+     * @param  string|null                                                              $search  Search term.
+     * @return \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\Role>          Filtered query.
      */
-    public function scopeSearch(Builder $query, null|string $search): Builder
-    {
+    public function scopeSearch(
+        Builder $query,
+        null|string $search,
+    ): Builder {
         if (empty($search)) {
             return $query;
         }

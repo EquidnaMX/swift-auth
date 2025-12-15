@@ -13,22 +13,24 @@
 
 namespace Equidna\SwiftAuth\Http\Controllers;
 
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Contracts\View\View;
+use Inertia\Response;
+use Equidna\SwiftAuth\Facades\SwiftAuth;
+use Equidna\SwiftAuth\Http\Requests\RegisterUserRequest;
+use Equidna\SwiftAuth\Http\Requests\UpdateUserRequest;
+use Equidna\SwiftAuth\Models\Role;
+use Equidna\SwiftAuth\Models\User;
+use Equidna\SwiftAuth\Support\Traits\SelectiveRender;
 use Equidna\Toolkit\Exceptions\BadRequestException;
 use Equidna\Toolkit\Exceptions\ForbiddenException;
 use Equidna\Toolkit\Helpers\ResponseHelper;
-use Inertia\Response;
-use Equidna\SwiftAuth\Facades\SwiftAuth;
-use Equidna\SwiftAuth\Models\Role;
-use Equidna\SwiftAuth\Models\User;
-use Equidna\SwiftAuth\Traits\SelectiveRender;
 
 /**
  * Manages SwiftAuth user lifecycle actions (listing, creation, updates, and deletion).
@@ -47,7 +49,10 @@ class UserController extends Controller
      */
     public function index(Request $request): View|Response
     {
-        $users = User::search($request->get('search'))
+        $searchRaw = $request->get('search', null);
+        $search = is_string($searchRaw) ? $searchRaw : null;
+
+        $users = User::search($search)
             ->paginate(10);
 
         return $this->render(
@@ -55,7 +60,8 @@ class UserController extends Controller
             'user/Index',
             [
                 'users' => $users,
-                'actions' => Config::get('swift-auth.actions'),
+                // Ensure actions is always an array for the view and static analysis
+                'actions' => (array) Config::get('swift-auth.actions', []),
             ],
         );
     }
@@ -68,7 +74,11 @@ class UserController extends Controller
      */
     public function register(Request $request): View|Response
     {
-        $roles = Role::orderBy('name')->get();
+        $roles = Cache::remember(
+            'swift-auth.roles',
+            300,
+            fn() => Role::orderBy('name')->get()
+        );
 
         return $this->render(
             'swift-auth::user.register',
@@ -80,37 +90,60 @@ class UserController extends Controller
     }
 
     /**
+     * Shows the admin create user form.
+     *
+     * @param  Request       $request  HTTP request context.
+     * @return View|Response           Blade or Inertia response with role list.
+     */
+    public function create(Request $request): View|Response
+    {
+        $roles = Cache::remember(
+            'swift-auth.roles',
+            300,
+            fn() => Role::orderBy('name')->get()
+        );
+
+        return $this->render(
+            'swift-auth::user.create',
+            'user/Create',
+            [
+                'roles' => $roles,
+            ],
+        );
+    }
+
+    /**
      * Stores a new user and assigns the selected role.
      *
-     * @param  Request                   $request  HTTP request with registration payload.
+     * @param  RegisterUserRequest       $request  Validated registration payload.
      * @return RedirectResponse|JsonResponse       Context-aware created response.
-     * @throws BadRequestException                 When validation fails.
      */
-    public function store(Request $request): RedirectResponse|JsonResponse
+    public function store(RegisterUserRequest $request): RedirectResponse|JsonResponse|string
     {
-        $prefix = config('swift-auth.table_prefix', '');
-        $min = (int) config('swift-auth.password_min_length', 8);
+        /** @var array{name:string,email:string,password:string,role?:int|string} $payload */
+        $payload = $request->validated();
 
-        $rules = [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:' . $prefix . 'Users',
-            'password' => ['required', 'string', 'confirmed', 'min:' . $min],
-            'role' => 'required|exists:' . $prefix . 'Roles,id_role',
-        ];
+        // If role not provided (public registration), assign a default role if configured.
+        if (!isset($payload['role'])) {
+            $defaultRole = config('swift-auth.default_role_id', null);
+            if ($defaultRole === null) {
+                $defaultRole = Role::orderBy('id_role')->value('id_role');
+            }
 
-        $validator = Validator::make($request->all(), $rules);
-
-        if ($validator->fails()) {
-            throw new BadRequestException(
-                'Registration data invalid.',
-                errors: $validator->errors()->toArray()
-            );
+            if ($defaultRole !== null) {
+                $payload['role'] = $defaultRole;
+            }
         }
 
-        $payload = $validator->validated();
-
-        $driver = config('swift-auth.hash_driver');
-        $hashed = $driver ? Hash::driver($driver)->make($payload['password']) : Hash::make($payload['password']);
+        $driverRaw = config('swift-auth.hash_driver');
+        $driver = is_string($driverRaw) ? $driverRaw : null;
+        if ($driver) {
+            /** @var \Illuminate\Contracts\Hashing\Hasher $hasher */
+            $hasher = Hash::driver($driver);
+            $hashed = $hasher->make($payload['password']);
+        } else {
+            $hashed = Hash::make($payload['password']);
+        }
 
         $user = User::create([
             'name' => $payload['name'],
@@ -118,7 +151,16 @@ class UserController extends Controller
             'password' => $hashed,
         ]);
 
-        $user->roles()->attach($payload['role']);
+        // Normalize role attachment to an array so attach() works with scalar or array.
+        $user->roles()->attach((array) ($payload['role'] ?? []));
+
+        logger()->info('User created', [
+            'user_id' => $user->getKey(),
+            'email' => $user->email,
+            // cast to string for consistent logging and static analysis
+            'created_by' => (string) SwiftAuth::id(),
+            'ip' => $request->ip(),
+        ]);
 
         if (SwiftAuth::check()) {
             return ResponseHelper::created(
@@ -130,7 +172,19 @@ class UserController extends Controller
             );
         }
 
-        SwiftAuth::login($user);
+        // Normalize device name header which may be string|array|null
+        $deviceNameRaw = $request->header('X-Device-Name', '');
+        $deviceName = is_array($deviceNameRaw) ? ($deviceNameRaw[0] ?? '') : (string) $deviceNameRaw;
+
+        /** @var string $deviceName */
+
+        SwiftAuth::login(
+            user: $user,
+            ipAddress: $request->ip(),
+            userAgent: $request->userAgent(),
+            deviceName: $deviceName,
+            remember: false,
+        );
 
         return ResponseHelper::created(
             message: 'Registration successful.',
@@ -148,10 +202,16 @@ class UserController extends Controller
      * @param  string        $id_user  Identifier of the user to show.
      * @return View|Response           Blade or Inertia response with user data.
      */
-    public function show(Request $request, string $id_user): View|Response
-    {
+    public function show(
+        Request $request,
+        string $id_user,
+    ): View|Response {
         $user = User::findOrFail($id_user);
-        $roles = Role::orderBy('name')->get();
+        $roles = Cache::remember(
+            'swift-auth.roles',
+            300,
+            fn() => Role::orderBy('name')->get()
+        );
 
         return $this->render(
             'swift-auth::user.show',
@@ -166,50 +226,45 @@ class UserController extends Controller
     /**
      * Updates the selected user name and roles.
      *
-     * @param  Request                   $request  HTTP request containing changes.
+     * @param  UpdateUserRequest         $request  Validated HTTP request containing changes.
      * @param  string                    $id_user  Identifier of the user to update.
      * @return RedirectResponse|JsonResponse       Context-aware success response.
-     * @throws BadRequestException                 When provided data is invalid.
      */
-    public function update(Request $request, string $id_user): RedirectResponse|JsonResponse
-    {
+    public function update(
+        UpdateUserRequest $request,
+        string $id_user,
+    ): RedirectResponse|JsonResponse|string {
         $user = User::findOrFail($id_user);
 
-        $prefix = config('swift-auth.table_prefix', '');
-        $validator = Validator::make(
-            $request->all(),
-            [
-                'name' => 'sometimes|string|max:255',
-                'roles' => 'sometimes|array',
-                'roles.*' => 'integer|exists:' . $prefix . 'Roles,id_role',
-                'role' => 'sometimes|integer|exists:' . $prefix . 'Roles,id_role',
-            ]
-        );
-
-        if ($validator->fails()) {
-            throw new BadRequestException(
-                'User update failed.',
-                errors: $validator->errors()->toArray()
-            );
-        }
-
-        $payload = $validator->validated();
+        /** @var array{name?:string,roles?:array<int>,role?:int} $payload */
+        $payload = $request->validated();
 
         $user->update([
             'name' => $payload['name'] ?? $user->name,
         ]);
 
+        /** @var array<int> $roleIds */
         $roleIds = [];
 
         if (isset($payload['roles'])) {
-            $roleIds = $payload['roles'];
+            $roleIds = is_array($payload['roles']) ? $payload['roles'] : [];
         } elseif (isset($payload['role'])) {
             $roleIds = [$payload['role']];
         }
 
+        // Normalize role ids to integers for the sync operation.
+        $roleIds = array_map('intval', $roleIds ?: []);
+
         if (!empty($roleIds)) {
             $user->roles()->sync($roleIds);
         }
+
+        logger()->info('User updated', [
+            'user_id' => $user->getKey(),
+            'updated_by' => SwiftAuth::id(),
+            'changes' => $payload,
+            'ip' => $request->ip(),
+        ]);
 
         return ResponseHelper::success(
             message: 'User updated successfully.',
@@ -221,6 +276,34 @@ class UserController extends Controller
     }
 
     /**
+     * Shows the admin edit form for a user.
+     *
+     * @param  Request       $request  HTTP request context.
+     * @param  string        $id_user  Identifier of the user to edit.
+     * @return View|Response           Blade or Inertia response with user and role data.
+     */
+    public function edit(
+        Request $request,
+        string $id_user,
+    ): View|Response {
+        $user = User::findOrFail($id_user);
+        $roles = Cache::remember(
+            'swift-auth.roles',
+            300,
+            fn() => Role::orderBy('name')->get()
+        );
+
+        return $this->render(
+            'swift-auth::user.edit',
+            'user/Edit',
+            [
+                'user' => $user,
+                'roles' => $roles,
+            ],
+        );
+    }
+
+    /**
      * Deletes a user from the system.
      *
      * @param  Request                   $request  HTTP request context.
@@ -228,13 +311,24 @@ class UserController extends Controller
      * @return RedirectResponse|JsonResponse       Context-aware success response.
      * @throws ForbiddenException                  When attempting to delete your own account.
      */
-    public function destroy(Request $request, string $id_user): RedirectResponse|JsonResponse
-    {
-        if ((int) SwiftAuth::id() === (int) $id_user) {
+    public function destroy(
+        Request $request,
+        string $id_user,
+    ): RedirectResponse|JsonResponse|string {
+        // Compare as strings to support both numeric and non-numeric identifiers (UUIDs).
+        if ((string) SwiftAuth::id() === (string) $id_user) {
             throw new ForbiddenException('You cannot delete your own account.');
         }
 
         $user = User::findOrFail($id_user);
+
+        logger()->warning('User deleted', [
+            'user_id' => $user->getKey(),
+            'email' => $user->email,
+            'deleted_by' => (string) SwiftAuth::id(),
+            'ip' => $request->ip(),
+        ]);
+
         $user->delete();
 
         return ResponseHelper::success(

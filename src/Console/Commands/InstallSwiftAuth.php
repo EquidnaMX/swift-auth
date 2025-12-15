@@ -16,11 +16,9 @@ namespace Equidna\SwiftAuth\Console\Commands;
 use Illuminate\Console\Command;
 
 /**
- * Class InstallSwiftAuth
+ * Installs SwiftAuth by publishing configuration, views, migrations, icons, and models.
  *
- * This command installs SwiftAuth by publishing configuration files,
- * views, migrations, icons, and models. It also allows the developer
- * to choose the desired frontend stack.
+ * Allows developers to choose the desired frontend stack (Blade, React+TS, React+JS).
  */
 class InstallSwiftAuth extends Command
 {
@@ -33,16 +31,16 @@ class InstallSwiftAuth extends Command
     /**
      * The console command description.
      */
-    protected $description = 'Instala SwiftAuth: configura, migra y publica archivos';
+    protected $description = 'Install SwiftAuth: configure, migrate and publish files';
 
     /**
-     * Execute the console command.
+     * Executes the console command.
      *
      * @return void
      */
     public function handle(): void
     {
-        $this->info('Iniciando instalación de SwiftAuth...');
+        $this->info('Starting SwiftAuth installation...');
 
         $this->call('vendor:publish', [
             '--provider' => 'Equidna\\SwiftAuth\\Providers\\SwiftAuthServiceProvider',
@@ -50,7 +48,7 @@ class InstallSwiftAuth extends Command
         ]);
 
         $choice = $this->choice(
-            '¿Qué frontend deseas utilizar?',
+            'Which frontend do you want to use?',
             [
                 'React + TypeScript',
                 'React + JavaScript',
@@ -67,7 +65,7 @@ class InstallSwiftAuth extends Command
             $this->installJavaScript();
         }
 
-        $this->info('Importando migraciones...');
+        $this->info('Importing migrations...');
 
         $this->call('vendor:publish', [
             '--provider' => 'Equidna\\SwiftAuth\\Providers\\SwiftAuthServiceProvider',
@@ -80,29 +78,29 @@ class InstallSwiftAuth extends Command
         $this->info('  php artisan swift-auth:create-admin "Admin Name" "admin@example.com"');
         $this->info('Set `SWIFT_ADMIN_NAME` and `SWIFT_ADMIN_EMAIL` in the environment for non-interactive creation.');
 
-        $this->info('Importando iconos...');
+        $this->info('Importing icons...');
         $this->call('vendor:publish', [
             '--provider' => 'Equidna\\SwiftAuth\\Providers\\SwiftAuthServiceProvider',
             '--tag' => 'swift-auth:icons'
         ]);
 
-        $this->info('Importando modelos...');
+        $this->info('Importing models...');
         $this->call('vendor:publish', [
             '--provider' => 'Equidna\\SwiftAuth\\Providers\\SwiftAuthServiceProvider',
             '--tag' => 'swift-auth:models'
         ]);
 
-        $this->info('Instalación completada.');
+        $this->info('Installation completed.');
     }
 
     /**
-     * Publish Blade views.
+     * Publishes Blade views.
      *
      * @return void
      */
     protected function installBlade(): void
     {
-        $this->info('Instalando vistas Blade...');
+        $this->info('Installing Blade views...');
         $this->call('vendor:publish', [
             '--provider' => 'Equidna\\SwiftAuth\\Providers\\SwiftAuthServiceProvider',
             '--tag' => 'swift-auth:views'
@@ -110,36 +108,38 @@ class InstallSwiftAuth extends Command
     }
 
     /**
-     * Publish React views with JavaScript.
+     * Publishes React views with JavaScript.
+     *
      * Displays a reminder to run npm commands.
      *
      * @return void
      */
     protected function installJavaScript(): void
     {
-        $this->info('Instalando vistas en React con JavaScript...');
+        $this->info('Installing React views with JavaScript...');
         $this->call('vendor:publish', [
             '--provider' => 'Equidna\\SwiftAuth\\Providers\\SwiftAuthServiceProvider',
             '--tag' => 'swift-auth:js-react'
         ]);
 
-        $this->warn('Recuerda ejecutar: npm install && npm run dev');
+        $this->warn('Remember to run: npm install && npm run dev');
     }
 
     /**
-     * Publish React views with TypeScript.
+     * Publishes React views with TypeScript.
+     *
      * Displays a reminder to run npm commands.
      *
      * @return void
      */
     protected function installTypeScript(): void
     {
-        $this->info('Instalando vistas en React con TypeScript...');
+        $this->info('Installing React views with TypeScript...');
         $this->call('vendor:publish', [
             '--provider' => 'Equidna\\SwiftAuth\\Providers\\SwiftAuthServiceProvider',
             '--tag' => 'swift-auth:ts-react'
         ]);
 
-        $this->warn('Recuerda ejecutar: npm install && npm run dev');
+        $this->warn('Remember to run: npm install && npm run dev');
     }
 }

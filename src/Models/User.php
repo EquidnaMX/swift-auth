@@ -13,9 +13,12 @@
 
 namespace Equidna\SwiftAuth\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Database\Eloquent\Builder;
+use Laragear\WebAuthn\Contracts\WebAuthnAuthenticatable;
+use Laragear\WebAuthn\WebAuthnAuthentication;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * Represents an authenticated SwiftAuth user record.
@@ -27,27 +30,51 @@ use Illuminate\Database\Eloquent\Builder;
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Equidna\SwiftAuth\Models\Role> $roles
  *
  * @method static Builder<\Equidna\SwiftAuth\Models\User> where(string $column, mixed $value = null)
+ * @method static Builder<\Equidna\SwiftAuth\Models\User> whereNotNull(string $column)
  * @method static Builder<\Equidna\SwiftAuth\Models\User> search(null|string $term)
  * @method static static create(array<string,mixed> $attributes = [])
  * @method static static find(string|int $id)
  * @method static static findOrFail(string|int $id)
  * @method static static firstOrCreate(array<string,mixed> $attributes, array<string,mixed> $values = [])
  */
-class User extends Authenticatable
+class User extends Authenticatable implements WebAuthnAuthenticatable
 {
+    use WebAuthnAuthentication;
+    use HasApiTokens;
+
     protected $table;
     protected $primaryKey = 'id_user';
 
     /**
+     * Cached available actions to avoid repeated parsing.
+     *
+     * @var array<int, string>|null
+     */
+    private ?array $cachedActions = null;
+
+    /**
      * Initialize the model.
+     *
+     * @param array<string, mixed> $attributes
      */
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        $prefix = config('swift-auth.table_prefix', '');
-        $this->table = $prefix . 'Users';
+        $this->table = $this->tablePrefix() . 'Users';
     }
 
+    protected function tablePrefix(): string
+    {
+        try {
+            return (string) config('swift-auth.table_prefix', '');
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+
+    /**
+     * @var array<int, string>
+     */
     protected $with = ['roles'];
     protected $fillable = [
         'name',
@@ -59,8 +86,14 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    /**
+     * @var array<string, string>
+     */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'locked_until' => 'datetime',
+        'last_failed_login_at' => 'datetime',
     ];
 
     /**
@@ -68,14 +101,12 @@ class User extends Authenticatable
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany<
      *     \Equidna\SwiftAuth\Models\Role,
-     *     $this,
-     *     \Illuminate\Database\Eloquent\Relations\Pivot,
-     *     'pivot'
+     *     $this
      * >
      */
     public function roles(): BelongsToMany
     {
-        $prefix = config('swift-auth.table_prefix', '');
+        $prefix = (string) config('swift-auth.table_prefix', '');
         return $this->belongsToMany(
             Role::class,
             $prefix . 'UsersRoles',
@@ -85,10 +116,10 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if the user has any of the given roles (by name).
+     * Checks if the user has any of the given roles (by name).
      *
-     * @param string|array<string> $roles List of role names to check.
-     * @return bool True if the user has at least one of the roles.
+     * @param  string|array<string> $roles  List of role names to check.
+     * @return bool                          True if the user has at least one of the roles.
      */
     public function hasRoles(string|array $roles): bool
     {
@@ -101,13 +132,23 @@ class User extends Authenticatable
             ->isNotEmpty();
     }
 
+    public function hasRole(string|array $roles): bool
+    {
+        return $this->hasRoles($roles);
+    }
+
     /**
-     * Get the list of available actions from all assigned roles.
+     * Returns the list of available actions from all assigned roles.
      *
-     * @return array<int, string> Unique list of actions the user can perform.
+     * @return array<int, string>  Unique list of actions the user can perform.
      */
     public function availableActions(): array
     {
+        // Return cached result if available
+        if ($this->cachedActions !== null) {
+            return $this->cachedActions;
+        }
+
         $actions = [];
 
         foreach ($this->roles as $role) {
@@ -115,28 +156,33 @@ class User extends Authenticatable
                 continue;
             }
 
-            $roleActions = array_filter(
-                array_map(
-                    static fn(string $action) => trim($action),
-                    explode(',', $role->actions)
-                )
-            );
+            // Actions are now stored as JSON array
+            $roleActions = is_array($role->actions)
+                ? $role->actions
+                : [];
 
             $actions = array_merge($actions, $roleActions);
         }
 
-        return array_values(array_unique($actions));
+        // Cache the result
+        /** @var array<int, string> $uniqueActions */
+        $uniqueActions = array_values(array_unique($actions));
+        $this->cachedActions = $uniqueActions;
+
+        return $this->cachedActions;
     }
 
     /**
-     * Scope a query to filter users by name or email.
+     * Scopes a query to filter users by name or email.
      *
-     * @param \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\User> $query
-     * @param string|null $search
-     * @return \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\User>
+     * @param  \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\User> $query   Query builder instance.
+     * @param  string|null                                                               $search  Search term.
+     * @return \Illuminate\Database\Eloquent\Builder<\Equidna\SwiftAuth\Models\User>          Filtered query.
      */
-    public function scopeSearch(Builder $query, null|string $search): Builder
-    {
+    public function scopeSearch(
+        Builder $query,
+        null|string $search,
+    ): Builder {
         if (empty($search)) {
             return $query;
         }

@@ -11,9 +11,9 @@
 namespace Equidna\SwiftAuth\Http\Middleware;
 
 use Illuminate\Http\Request;
-use Equidna\Toolkit\Helpers\ResponseHelper;
 use Symfony\Component\HttpFoundation\Response;
 use Equidna\SwiftAuth\Facades\SwiftAuth;
+use Equidna\Toolkit\Helpers\ResponseHelper;
 use Closure;
 
 /**
@@ -22,15 +22,15 @@ use Closure;
 class CanPerformAction
 {
     /**
-     * Handle an incoming request.
+     * Handles an incoming request.
      *
-     * Verifies if the authenticated user has permission to perform the given action.
-     * If the user does not have the required permission, they are redirected back with an error message.
+     * Verifies if the authenticated user has permission to perform the given action. If the user
+     * does not have the required permission, returns a forbidden response.
      *
-     * @param  Request $request  Incoming HTTP request.
-     * @param  Closure $next     Next middleware to handle the request.
-     * @param  string  $action   Action the user is attempting to perform.
-     * @return Response          Response after handling the request.
+     * @param  Request  $request  Incoming HTTP request.
+     * @param  Closure  $next     Next middleware to handle the request.
+     * @param  string   $action   Action the user is attempting to perform.
+     * @return Response           Response after handling the request.
      */
     public function handle(
         Request $request,

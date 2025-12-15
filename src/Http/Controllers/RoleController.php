@@ -13,18 +13,19 @@
 
 namespace Equidna\SwiftAuth\Http\Controllers;
 
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Contracts\View\View;
+use Inertia\Response;
+use Equidna\SwiftAuth\Facades\SwiftAuth;
+use Equidna\SwiftAuth\Models\Role;
+use Equidna\SwiftAuth\Support\Traits\SelectiveRender;
 use Equidna\Toolkit\Exceptions\BadRequestException;
 use Equidna\Toolkit\Helpers\ResponseHelper;
-use Inertia\Response;
-use Equidna\SwiftAuth\Models\Role;
-use Equidna\SwiftAuth\Traits\SelectiveRender;
 
 /**
  * Administers SwiftAuth roles through list, create, update, and delete endpoints.
@@ -109,10 +110,17 @@ class RoleController extends Controller
             ),
         );
 
-        Role::create([
+        $role = Role::create([
             'name' => $payload['name'],
             'description' => $payload['description'],
-            'actions' => implode(',', $roleActions),
+            'actions' => $roleActions, // Now stored as JSON array
+        ]);
+
+        logger()->info('Role created', [
+            'role_id' => $role->getKey(),
+            'role_name' => $role->name,
+            'created_by' => SwiftAuth::id(),
+            'ip' => $request->ip(),
         ]);
 
         return ResponseHelper::created(
@@ -129,8 +137,10 @@ class RoleController extends Controller
      * @param  string        $id_role  Identifier for the role.
      * @return View|Response           Blade or Inertia response with role data.
      */
-    public function edit(Request $request, string $id_role): View|Response
-    {
+    public function edit(
+        Request $request,
+        string $id_role,
+    ): View|Response {
         $role = Role::findOrFail($id_role);
 
         return $this->render(
@@ -151,8 +161,10 @@ class RoleController extends Controller
      * @return RedirectResponse|JsonResponse       Context-aware success response.
      * @throws BadRequestException                 When validation fails.
      */
-    public function update(Request $request, string $id_role): RedirectResponse|JsonResponse
-    {
+    public function update(
+        Request $request,
+        string $id_role,
+    ): RedirectResponse|JsonResponse {
         $role = Role::findOrFail($id_role);
 
         $validator = Validator::make(
@@ -182,7 +194,15 @@ class RoleController extends Controller
 
         $role->update([
             'description' => $payload['description'],
-            'actions' => implode(',', $roleActions),
+            'actions' => $roleActions, // Now stored as JSON array
+        ]);
+
+        logger()->info('Role updated', [
+            'role_id' => $role->getKey(),
+            'role_name' => $role->name,
+            'updated_by' => SwiftAuth::id(),
+            'changes' => $payload,
+            'ip' => $request->ip(),
         ]);
 
         return ResponseHelper::success(
@@ -201,9 +221,18 @@ class RoleController extends Controller
      * @param  string                    $id_role  Identifier of the role to delete.
      * @return RedirectResponse|JsonResponse       Context-aware success response.
      */
-    public function destroy(Request $request, string $id_role): RedirectResponse|JsonResponse
-    {
+    public function destroy(
+        Request $request,
+        string $id_role,
+    ): RedirectResponse|JsonResponse {
         $role = Role::findOrFail($id_role);
+
+        logger()->warning('Role deleted', [
+            'role_id' => $role->getKey(),
+            'role_name' => $role->name,
+            'deleted_by' => SwiftAuth::id(),
+            'ip' => $request->ip(),
+        ]);
 
         $role->delete();
 

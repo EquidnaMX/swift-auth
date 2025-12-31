@@ -30,7 +30,8 @@ return new class extends Migration {
             $table->string('token');
             $table->timestamp('created_at')->nullable();
 
-            // Performance index for token verification
+            // Performance indexes
+            $table->index('token');
             $table->index(['email', 'token']);
         });
     }

@@ -47,6 +47,12 @@ class InstallSwiftAuth extends Command
             '--tag' => 'swift-auth:config'
         ]);
 
+        $this->info('Publishing translations...');
+        $this->call('vendor:publish', [
+            '--provider' => 'Equidna\\SwiftAuth\\Providers\\SwiftAuthServiceProvider',
+            '--tag' => 'swift-auth:lang'
+        ]);
+
         $choice = $this->choice(
             'Which frontend do you want to use?',
             [
@@ -65,8 +71,7 @@ class InstallSwiftAuth extends Command
             $this->installJavaScript();
         }
 
-        $this->info('Importing migrations...');
-
+        $this->info('Publishing migrations...');
         $this->call('vendor:publish', [
             '--provider' => 'Equidna\\SwiftAuth\\Providers\\SwiftAuthServiceProvider',
             '--tag' => 'swift-auth:migrations'
@@ -74,9 +79,10 @@ class InstallSwiftAuth extends Command
 
         $this->call('migrate');
 
-        $this->info('No automatic admin seeded. To create an administrator run:');
-        $this->info('  php artisan swift-auth:create-admin "Admin Name" "admin@example.com"');
-        $this->info('Set `SWIFT_ADMIN_NAME` and `SWIFT_ADMIN_EMAIL` in the environment for non-interactive creation.');
+        $this->info('To create an administrator user, run:');
+        $this->info('  php artisan swift-auth:create-admin "Admin Name" admin@example.com');
+        $this->info('The command will securely prompt for a password.');
+        $this->info('Leave empty to generate a random password.');
 
         $this->info('Importing icons...');
         $this->call('vendor:publish', [

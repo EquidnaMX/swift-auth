@@ -32,6 +32,8 @@ return new class extends Migration {
             $table->timestamp('last_activity');
             $table->timestamps();
 
+            // Performance indexes
+            $table->index('id_user');
             $table->index(['id_user', 'last_activity']);
         });
     }

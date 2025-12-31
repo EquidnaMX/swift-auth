@@ -1,8 +1,11 @@
-import { Link } from "@inertiajs/react";
+import { Link, usePage } from "@inertiajs/react";
 import { useState } from "react";
+import { __ } from "../../../lang/translations";
+import { LanguageSwitcher } from "../LanguageSwitcher";
 
 export function Navbar({ user }) {
     const [isOpen, setIsOpen] = useState(false);
+    const { locale } = usePage().props;
 
     return (
         <nav className="bg-gray-900 text-white">
@@ -30,6 +33,10 @@ export function Navbar({ user }) {
                         {user ? (
                             <>
                                 <span className="px-4 py-2">{user.name}</span>
+                                <LanguageSwitcher
+                                    currentLocale={locale}
+                                    className="mr-2"
+                                />
                                 <form
                                     method="GET"
                                     action={route("swift-auth.logout")}
@@ -38,17 +45,23 @@ export function Navbar({ user }) {
                                         type="submit"
                                         className="bg-red-500 px-4 py-2 rounded hover:bg-red-600"
                                     >
-                                        Cerrar sesión
+                                        {__("auth.logout_button")}
                                     </button>
                                 </form>
                             </>
                         ) : (
-                            <Link
-                                href="/login"
-                                className="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600"
-                            >
-                                Iniciar sesión
-                            </Link>
+                            <>
+                                <LanguageSwitcher
+                                    currentLocale={locale}
+                                    className="mr-2"
+                                />
+                                <Link
+                                    href="/login"
+                                    className="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600"
+                                >
+                                    {__("auth.login_button")}
+                                </Link>
+                            </>
                         )}
                     </div>
                 </div>
@@ -70,22 +83,26 @@ export function Navbar({ user }) {
                         {user ? (
                             <>
                                 <span className="py-2">{user.name}</span>
+                                <LanguageSwitcher currentLocale={locale} />
                                 <form method="POST" action="/logout">
                                     <button
                                         type="submit"
                                         className="bg-red-500 px-4 py-2 rounded hover:bg-red-600"
                                     >
-                                        Cerrar sesión
+                                        {__("auth.logout_button")}
                                     </button>
                                 </form>
                             </>
                         ) : (
-                            <Link
-                                href="/login"
-                                className="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600"
-                            >
-                                Iniciar sesión
-                            </Link>
+                            <>
+                                <LanguageSwitcher currentLocale={locale} />
+                                <Link
+                                    href="/login"
+                                    className="bg-blue-500 px-4 py-2 rounded hover:bg-blue-600"
+                                >
+                                    {__("auth.login_button")}
+                                </Link>
+                            </>
                         )}
                     </div>
                 </div>

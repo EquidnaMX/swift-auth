@@ -1,10 +1,11 @@
 import { Link, useForm } from "@inertiajs/react";
 import Authenticated from "../../layouts/Authenticated";
+import { __ } from "../../../lang/translations";
 
 const CreateForm = () => {
     const { data, setData, post, processing, errors } = useForm({
         name: "",
-        description: ""
+        description: "",
     });
 
     const handleSubmit = (e) => {
@@ -21,11 +22,15 @@ const CreateForm = () => {
             <Head title="New user" />
 
             <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-2xl font-bold text-center mb-4">Agregar rol</h2>
+                <h2 className="text-2xl font-bold text-center mb-4">
+                    {__("role.add_role")}
+                </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium">Nombre</label>
+                        <label className="block text-sm font-medium">
+                            {__("role.name")}
+                        </label>
                         <input
                             type="text"
                             name="name"
@@ -35,7 +40,9 @@ const CreateForm = () => {
                             required
                         />
                         {errors.name && (
-                            <p className="text-gray-500 text-sm">{errors.name}</p>
+                            <p className="text-gray-500 text-sm">
+                                {errors.name}
+                            </p>
                         )}
                     </div>
 
@@ -47,24 +54,26 @@ const CreateForm = () => {
                             type="text"
                             name="description"
                             value={data.description}
-                            onChange={(e) => setData("description", e.target.value)}
+                            onChange={(e) =>
+                                setData("description", e.target.value)
+                            }
                             className="w-full border rounded px-3 py-2 mt-1"
                             required
                         />
                         {errors.description && (
-                            <p className="text-gray-500 text-sm">{errors.description}</p>
+                            <p className="text-gray-500 text-sm">
+                                {errors.description}
+                            </p>
                         )}
                     </div>
 
                     <div className="flex justify-between items-center">
-
-
-                    <button
-                        type="button"
-                        className="bg-transparent hover:bg-gray-500 text-gray-700 font-semibold hover:text-white py-2 px-4 border border-gray-500 hover:border-transparent rounded"
-                        onClick={handleCancel}
+                        <button
+                            type="button"
+                            className="bg-transparent hover:bg-gray-500 text-gray-700 font-semibold hover:text-white py-2 px-4 border border-gray-500 hover:border-transparent rounded"
+                            onClick={handleCancel}
                         >
-                        Cancelar
+                            {__("auth.cancel")}
                         </button>
 
                         <button
@@ -72,7 +81,7 @@ const CreateForm = () => {
                             className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
                             disabled={processing}
                         >
-                            {processing ? "Enviando..." : "Guardar"}
+                            {processing ? __("auth.saving") : __("user.save")}
                         </button>
                     </div>
                 </form>

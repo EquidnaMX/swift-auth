@@ -1,6 +1,7 @@
 import { Head, useForm } from "@inertiajs/react";
 import { FormEvent, ReactNode } from "react";
 import Authenticated from "../../layouts/Authenticated";
+import { __ } from "../../../lang/translations";
 
 type EditFormProps = {
     role: {
@@ -18,9 +19,7 @@ const EditForm = ({ role }: EditFormProps) => {
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        put(route("swift-auth.users.role.update", role.id), {
-            onError: (errors) => alert(JSON.stringify(errors)),
-        });
+        put(route("swift-auth.users.role.update", role.id), {});
     };
 
     const handleCancel = () => {
@@ -29,16 +28,16 @@ const EditForm = ({ role }: EditFormProps) => {
 
     return (
         <>
-            <Head title="Editar rol" />
+            <Head title={__("role.edit_role")} />
             <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
                 <h2 className="text-2xl font-bold text-center mb-4">
-                    Editar rol
+                    {__("role.edit_role")}
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium">
-                            Nombre
+                            {__("role.name")}
                         </label>
                         <input
                             type="text"
@@ -82,7 +81,7 @@ const EditForm = ({ role }: EditFormProps) => {
                             className="bg-transparent hover:bg-gray-500 text-gray-700 font-semibold hover:text-white py-2 px-4 border border-gray-500 hover:border-transparent rounded"
                             onClick={handleCancel}
                         >
-                            Cancelar
+                            {__("auth.cancel")}
                         </button>
 
                         <button
@@ -90,7 +89,7 @@ const EditForm = ({ role }: EditFormProps) => {
                             className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
                             disabled={processing}
                         >
-                            {processing ? "Enviando..." : "Guardar"}
+                            {processing ? __("auth.saving") : __("user.save")}
                         </button>
                     </div>
                 </form>

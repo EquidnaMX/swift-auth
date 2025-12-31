@@ -22,5 +22,6 @@ final class MfaChallengeStarted
         public readonly string $sessionId,
         public readonly ?string $ipAddress,
         public readonly array $driverMetadata
-    ) {}
+    ) {
+    }
 }

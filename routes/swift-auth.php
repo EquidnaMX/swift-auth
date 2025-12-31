@@ -10,11 +10,14 @@
 
 use Illuminate\Support\Facades\Route;
 use Equidna\SwiftAuth\Http\Controllers\AuthController;
+use Equidna\SwiftAuth\Http\Controllers\EmailVerificationController;
+use Equidna\SwiftAuth\Http\Controllers\LocaleController;
+use Equidna\SwiftAuth\Http\Controllers\MfaController;
 use Equidna\SwiftAuth\Http\Controllers\PasswordController;
+use Equidna\SwiftAuth\Http\Controllers\UserController;
+use Equidna\SwiftAuth\Http\Controllers\WebAuthnController;
 use Equidna\SwiftAuth\Http\Middleware\CanPerformAction;
 use Equidna\SwiftAuth\Http\Middleware\RequireAuthentication;
-use Equidna\SwiftAuth\Http\Controllers\MfaController;
-use Equidna\SwiftAuth\Http\Controllers\UserController;
 
 $routePrefix = (string) config('swift-auth.route_prefix', 'swift-auth');
 
@@ -23,9 +26,29 @@ Route::middleware(['web', 'SwiftAuth.SecurityHeaders'])
     ->as($routePrefix . '.')
     ->group(
         function () {
+            // Locale switching
+            Route::post('locale/{locale}', [LocaleController::class, 'switch'])->name('locale.switch');
+
             Route::get('login', [AuthController::class, 'showLoginForm'])->name('login.form');
             Route::post('login', [AuthController::class, 'login'])->name('login');
+            Route::match(['get', 'post'], 'logout', [AuthController::class, 'logout'])->name('logout');
 
+            // Password reset routes
+            Route::prefix('password')->as('password.')
+                ->group(
+                    function () {
+                        Route::get('', [PasswordController::class, 'showRequestForm'])->name('request.form');
+                        Route::post('', [PasswordController::class, 'sendResetLink'])
+                            ->middleware('throttle:swift-auth-password-reset')
+                            ->name('request.send');
+
+                        Route::get('sent', [PasswordController::class, 'showRequestSent'])->name('request.sent');
+                        Route::get('{token}', [PasswordController::class, 'showResetForm'])->name('reset.form');
+                        Route::post('reset', [PasswordController::class, 'resetPassword'])->name('reset.update');
+                    }
+                );
+
+            // Multi-Factor Authentication (MFA) routes
             Route::prefix('mfa')->as('mfa.')
                 ->group(
                     function () {
@@ -41,20 +64,29 @@ Route::middleware(['web', 'SwiftAuth.SecurityHeaders'])
                     // Registration (Requires Auth)
                     Route::middleware(RequireAuthentication::class)
                         ->group(function () {
-                            Route::post('register/options', [Equidna\SwiftAuth\Http\Controllers\WebAuthnController::class, 'registerOptions'])
+                            Route::post('register/options', [WebAuthnController::class, 'registerOptions'])
                                 ->name('register.options');
-                            Route::post('register', [Equidna\SwiftAuth\Http\Controllers\WebAuthnController::class, 'register'])
+                            Route::post('register', [WebAuthnController::class, 'register'])
                                 ->name('register');
                         });
 
                     // Login (Public)
-                    Route::post('login/options', [Equidna\SwiftAuth\Http\Controllers\WebAuthnController::class, 'loginOptions'])
+                    Route::post('login/options', [WebAuthnController::class, 'loginOptions'])
                         ->name('login.options');
-                    Route::post('login', [Equidna\SwiftAuth\Http\Controllers\WebAuthnController::class, 'login'])
+                    Route::post('login', [WebAuthnController::class, 'login'])
                         ->name('login');
                 });
 
-            Route::match(['get', 'post'], 'logout', [AuthController::class, 'logout'])->name('logout');
+            // Email verification routes
+            Route::prefix('email')->as('email.')
+                ->group(
+                    function () {
+                        Route::post('send', [EmailVerificationController::class, 'send'])
+                            ->name('send');
+                        Route::get('verify/{token}', [EmailVerificationController::class, 'verify'])
+                            ->name('verify');
+                    }
+                );
 
             // Public registration routes (optional)
             if (config('swift-auth.allow_registration', true)) {
@@ -65,20 +97,6 @@ Route::middleware(['web', 'SwiftAuth.SecurityHeaders'])
                     ->middleware('throttle:swift-auth-registration')
                     ->name('public.register.store');
             }
-
-            Route::prefix('password')->as('password.')
-                ->group(
-                    function () {
-                        Route::get('', [PasswordController::class, 'showRequestForm'])->name('request.form');
-                        Route::post('', [PasswordController::class, 'sendResetLink'])
-                            ->middleware('throttle:swift-auth-password-reset')
-                            ->name('request.send');
-
-                        Route::get('sent', [PasswordController::class, 'showRequestSent'])->name('request.sent');
-                        Route::get('{token}', [PasswordController::class, 'showResetForm'])->name('reset.form');
-                        Route::post('reset', [PasswordController::class, 'resetPassword'])->name('reset.update');
-                    }
-                );
 
             Route::middleware([
                 RequireAuthentication::class,

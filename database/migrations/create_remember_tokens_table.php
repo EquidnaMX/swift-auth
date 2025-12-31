@@ -34,6 +34,10 @@ return new class extends Migration {
             $table->string('browser', 255)->nullable();
             $table->timestamps();
 
+            // Performance indexes
+            $table->index('id_user');
+            $table->index('hashed_token');
+            $table->index('expires_at');
             $table->index(['id_user', 'expires_at']);
         });
     }

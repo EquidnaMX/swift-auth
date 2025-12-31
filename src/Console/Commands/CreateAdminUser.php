@@ -36,7 +36,7 @@ class CreateAdminUser extends Command
      * The console command description.
      *
      */
-    protected $description = 'Create an administrator user using .env values or user-provided data';
+    protected $description = 'Create an administrator user with name and email arguments';
 
     /**
      * Executes the console command.
@@ -46,16 +46,31 @@ class CreateAdminUser extends Command
     public function handle(): void
     {
         // Retrieve raw inputs (may be mixed/null) then normalize to strings.
-        $rawName = $this->argument('name') ?? env('SWIFT_ADMIN_NAME');
-        $rawEmail = $this->argument('email') ?? env('SWIFT_ADMIN_EMAIL');
+        $rawName = $this->argument('name');
+        $rawEmail = $this->argument('email');
 
         $userName = is_string($rawName) ? trim($rawName) : '';
         $email = is_string($rawEmail) ? trim($rawEmail) : '';
 
         if ($userName === '' || $email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->info('Aborting: provide admin name and email via command arguments.');
-            $this->info('Or set SWIFT_ADMIN_NAME and SWIFT_ADMIN_EMAIL in the environment.');
+            $this->error('Aborting: please provide admin name and email as arguments.');
+            $this->info('Usage: php artisan swift-auth:create-admin "Name" email@example.com');
             return;
+        }
+
+        // Always prompt for password (never from command line for security)
+        $password = (string) $this->secret('Enter admin password (leave empty to generate random)');
+        $password = trim($password);
+
+        // Generate random password if empty
+        $passwordGenerated = false;
+        if ($password === '') {
+            try {
+                $password = bin2hex(random_bytes(16));
+            } catch (\Exception $e) {
+                $password = bin2hex(openssl_random_pseudo_bytes(16));
+            }
+            $passwordGenerated = true;
         }
 
         if (!$this->confirm("Do you want to create the admin user '{$userName}' with email '{$email}'?", true)) {
@@ -63,14 +78,15 @@ class CreateAdminUser extends Command
             return;
         }
 
-        try {
-            $randomPassword = bin2hex(random_bytes(16));
-        } catch (\Exception $e) {
-            $randomPassword = bin2hex(openssl_random_pseudo_bytes(16));
-        }
+        $this->createAdminUser($userName, $email, $password, false);
 
-        $this->createAdminUser($userName, $email, $randomPassword, false);
-        $this->info('Admin user created. Request a password reset for the new account to set a secure password.');
+        if ($passwordGenerated) {
+            $this->info('Admin user created with generated password.');
+            $this->warn('Password: ' . $password);
+            $this->info('Save this password securely. It will not be shown again.');
+        } else {
+            $this->info('Admin user created successfully.');
+        }
     }
 
     private function createAdminUser(

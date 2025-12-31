@@ -57,7 +57,7 @@ class UserController extends Controller
 
         return $this->render(
             'swift-auth::user.index',
-            'user/Index',
+            'SwiftAuth/User/Index',
             [
                 'users' => $users,
                 // Ensure actions is always an array for the view and static analysis
@@ -105,7 +105,7 @@ class UserController extends Controller
 
         return $this->render(
             'swift-auth::user.create',
-            'user/Create',
+            'SwiftAuth/User/Create',
             [
                 'roles' => $roles,
             ],
@@ -295,7 +295,7 @@ class UserController extends Controller
 
         return $this->render(
             'swift-auth::user.edit',
-            'user/Edit',
+            'SwiftAuth/User/Edit',
             [
                 'user' => $user,
                 'roles' => $roles,

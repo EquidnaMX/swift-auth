@@ -1,5 +1,6 @@
 import { Head, useForm } from "@inertiajs/react";
 import Authenticated from "../../layouts/Authenticated";
+import { __ } from "../../../lang/translations";
 
 const EditForm = ({ user }) => {
     const { data, setData, put, processing, errors } = useForm({
@@ -9,9 +10,7 @@ const EditForm = ({ user }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        put(route("swift-auth.users.update", user.id), {
-            onError: (errors) => alert(JSON.stringify(errors)),
-        });
+        put(route("swift-auth.users.update", user.id), {});
     };
 
     const handleCancel = () => {
@@ -20,16 +19,16 @@ const EditForm = ({ user }) => {
 
     return (
         <>
-            <Head title="Editar usuario" />
+            <Head title={__("user.edit")} />
             <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
                 <h2 className="text-2xl font-bold text-center mb-4">
-                    Editar usuario
+                    {__("user.edit")}
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium">
-                            Nombre
+                            {__("auth.name")}
                         </label>
                         <input
                             type="text"
@@ -48,7 +47,7 @@ const EditForm = ({ user }) => {
 
                     <div>
                         <label className="block text-sm font-medium">
-                            Correo electrónico
+                            {__("auth.email")}
                         </label>
                         <input
                             type="email"
@@ -71,7 +70,7 @@ const EditForm = ({ user }) => {
                             className="bg-transparent hover:bg-gray-500 text-gray-700 font-semibold hover:text-white py-2 px-4 border border-gray-500 hover:border-transparent rounded"
                             onClick={handleCancel}
                         >
-                            Cancelar
+                            {__("auth.cancel")}
                         </button>
 
                         <button
@@ -79,7 +78,7 @@ const EditForm = ({ user }) => {
                             className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
                             disabled={processing}
                         >
-                            {processing ? "Enviando..." : "Guardar"}
+                            {processing ? __("auth.saving") : __("user.save")}
                         </button>
                     </div>
                 </form>

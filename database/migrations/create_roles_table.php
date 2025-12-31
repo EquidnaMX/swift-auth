@@ -36,6 +36,10 @@ return new class extends Migration {
             $table->primary(['id_user', 'id_role']);
             $table->foreign('id_user')->references('id_user')->on($prefix . 'Users')->onDelete('cascade');
             $table->foreign('id_role')->references('id_role')->on($prefix . 'Roles')->onDelete('cascade');
+
+            // Performance indexes on foreign keys
+            $table->index('id_user');
+            $table->index('id_role');
         });
     }
 

@@ -22,11 +22,11 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Response;
+use Equidna\SwiftAuth\Classes\Auth\Services\AccountLockoutService;
+use Equidna\SwiftAuth\Classes\Auth\Traits\ChecksRateLimits;
 use Equidna\SwiftAuth\Classes\Users\Contracts\UserRepositoryInterface;
 use Equidna\SwiftAuth\Facades\SwiftAuth;
 use Equidna\SwiftAuth\Http\Requests\LoginRequest;
-use Equidna\SwiftAuth\Classes\Auth\Services\AccountLockoutService;
-use Equidna\SwiftAuth\Classes\Auth\Traits\ChecksRateLimits;
 use Equidna\SwiftAuth\Support\Traits\SelectiveRender;
 use Equidna\Toolkit\Exceptions\UnauthorizedException;
 use Equidna\Toolkit\Helpers\ResponseHelper;
@@ -51,7 +51,7 @@ class AuthController extends Controller
     {
         return $this->render(
             'swift-auth::login',
-            'Login',
+            'SwiftAuth/Login',
         );
     }
 
@@ -126,7 +126,7 @@ class AuthController extends Controller
 
         if (is_string($response)) {
             $response = response()->json([
-                'message' => 'Logged out successfully.',
+                'message' => __('swift-auth::auth.logout_success'),
                 'forward_url' => route('swift-auth.login.form'),
             ]);
         }
@@ -376,7 +376,7 @@ class AuthController extends Controller
         // Normalize potential non-response return into JsonResponse
         if (is_string($response)) {
             $response = response()->json([
-                'message' => 'Login successful.',
+                'message' => __('swift-auth::auth.login_success'),
                 'user_id' => $user->getKey(),
                 'forward_url' => Config::get('swift-auth.success_url'),
                 'evicted_session_ids' => $loginResult['evicted_session_ids'] ?? [],

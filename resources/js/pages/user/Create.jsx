@@ -1,5 +1,6 @@
 import { Link, useForm } from "@inertiajs/react";
 import Authenticated from "../../layouts/Authenticated";
+import { __ } from "../../../lang/translations";
 
 const CreateForm = () => {
     const { data, setData, post, processing, errors } = useForm({
@@ -23,11 +24,15 @@ const CreateForm = () => {
             <Head title="New user" />
 
             <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-2xl font-bold text-center mb-4">Agregar usuario</h2>
+                <h2 className="text-2xl font-bold text-center mb-4">
+                    {__("user.create")}
+                </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium">Nombre</label>
+                        <label className="block text-sm font-medium">
+                            {__("auth.name")}
+                        </label>
                         <input
                             type="text"
                             name="name"
@@ -37,13 +42,15 @@ const CreateForm = () => {
                             required
                         />
                         {errors.name && (
-                            <p className="text-gray-500 text-sm">{errors.name}</p>
+                            <p className="text-gray-500 text-sm">
+                                {errors.name}
+                            </p>
                         )}
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium">
-                            Correo electrónico
+                            {__("auth.email")}
                         </label>
                         <input
                             type="email"
@@ -54,19 +61,23 @@ const CreateForm = () => {
                             required
                         />
                         {errors.email && (
-                            <p className="text-gray-500 text-sm">{errors.email}</p>
+                            <p className="text-gray-500 text-sm">
+                                {errors.email}
+                            </p>
                         )}
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium">
-                            Contraseña
+                            {__("auth.password")}
                         </label>
                         <input
                             type="password"
                             name="password"
                             value={data.password}
-                            onChange={(e) => setData("password", e.target.value)}
+                            onChange={(e) =>
+                                setData("password", e.target.value)
+                            }
                             className="w-full border rounded px-3 py-2 mt-1"
                             required
                         />
@@ -94,14 +105,12 @@ const CreateForm = () => {
                     </div>
 
                     <div className="flex justify-between items-center">
-
-
-                    <button
-                        type="button"
-                        className="bg-transparent hover:bg-gray-500 text-gray-700 font-semibold hover:text-white py-2 px-4 border border-gray-500 hover:border-transparent rounded"
-                        onClick={handleCancel}
+                        <button
+                            type="button"
+                            className="bg-transparent hover:bg-gray-500 text-gray-700 font-semibold hover:text-white py-2 px-4 border border-gray-500 hover:border-transparent rounded"
+                            onClick={handleCancel}
                         >
-                        Cancelar
+                            Cancelar
                         </button>
 
                         <button
@@ -109,7 +118,7 @@ const CreateForm = () => {
                             className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
                             disabled={processing}
                         >
-                            {processing ? "Enviando..." : "Guardar"}
+                            {processing ? __("auth.saving") : __("user.save")}
                         </button>
                     </div>
                 </form>

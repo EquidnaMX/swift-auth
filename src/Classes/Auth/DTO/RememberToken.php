@@ -23,5 +23,6 @@ class RememberToken
         public readonly ?string $userAgent = null,
         public readonly ?string $deviceName = null,
         public readonly ?int $userId = null,
-    ) {}
+    ) {
+    }
 }

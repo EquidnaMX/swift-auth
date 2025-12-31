@@ -3,6 +3,7 @@ import Authenticated from "../../layouts/Authenticated";
 import { PageProps } from "@/types";
 import { Link, Head } from "@inertiajs/react";
 import { router } from "@inertiajs/react";
+import { __ } from "../../../lang/translations";
 
 type User = {
     id: number;
@@ -26,26 +27,26 @@ const Index = ({ users }: PageProps<Props>) => {
 
     return (
         <>
-            <Head title="Usuarios" />
+            <Head title={__("user.users")} />
             <div className="max-w-4xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-2xl font-bold text-left mb-4">
-                        Usuarios
+                        {__("user.users")}
                     </h2>
 
                     <Link
                         href={route("swift-auth.users.create")}
                         className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
                     >
-                        Nuevo usuario
+                        {__("user.new_user")}
                     </Link>
                 </div>
                 <table className="w-full border-collapse border border-gray-200">
                     <thead>
                         <tr className="bg-gray-100">
-                            <th className="border p-2">Nombre</th>
-                            <th className="border p-2">Correo electrónico</th>
-                            <th className="border p-2">Acciones</th>
+                            <th className="border p-2">{__("user.name")}</th>
+                            <th className="border p-2">{__("user.email")}</th>
+                            <th className="border p-2">{__("user.actions")}</th>
                         </tr>
                     </thead>
                     <tbody>

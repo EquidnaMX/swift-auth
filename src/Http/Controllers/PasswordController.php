@@ -53,7 +53,7 @@ class PasswordController extends Controller
     {
         return $this->render(
             'swift-auth::password.email',
-            'password/Request',
+            'SwiftAuth/Password/Request',
         );
     }
 
@@ -78,8 +78,8 @@ class PasswordController extends Controller
 
         /** @var array{attempts?:int,decay_seconds?:int}|mixed $rateConfig */
         $rateConfig = config('swift-auth.password_reset_rate_limit', []);
-        $attempts = (int) ($rateConfig['attempts'] ?? 5);
-        $decay = (int) ($rateConfig['decay_seconds'] ?? 60);
+        $attempts = (int) ($rateConfig['attempts'] ?? 3);
+        $decay = (int) ($rateConfig['decay_seconds'] ?? 300);
 
         // Limit requests per-target (email) to prevent abuse and enumeration.
         $limiterKey = 'password-reset:email:' . hash('sha256', $email);
@@ -175,7 +175,7 @@ class PasswordController extends Controller
     ): View|Response {
         return $this->render(
             'swift-auth::password.reset',
-            'password/Reset',
+            'SwiftAuth/Password/Reset',
             [
                 'token' => $token,
                 'email' => $request->input('email'),
@@ -193,7 +193,7 @@ class PasswordController extends Controller
     {
         return $this->render(
             'swift-auth::password.request_sent',
-            'password/RequestSent',
+            'SwiftAuth/Password/RequestSent',
         );
     }
 

@@ -1,18 +1,21 @@
 import { Head } from "@inertiajs/react";
 import Authenticated from "../../layouts/Authenticated";
+import { __ } from "../../../lang/translations";
 
 const Index = ({ users }) => {
     return (
         <>
-            <Head title="Users" />
+            <Head title={__("user.users")} />
 
             <div className="max-w-4xl mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-2xl font-bold text-center mb-4">Usuarios</h2>
+                <h2 className="text-2xl font-bold text-center mb-4">
+                    {__("user.users")}
+                </h2>
                 <table className="w-full border-collapse border border-gray-200">
                     <thead>
                         <tr className="bg-gray-100">
-                            <th className="border p-2">Nombre</th>
-                            <th className="border p-2">Correo electrónico</th>
+                            <th className="border p-2">{__("user.name")}</th>
+                            <th className="border p-2">{__("user.email")}</th>
                         </tr>
                     </thead>
                     <tbody>

@@ -1,6 +1,7 @@
 import { useForm, Head } from "@inertiajs/react";
 import { FormEvent, ReactNode } from "react";
 import Authenticated from "../../layouts/Authenticated";
+import { __ } from "../../../lang/translations";
 
 const CreateForm = () => {
     const { data, setData, post, processing, errors } = useForm({
@@ -19,16 +20,16 @@ const CreateForm = () => {
 
     return (
         <>
-            <Head title="Nuevo rol" />
+            <Head title={__("role.new_role")} />
             <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
                 <h2 className="text-2xl font-bold text-center mb-4">
-                    Agregar rol
+                    {__("role.add_role")}
                 </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium">
-                            Nombre
+                            {__("role.name")}
                         </label>
                         <input
                             type="text"
@@ -72,7 +73,7 @@ const CreateForm = () => {
                             className="bg-transparent hover:bg-gray-500 text-gray-700 font-semibold hover:text-white py-2 px-4 border border-gray-500 hover:border-transparent rounded"
                             onClick={handleCancel}
                         >
-                            Cancelar
+                            {__("auth.cancel")}
                         </button>
 
                         <button
@@ -80,7 +81,7 @@ const CreateForm = () => {
                             className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
                             disabled={processing}
                         >
-                            {processing ? "Enviando..." : "Guardar"}
+                            {processing ? __("auth.saving") : __("user.save")}
                         </button>
                     </div>
                 </form>

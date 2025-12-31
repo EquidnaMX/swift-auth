@@ -48,7 +48,7 @@ class NotificationService
             $flight = new FlightPlan(
                 channel: 'email',
                 to: $email,
-                subject: 'Password Reset Request',
+                subject: __('swift-auth::email.reset_subject'),
                 html: $this->getPasswordResetHtml($resetUrl, $email),
                 text: $this->getPasswordResetText($resetUrl),
                 idempotencyKey: "swift-auth:password-reset:{$email}:{$token}",
@@ -97,7 +97,7 @@ class NotificationService
             $flight = new FlightPlan(
                 channel: 'email',
                 to: $email,
-                subject: 'Verify Your Email Address',
+                subject: __('swift-auth::email.verification_subject'),
                 html: $this->getEmailVerificationHtml($verifyUrl, $email),
                 text: $this->getEmailVerificationText($verifyUrl),
                 idempotencyKey: "swift-auth:email-verification:{$email}:{$token}",
@@ -137,7 +137,7 @@ class NotificationService
             $flight = new FlightPlan(
                 channel: 'email',
                 to: $email,
-                subject: 'Account Temporarily Locked',
+                subject: __('swift-auth::email.lockout_subject'),
                 html: $this->getAccountLockoutHtml($email, $minutes),
                 text: $this->getAccountLockoutText($minutes),
                 idempotencyKey: "swift-auth:account-lockout:{$email}:" . now()->getTimestamp(),

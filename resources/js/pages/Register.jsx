@@ -1,5 +1,6 @@
 import { Link, useForm, Head } from "@inertiajs/react";
 import Guest from "../layouts/Guest";
+import { __ } from "../../lang/translations";
 
 const RegisterForm = () => {
     const { data, setData, post, processing, errors } = useForm({
@@ -11,10 +12,8 @@ const RegisterForm = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route("swift-auth.store"),  {
-            onError: (error) => {
-                console.log(error);
-            },
+        post(route("swift-auth.store"), {
+            onError: (error) => {},
         });
     };
 
@@ -23,11 +22,15 @@ const RegisterForm = () => {
             <Head title="Register" />
 
             <div className="max-w-md mx-auto mt-10 bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-2xl font-bold text-center mb-4">Registrarse</h2>
+                <h2 className="text-2xl font-bold text-center mb-4">
+                    {__("auth.register_title")}
+                </h2>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium">Nombre</label>
+                        <label className="block text-sm font-medium">
+                            {__("auth.name")}
+                        </label>
                         <input
                             type="text"
                             name="name"
@@ -37,13 +40,15 @@ const RegisterForm = () => {
                             required
                         />
                         {errors.name && (
-                            <p className="text-red-500 text-sm">{errors.name}</p>
+                            <p className="text-red-500 text-sm">
+                                {errors.name}
+                            </p>
                         )}
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium">
-                            Correo electrónico
+                            {__("auth.email")}
                         </label>
                         <input
                             type="email"
@@ -54,19 +59,23 @@ const RegisterForm = () => {
                             required
                         />
                         {errors.email && (
-                            <p className="text-red-500 text-sm">{errors.email}</p>
+                            <p className="text-red-500 text-sm">
+                                {errors.email}
+                            </p>
                         )}
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium">
-                            Contraseña
+                            {__("auth.password")}
                         </label>
                         <input
                             type="password"
                             name="password"
                             value={data.password}
-                            onChange={(e) => setData("password", e.target.value)}
+                            onChange={(e) =>
+                                setData("password", e.target.value)
+                            }
                             className="w-full border rounded px-3 py-2 mt-1"
                             required
                         />
@@ -79,7 +88,7 @@ const RegisterForm = () => {
 
                     <div>
                         <label className="block text-sm font-medium">
-                            Confirmar contraseña
+                            {__("auth.password_confirmation")}
                         </label>
                         <input
                             type="password"
@@ -98,14 +107,16 @@ const RegisterForm = () => {
                             href={route("swift-auth.login")}
                             className="text-sm text-blue-500"
                         >
-                            ¿Ya tienes cuenta? Inicia sesión
+                            {__("auth.already_have_account")}
                         </Link>
                         <button
                             type="submit"
                             className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                             disabled={processing}
                         >
-                            {processing ? "Registrando..." : "Registrarse"}
+                            {processing
+                                ? __("auth.registering")
+                                : __("auth.register_button")}
                         </button>
                     </div>
                 </form>

@@ -19,7 +19,6 @@ use Illuminate\Support\Str;
 use Equidna\SwiftAuth\Models\User;
 use Equidna\SwiftAuth\Classes\Notifications\NotificationService;
 
-
 /**
  * Manages email verification process.
  */
@@ -42,7 +41,7 @@ final class EmailVerificationController
         $email = is_string($rawEmail) ? trim($rawEmail) : '';
 
         if (!$email || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return response()->json(['message' => 'Invalid email address.'], 400);
+            return response()->json(['message' => __('swift-auth::email.verification_invalid_email')], 400);
         }
 
         /** @var array{attempts?:int,decay_seconds?:int}|mixed $ipRateLimit */
@@ -67,10 +66,10 @@ final class EmailVerificationController
                 ],
             );
 
-            return response()->json(['message' => "Too many verification requests. Please try again in {$seconds} seconds."], 429);
+            return response()->json(['message' => __('swift-auth::email.verification_too_many_requests', ['seconds' => $seconds])], 429);
         }
 
-        $rateLimitKey = 'email-verification:' . sha1($email);
+        $rateLimitKey = 'email-verification:' . hash('sha256', $email);
         /** @var array{attempts?:int,decay_seconds?:int}|mixed $rateLimitConfig */
         $rateLimitConfig = config('swift-auth.email_verification.resend_rate_limit', []);
         $attempts = (int) ($rateLimitConfig['attempts'] ?? 3);
@@ -91,7 +90,7 @@ final class EmailVerificationController
                 ],
             );
 
-            return response()->json(['message' => "Too many verification emails sent. Please try again in {$seconds} seconds."], 429);
+            return response()->json(['message' => __('swift-auth::email.verification_rate_limit', ['seconds' => $seconds])], 429);
         }
 
         $user = User::where(
@@ -104,11 +103,11 @@ final class EmailVerificationController
                 $rateLimitKey,
                 $decaySeconds,
             );
-            return response()->json(['message' => 'User not found.'], 404);
+            return response()->json(['message' => __('swift-auth::email.verification_user_not_found')], 404);
         }
 
         if ($user->email_verified_at) {
-            return response()->json(['message' => 'Email already verified.'], 400);
+            return response()->json(['message' => __('swift-auth::email.verification_already_verified')], 400);
         }
 
         $token = Str::random(64);
@@ -122,7 +121,7 @@ final class EmailVerificationController
         );
 
         if (!$result->success) {
-            return response()->json(['message' => 'Failed to send verification email. Please try again later.'], 500);
+            return response()->json(['message' => __('swift-auth::email.verification_failed')], 500);
         }
 
         RateLimiter::hit(
@@ -145,7 +144,7 @@ final class EmailVerificationController
         );
 
         return response()->json([
-            'message' => 'Verification email sent successfully.',
+            'message' => __('swift-auth::email.verification_sent'),
             'data' => null,
         ], 200);
     }
@@ -166,7 +165,7 @@ final class EmailVerificationController
         $email = is_string($rawQueryEmail) ? trim($rawQueryEmail) : '';
 
         if ($token === '' || $email === '') {
-            return response()->json(['message' => 'Invalid verification link.'], 400);
+            return response()->json(['message' => __('swift-auth::email.verification_invalid')], 400);
         }
 
         $hashedToken = hash('sha256', $token);
@@ -189,7 +188,7 @@ final class EmailVerificationController
                 ],
             );
 
-            return response()->json(['message' => 'Invalid or expired verification token.'], 400);
+            return response()->json(['message' => __('swift-auth::email.verification_invalid')], 400);
         }
 
         $ttl = (int) config('swift-auth.email_verification.token_ttl', 86400);
@@ -204,7 +203,7 @@ final class EmailVerificationController
                 ],
             );
 
-            return response()->json(['message' => 'Verification token has expired.'], 400);
+            return response()->json(['message' => __('swift-auth::email.verification_expired')], 400);
         }
 
         $user->email_verified_at = now();
@@ -221,6 +220,6 @@ final class EmailVerificationController
             ],
         );
 
-        return response()->json(['message' => 'Email verified successfully.'], 200);
+        return response()->json(['message' => __('swift-auth::email.verification_success')], 200);
     }
 }

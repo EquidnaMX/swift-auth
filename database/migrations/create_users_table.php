@@ -36,6 +36,7 @@ return new class extends Migration {
 
             // Performance indexes
             $table->index('name');
+            $table->index('email_verification_token');
         });
     }
 

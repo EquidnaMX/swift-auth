@@ -49,7 +49,7 @@ class RoleController extends Controller
 
         return $this->render(
             'swift-auth::role.index',
-            'role/Index',
+            'SwiftAuth/Role/Index',
             [
                 'roles' => $roles,
                 'actions' => Config::get('swift-auth.actions'),
@@ -67,7 +67,7 @@ class RoleController extends Controller
     {
         return $this->render(
             'swift-auth::role.create',
-            'role/Create',
+            'SwiftAuth/Role/Create',
             [
                 'actions' => Config::get('swift-auth.actions'),
             ],
@@ -145,7 +145,7 @@ class RoleController extends Controller
 
         return $this->render(
             'swift-auth::role.edit',
-            'role/Edit',
+            'SwiftAuth/Role/Edit',
             [
                 'role' => $role,
                 'actions' => Config::get('swift-auth.actions'),

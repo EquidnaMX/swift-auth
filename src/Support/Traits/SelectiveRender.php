@@ -22,7 +22,8 @@ use Inertia\Response;
  * Provides selective rendering for Blade or Inertia frontends.
  *
  * Determines view technology based on configuration and automatically includes flash messages
- * (success, error, status) in view data.
+ * (success, error, status) in view data. For Inertia frontends (TypeScript or JavaScript),
+ * component resolution is handled by the Inertia middleware and build tool (Vite/Webpack).
  */
 trait SelectiveRender
 {
@@ -30,9 +31,11 @@ trait SelectiveRender
      * Renders a view or Inertia component based on the frontend configuration.
      *
      * Flash messages (success, error, status) are automatically added to the view data.
+     * For Inertia frontends, pass the full component namespace (e.g., 'SwiftAuth/Login').
+     * The TypeScript/JavaScript distinction is handled during the build phase by Vite/Webpack.
      *
      * @param  string              $bladeView         Blade view name to render (if frontend is Blade).
-     * @param  string              $inertiaComponent  Inertia component name (if frontend is Inertia).
+     * @param  string              $inertiaComponent  Full Inertia component name (e.g., 'SwiftAuth/Login').
      * @param  array<string,mixed> $data              Additional data to pass to the view or component.
      * @return View|Response                          Rendered Blade view or Inertia component.
      */
@@ -49,7 +52,9 @@ trait SelectiveRender
 
         $data = array_merge($data, $flashMessages);
 
-        return Config::get('swift-auth.frontend') === 'blade'
+        $frontend = Config::get('swift-auth.frontend', 'typescript');
+
+        return $frontend === 'blade'
             ? view($bladeView, $data)
             : Inertia::render($inertiaComponent, $data);
     }

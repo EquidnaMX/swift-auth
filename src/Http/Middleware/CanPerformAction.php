@@ -38,7 +38,9 @@ class CanPerformAction
         string $action,
     ): Response {
         if (!SwiftAuth::canPerformAction($action)) {
-            return ResponseHelper::forbidden(message: 'You cannot perform this action.');
+            $response = ResponseHelper::forbidden(message: 'You cannot perform this action.');
+
+            return $response instanceof Response ? $response : response($response, 403);
         }
 
         return $next($request);

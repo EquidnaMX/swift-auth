@@ -19,6 +19,7 @@ Route::prefix('users')
 
             // Admin create page
             Route::get('create', [UserController::class, 'create'])->name('create');
+            Route::post('create', [UserController::class, 'storeAdmin'])->name('store');
 
 
             Route::prefix('{id_user}')->group(

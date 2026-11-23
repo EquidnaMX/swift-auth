@@ -21,7 +21,8 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Contracts\Hashing\Hasher;
+use Illuminate\Support\Facades\DB;
+use Equidna\SwiftAuth\Http\Requests\CreateAdminUserRequest;
 use Illuminate\Contracts\Support\Responsable;
 use Equidna\SwiftAuth\Facades\SwiftAuth;
 use Equidna\SwiftAuth\Http\Requests\RegisterUserRequest;
@@ -72,23 +73,11 @@ class UserController extends Controller
      * Shows the registration form for creating a new user.
      *
      * @param  Request       $request  HTTP request context.
-     * @return View|Responsable           Blade or Inertia response with role list.
+     * @return View|Responsable           Blade or Inertia registration form.
      */
     public function register(Request $request): View|Responsable
     {
-        $roles = Cache::remember(
-            $this->rolesCacheKey(),
-            300,
-            fn() => Role::orderBy('name')->get()
-        );
-
-        return $this->render(
-            'swift-auth::user.register',
-            'user/Register',
-            [
-                'roles' => $roles,
-            ],
-        );
+        return $this->render('swift-auth::user.register', 'user/Register', []);
     }
 
     /**
@@ -114,47 +103,33 @@ class UserController extends Controller
         );
     }
 
+    public function storeAdmin(CreateAdminUserRequest $request): RedirectResponse|JsonResponse
+    {
+        $user = $this->persistNewUser($request->validated());
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'User created successfully.',
+                'data' => ['user_id' => $user->getKey()],
+            ], 201);
+        }
+
+        return redirect()->route('swift-auth.users.index')->with('success', 'User created successfully.');
+    }
+
     /**
-     * Stores a new user and assigns the selected role.
+     * Registers a public user with the configured default role.
      *
      * @param  RegisterUserRequest       $request  Validated registration payload.
      * @return RedirectResponse|JsonResponse       Context-aware created response.
      */
     public function store(RegisterUserRequest $request): RedirectResponse|JsonResponse
     {
-        /** @var array{name:string,email:string,password:string,role?:int|string} $payload */
-        $payload = $request->validated();
+        /** @var array{name:string,email:string,password:string,role?:int|string|null} $payload */
+        $payload = $request->safe()->only(['name', 'email', 'password']);
+        $payload['role'] = config('swift-auth.default_role_id');
 
-        // If role not provided (public registration), assign a default role if configured.
-        if (!isset($payload['role'])) {
-            $defaultRole = config('swift-auth.default_role_id', null);
-            if ($defaultRole === null) {
-                $defaultRole = Role::orderBy('id_role')->value('id_role');
-            }
-
-            if ($defaultRole !== null) {
-                $payload['role'] = $defaultRole;
-            }
-        }
-
-        $driverRaw = config('swift-auth.hash_driver');
-        $driver = is_string($driverRaw) ? $driverRaw : null;
-        if ($driver) {
-            /** @var Hasher $hasher */
-            $hasher = Hash::driver($driver);
-            $hashed = $hasher->make($payload['password']);
-        } else {
-            $hashed = Hash::make($payload['password']);
-        }
-
-        $user = User::create([
-            'name' => $payload['name'],
-            'email' => $payload['email'],
-            'password' => $hashed,
-        ]);
-
-        // Normalize role attachment to an array so attach() works with scalar or array.
-        $user->roles()->attach((array) ($payload['role'] ?? []));
+        $user = $this->persistNewUser($payload);
 
         logger()->info('User created', [
             'user_id' => $user->getKey(),
@@ -195,6 +170,26 @@ class UserController extends Controller
             ],
             forward_url: route('swift-auth.users.index'),
         );
+    }
+
+    /** @param array{name:string,email:string,password:string,role?:int|string|null} $payload */
+    private function persistNewUser(array $payload): User
+    {
+        $driver = config('swift-auth.hash_driver');
+        $hashed = is_string($driver) && $driver !== ''
+            ? Hash::driver($driver)->make($payload['password'])
+            : Hash::make($payload['password']);
+
+        return DB::transaction(function () use ($payload, $hashed): User {
+            $user = User::create([
+                'name' => $payload['name'],
+                'email' => $payload['email'],
+                'password' => $hashed,
+            ]);
+            $user->roles()->attach((array) ($payload['role'] ?? []));
+
+            return $user;
+        });
     }
 
     /**

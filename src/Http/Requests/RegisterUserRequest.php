@@ -50,11 +50,6 @@ final class RegisterUserRequest extends EquidnaFormRequest
                 'confirmed',
                 ...$passwordRules,
             ],
-            'role' => [
-                'sometimes',
-                'integer',
-                'exists:' . $prefix . 'Roles,id_role',
-            ],
         ];
     }
 

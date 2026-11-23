@@ -1,4 +1,4 @@
-import { Link, useForm } from "@inertiajs/react";
+import { Head, useForm } from "@inertiajs/react";
 import Authenticated from "../../layouts/Authenticated";
 import { __ } from "../../../lang/translations";
 
@@ -12,7 +12,7 @@ const CreateForm = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route("swift-auth.store"));
+        post(route("swift-auth.users.store"));
     };
 
     const handleCancel = () => {

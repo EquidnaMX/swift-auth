@@ -12,7 +12,7 @@ const RegisterForm = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route("swift-auth.store"), {
+        post(route("swift-auth.public.register.store"), {
             onError: (error) => {},
         });
     };

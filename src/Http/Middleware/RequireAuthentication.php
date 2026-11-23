@@ -35,9 +35,8 @@ class RequireAuthentication
         Closure $next,
     ): Response {
         if (!SwiftAuth::check()) {
-            return ResponseHelper::unauthorized(
+            return $this->unauthorized(
                 message: 'You must be logged in.',
-                forward_url: route('swift-auth.login.form'),
             );
         }
 
@@ -46,12 +45,19 @@ class RequireAuthentication
 
             $request->attributes->add(['swift_auth_user' => $user]);
         } catch (ModelNotFoundException $e) {
-            return ResponseHelper::unauthorized(
+            return $this->unauthorized(
                 message: 'Authenticated user not found on record.',
-                forward_url: route('swift-auth.login.form'),
             );
         }
 
         return $next($request);
+    }
+
+    private function unauthorized(string $message): Response
+    {
+        $loginUrl = route('swift-auth.login.form');
+        $response = ResponseHelper::unauthorized(message: $message, forward_url: $loginUrl);
+
+        return $response instanceof Response ? $response : redirect()->to($loginUrl);
     }
 }

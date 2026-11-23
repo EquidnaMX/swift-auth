@@ -5,7 +5,7 @@
 @section('content')
     <h2 class="text-center">Registro de usuario</h2>
 
-    <form method="POST" action="{{ route('swift-auth.users.store') }}">
+    <form method="POST" action="{{ route('swift-auth.public.register.store') }}">
         @csrf
 
         <div class="mb-3">
@@ -35,15 +35,6 @@
         <div class="mb-3">
             <label for="password_confirmation" class="form-label">Confirmar contraseña:</label>
             <input type="password" class="form-control" name="password_confirmation" required>
-        </div>
-
-        <div class="mb-3">
-            <label for="role" class="form-label">Rol:</label>
-            <select name="role" class="form-select">
-                @foreach($roles as $role)
-                    <option value="{{ $role->id_role }}">{{ $role->name }}</option>
-                @endforeach
-            </select>
         </div>
 
         <button type="submit" class="btn btn-primary w-100">Registrarse</button>

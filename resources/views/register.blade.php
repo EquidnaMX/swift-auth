@@ -5,7 +5,7 @@
 @section('content')
     <h2 class="text-center">@lang('swift-auth::auth.register_title')</h2>
 
-    <form method="POST" action="{{ route('swift-auth.users.store') }}">
+    <form method="POST" action="{{ route('swift-auth.public.register.store') }}">
         @csrf
 
         <div class="mb-3">
